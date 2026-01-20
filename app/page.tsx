@@ -1,54 +1,25 @@
-'use client'
-
-import { useState } from 'react'
-import Hero from '@/components/Hero'
-import Experience from '@/components/Experience'
-import Skills from '@/components/Skills'
-import AskAIModal from '@/components/AskAIModal'
-import FitCheck from '@/components/FitCheck'
-import Footer from '@/components/Footer'
-import ThemeToggle from '@/components/ThemeToggle'
+import Link from 'next/link'
 
 export default function Home() {
-  const [isAIModalOpen, setIsAIModalOpen] = useState(false)
-
   return (
-    <main className="min-h-screen">
-      {/* Theme Toggle */}
-      <ThemeToggle />
-
-      {/* Hero Section */}
-      <Hero onAskAI={() => setIsAIModalOpen(true)} />
-
-      {/* Experience Section */}
-      <section id="experience" className="py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
-        <h2 className="section-title">Experience</h2>
-        <Experience />
-      </section>
-
-      {/* Skills Section */}
-      <section id="skills" className="py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto bg-gray-50 dark:bg-gray-800/50">
-        <h2 className="section-title">Skills</h2>
-        <Skills />
-      </section>
-
-      {/* Fit Check Section */}
-      <section id="fit-check" className="py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
-        <h2 className="section-title">Fit Check</h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-8">
-          Paste a job description and get an honest assessment of how well my background matches the role.
+    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+      <div className="text-center px-4">
+        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white mb-6">
+          Tarek Alaaddin
+        </h1>
+        <p className="text-xl sm:text-2xl text-gray-600 dark:text-gray-300 mb-12">
+          Software Engineer & Technical Leader
         </p>
-        <FitCheck />
-      </section>
-
-      {/* Footer */}
-      <Footer />
-
-      {/* AI Chat Modal */}
-      <AskAIModal
-        isOpen={isAIModalOpen}
-        onClose={() => setIsAIModalOpen(false)}
-      />
+        <Link
+          href="/resume"
+          className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-8 rounded-lg transition-colors text-lg"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          View My Resume
+        </Link>
+      </div>
     </main>
   )
 }
