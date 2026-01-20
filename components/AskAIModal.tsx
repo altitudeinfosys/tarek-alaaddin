@@ -70,31 +70,15 @@ export default function AskAIModal({ isOpen, onClose }: AskAIModalProps) {
         throw new Error('Failed to get response')
       }
 
-      // Handle streaming response
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
+      const data = await response.json()
 
-      if (!reader) throw new Error('No reader available')
-
-      let assistantMessage = ''
-      setMessages((prev) => [...prev, { role: 'assistant', content: '' }])
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value)
-        assistantMessage += chunk
-
-        setMessages((prev) => {
-          const newMessages = [...prev]
-          newMessages[newMessages.length - 1] = {
-            role: 'assistant',
-            content: assistantMessage,
-          }
-          return newMessages
-        })
-      }
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: data.content,
+        },
+      ])
     } catch (error) {
       console.error('Chat error:', error)
       setMessages((prev) => [

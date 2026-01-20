@@ -1,5 +1,5 @@
-import { NextRequest } from 'next/server'
-import { streamChat, ChatMessage } from '@/lib/claude'
+import { NextRequest, NextResponse } from 'next/server'
+import { chat, ChatMessage } from '@/lib/claude'
 import { getResumeForChat } from '@/lib/resume-loader'
 
 export const runtime = 'nodejs'
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const { messages } = await request.json() as { messages: ChatMessage[] }
 
     if (!messages || !Array.isArray(messages)) {
-      return new Response('Invalid request: messages required', { status: 400 })
+      return NextResponse.json({ error: 'Invalid request: messages required' }, { status: 400 })
     }
 
     // Load resume data for context
@@ -33,15 +33,10 @@ ${resumeContext}
 
 Remember: You're representing Tarek, so be authentic and helpful. Don't make up information that isn't in the resume or context.`
 
-    // Stream the response
-    const stream = await streamChat(messages, systemPrompt, 'haiku')
+    // Get non-streaming response
+    const response = await chat(messages, systemPrompt, 'haiku')
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Transfer-Encoding': 'chunked',
-      },
-    })
+    return NextResponse.json({ content: response })
   } catch (error) {
     console.error('Chat API error:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -49,8 +44,8 @@ Remember: You're representing Tarek, so be authentic and helpful. Don't make up 
 
     // Return more specific error for debugging
     if (errorMessage.includes('ANTHROPIC_API_KEY')) {
-      return new Response('API key not configured', { status: 500 })
+      return NextResponse.json({ error: 'API key not configured' }, { status: 500 })
     }
-    return new Response('Internal server error', { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
