@@ -1,8 +1,13 @@
 import Anthropic from '@anthropic-ai/sdk'
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
+// Initialize Anthropic client - will throw if API key is missing
+function getAnthropicClient() {
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY environment variable is not set')
+  }
+  return new Anthropic({ apiKey })
+}
 
 export type ModelType = 'haiku' | 'sonnet'
 
@@ -21,6 +26,7 @@ export async function chat(
   systemPrompt: string,
   model: ModelType = 'haiku'
 ): Promise<string> {
+  const anthropic = getAnthropicClient()
   const response = await anthropic.messages.create({
     model: MODELS[model],
     max_tokens: 1024,
@@ -40,6 +46,7 @@ export async function streamChat(
   systemPrompt: string,
   model: ModelType = 'haiku'
 ): Promise<ReadableStream<Uint8Array>> {
+  const anthropic = getAnthropicClient()
   const stream = await anthropic.messages.stream({
     model: MODELS[model],
     max_tokens: 1024,
@@ -98,6 +105,7 @@ ${resumeMarkdown}
 Job Description:
 ${jobDescription}`
 
+  const anthropic = getAnthropicClient()
   const response = await anthropic.messages.create({
     model: MODELS.sonnet,
     max_tokens: 2048,

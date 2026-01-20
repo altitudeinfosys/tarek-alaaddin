@@ -44,6 +44,13 @@ Remember: You're representing Tarek, so be authentic and helpful. Don't make up 
     })
   } catch (error) {
     console.error('Chat API error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Error details:', errorMessage)
+
+    // Return more specific error for debugging
+    if (errorMessage.includes('ANTHROPIC_API_KEY')) {
+      return new Response('API key not configured', { status: 500 })
+    }
     return new Response('Internal server error', { status: 500 })
   }
 }
