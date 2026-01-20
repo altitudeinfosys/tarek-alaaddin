@@ -32,7 +32,16 @@ Microsoft Azure, AWS
 Oracle, SQL Server, PostgreSQL
 
 ### DevOps & CI/CD
-Jenkins, Azure DevOps, Git
+Jenkins, Azure DevOps, Git, Docker
+
+### AI & LLM Tools
+Claude (Anthropic), OpenAI/ChatGPT, Claude Code, GitHub Copilot, Gemini
+
+### Agentic AI Development
+Claude Code, Cursor, AI-assisted code generation, Prompt engineering, LLM API integration
+
+### Workflow Automation
+N8n, Make.com (Integromat), Zapier, Custom automation scripts
 
 ### Testing
 JUnit, Selenium

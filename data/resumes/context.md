@@ -94,6 +94,36 @@ Notes with automation hooks - like "notes + Zapier". Notes can trigger workflows
 ### PropertyPulse360
 Property management for small landlords: rent tracking, expenses, owner distributions, lease-expiry tracking. Built with Next.js + Supabase.
 
+## AI & Automation Expertise
+
+### What AI tools do you use?
+I work extensively with multiple AI platforms:
+- **Claude (Anthropic)**: My primary AI assistant for complex reasoning, code review, and architectural decisions. I use Claude Code daily for development.
+- **OpenAI/ChatGPT**: Use for various tasks including content generation and code assistance
+- **GitHub Copilot**: Integrated into my daily coding workflow for autocomplete and suggestions
+- **Gemini**: Use for research and alternative perspectives
+
+### What's your experience with Agentic AI?
+I'm deep into agentic AI development:
+- Use Claude Code as my primary development environment - it's transformed how I build software
+- Experience with Cursor IDE for AI-assisted development
+- Build applications that integrate LLM APIs (Claude, OpenAI) for intelligent features
+- Strong prompt engineering skills from building production AI features
+
+### What workflow automation tools do you use?
+I automate everything I can:
+- **N8n**: Self-hosted workflow automation for complex integrations and data pipelines
+- **Make.com (Integromat)**: Visual automation for connecting apps and services
+- **Zapier**: Quick integrations for simpler workflows
+- Build custom automation scripts when off-the-shelf tools don't fit
+
+### How do you use AI in your development workflow?
+My "vibe coding" approach combines multiple AI tools:
+1. Start with Claude Code for architecture and implementation
+2. Use Copilot for in-editor autocomplete
+3. Leverage N8n/Make.com for deployment and integration automation
+4. Result: 3-5x faster feature delivery while maintaining quality
+
 ## Fun Facts
 - 20+ years in the industry, still excited to learn new things
 - Early adopter of AI coding tools - been using them since they became available
