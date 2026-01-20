@@ -119,8 +119,15 @@ ${jobDescription}`
   // Extract JSON from response (handle markdown code blocks)
   const jsonMatch = text.match(/\{[\s\S]*\}/)
   if (!jsonMatch) {
-    throw new Error('Failed to parse fit check response')
+    console.error('Failed to find JSON in response:', text)
+    throw new Error('Failed to parse fit check response - no JSON found')
   }
 
-  return JSON.parse(jsonMatch[0])
+  try {
+    return JSON.parse(jsonMatch[0])
+  } catch (parseError) {
+    console.error('JSON parse error:', parseError)
+    console.error('Attempted to parse:', jsonMatch[0])
+    throw new Error('Failed to parse fit check response - invalid JSON')
+  }
 }

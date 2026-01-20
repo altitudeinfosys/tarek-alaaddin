@@ -34,8 +34,11 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Fit check API error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Error details:', errorMessage)
+
     return NextResponse.json(
-      { error: 'Failed to analyze job fit' },
+      { error: `Failed to analyze job fit: ${errorMessage}` },
       { status: 500 }
     )
   }
