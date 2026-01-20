@@ -129,3 +129,4 @@ My "vibe coding" approach combines multiple AI tools:
 - Early adopter of AI coding tools - been using them since they became available
 - Based in Round Rock, Texas (Austin area)
 - University of Houston Computer Science grad (Go Coogs!)
+
