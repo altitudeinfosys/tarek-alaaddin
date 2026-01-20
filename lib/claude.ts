@@ -12,8 +12,8 @@ function getAnthropicClient() {
 export type ModelType = 'haiku' | 'sonnet'
 
 const MODELS: Record<ModelType, string> = {
-  haiku: 'claude-3-5-haiku-latest',
-  sonnet: 'claude-3-5-sonnet-latest',
+  haiku: 'claude-3-5-haiku-20241022',
+  sonnet: 'claude-sonnet-4-20250514',
 }
 
 export interface ChatMessage {
