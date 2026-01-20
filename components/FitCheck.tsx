@@ -25,7 +25,7 @@ export default function FitCheck() {
     setResult(null)
 
     try {
-      const response = await fetch('/resume/api/fit-check', {
+      const response = await fetch('/api/fit-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jobDescription: jobDescription.trim() }),
