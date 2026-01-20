@@ -58,7 +58,7 @@ export default function AskAIModal({ isOpen, onClose }: AskAIModalProps) {
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch('/resume/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
