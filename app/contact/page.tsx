@@ -4,6 +4,9 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import ThemeToggle from '@/components/ThemeToggle'
+import Turnstile from '@/components/Turnstile'
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -14,6 +17,7 @@ export default function ContactPage() {
   })
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -24,6 +28,13 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!turnstileToken) {
+      setStatus('error')
+      setErrorMessage('Please complete the verification.')
+      return
+    }
+
     setStatus('loading')
     setErrorMessage('')
 
@@ -33,7 +44,7 @@ export default function ContactPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, turnstileToken }),
       })
 
       if (!response.ok) {
@@ -42,6 +53,7 @@ export default function ContactPage() {
 
       setStatus('success')
       setFormData({ name: '', email: '', subject: '', message: '' })
+      setTurnstileToken(null)
     } catch (error) {
       setStatus('error')
       setErrorMessage('Failed to send message. Please try again later.')
@@ -277,6 +289,15 @@ export default function ContactPage() {
                     <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
                       {errorMessage}
                     </div>
+                  )}
+
+                  {/* Cloudflare Turnstile */}
+                  {TURNSTILE_SITE_KEY && (
+                    <Turnstile
+                      siteKey={TURNSTILE_SITE_KEY}
+                      onVerify={(token) => setTurnstileToken(token)}
+                      onError={() => setTurnstileToken(null)}
+                    />
                   )}
 
                   <div className="pt-4">

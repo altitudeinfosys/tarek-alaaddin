@@ -9,14 +9,64 @@ interface ContactFormData {
   email: string
   subject: string
   message: string
+  turnstileToken: string
+}
+
+interface TurnstileResponse {
+  success: boolean
+  'error-codes'?: string[]
+}
+
+async function verifyTurnstileToken(token: string): Promise<boolean> {
+  const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY
+
+  if (!TURNSTILE_SECRET_KEY) {
+    console.error('Missing TURNSTILE_SECRET_KEY')
+    return false
+  }
+
+  try {
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        secret: TURNSTILE_SECRET_KEY,
+        response: token,
+      }),
+    })
+
+    const data = (await response.json()) as TurnstileResponse
+
+    if (!data.success) {
+      console.error('Turnstile verification failed:', data['error-codes'])
+    }
+
+    return data.success
+  } catch (error) {
+    console.error('Turnstile verification error:', error)
+    return false
+  }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, subject, message } = (await request.json()) as ContactFormData
+    const { name, email, subject, message, turnstileToken } =
+      (await request.json()) as ContactFormData
 
     if (!name || !email || !message) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    // Verify Turnstile token
+    if (!turnstileToken) {
+      return NextResponse.json({ error: 'Verification required' }, { status: 400 })
+    }
+
+    const isValidToken = await verifyTurnstileToken(turnstileToken)
+    if (!isValidToken) {
+      return NextResponse.json({ error: 'Verification failed' }, { status: 400 })
     }
 
     const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY
