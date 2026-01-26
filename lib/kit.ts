@@ -63,11 +63,14 @@ export interface KitResponse {
  */
 export async function subscribeToNewsletter(params: SubscribeParams): Promise<KitResponse> {
   if (!KIT_API_KEY) {
+    console.error('[Kit] KIT_API_KEY is not set. Available env vars:', Object.keys(process.env).filter(k => k.includes('KIT')))
     return {
       success: false,
       error: 'Kit API is not configured',
     }
   }
+
+  console.log('[Kit] Using API base URL:', KIT_API_BASE_URL)
 
   try {
     // Create subscriber

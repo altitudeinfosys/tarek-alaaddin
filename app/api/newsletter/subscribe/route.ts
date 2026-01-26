@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Subscribe to newsletter via Kit
+    console.log('[Newsletter API] Attempting Kit subscription for:', email)
     const result = await subscribeToNewsletter({
       email,
       firstName,
@@ -77,11 +78,14 @@ export async function POST(request: NextRequest) {
     })
 
     if (!result.success) {
+      console.error('[Newsletter API] Kit subscription failed:', result.error)
       return NextResponse.json(
         { error: result.error || 'Failed to subscribe. Please try again later.' },
         { status: 500 }
       )
     }
+
+    console.log('[Newsletter API] Successfully subscribed:', email, 'with ID:', result.subscriberId)
 
     return NextResponse.json({
       success: true,
