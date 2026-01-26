@@ -97,29 +97,31 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Ki
     const data = await subscriberResponse.json()
     const subscriberId = data.subscriber?.id
 
-    // Add tags based on selected topics
-    if (subscriberId) {
-      const tagPromises = []
-
-      // Add lead magnet tag (everyone gets this)
-      tagPromises.push(
-        addTagToSubscriber(subscriberId, 'lead-magnet-productivity-stack')
-      )
-
-      // Add topic-specific tags
-      if (params.topics.productivity) {
-        tagPromises.push(addTagToSubscriber(subscriberId, 'interest-productivity'))
-      }
-      if (params.topics.ai) {
-        tagPromises.push(addTagToSubscriber(subscriberId, 'interest-ai'))
-      }
-      if (params.topics.marketing) {
-        tagPromises.push(addTagToSubscriber(subscriberId, 'interest-marketing'))
-      }
-
-      // Wait for all tags to be added (but don't fail if tagging fails)
-      await Promise.allSettled(tagPromises)
+    if (!subscriberId) {
+      throw new Error(`Kit API did not return subscriber ID. Response: ${JSON.stringify(data)}`)
     }
+
+    // Add tags based on selected topics
+    const tagPromises = []
+
+    // Add lead magnet tag (everyone gets this)
+    tagPromises.push(
+      addTagToSubscriber(subscriberId, 'lead-magnet-productivity-stack')
+    )
+
+    // Add topic-specific tags
+    if (params.topics.productivity) {
+      tagPromises.push(addTagToSubscriber(subscriberId, 'interest-productivity'))
+    }
+    if (params.topics.ai) {
+      tagPromises.push(addTagToSubscriber(subscriberId, 'interest-ai'))
+    }
+    if (params.topics.marketing) {
+      tagPromises.push(addTagToSubscriber(subscriberId, 'interest-marketing'))
+    }
+
+    // Wait for all tags to be added (but don't fail if tagging fails)
+    await Promise.allSettled(tagPromises)
 
     return {
       success: true,

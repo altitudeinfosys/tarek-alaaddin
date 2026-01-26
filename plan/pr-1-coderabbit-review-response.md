@@ -9,7 +9,7 @@
 ## Review Summary
 
 ### Automated Reviewers Status:
-- **Vercel:** ✅ DEPLOYED - Preview available at https://tarek-alaaddin-git-feature-blog-a3397e-tarek-alaaddins-projects.vercel.app
+- **Vercel:** ✅ DEPLOYED - Preview available at <https://tarek-alaaddin-git-feature-blog-a3397e-tarek-alaaddins-projects.vercel.app>
 - **CodeRabbit:** ⚠️ COMMENTED - 16 actionable comments + 19 nitpicks
 - **Claude Bot:** ⏳ NOT REVIEWED
 - **Codex:** ⏳ NOT REVIEWED
@@ -191,7 +191,7 @@ b) Missing language tags on fenced code blocks
 
 **CodeRabbit Comments:**
 > The bash snippet contains a hard-coded absolute path; replace with a repo-relative or placeholder path
-
+>
 > Several fenced code blocks are missing language identifiers (MD040 failures)
 
 **Fix:**

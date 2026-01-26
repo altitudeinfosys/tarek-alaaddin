@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import Button from '@/components/ui/Button'
 
 export default function AboutSection() {
@@ -61,11 +60,9 @@ export default function AboutSection() {
         </div>
 
         <div className="text-center">
-          <Link href="/blog">
-            <Button variant="outline" size="lg">
-              Read the Blog
-            </Button>
-          </Link>
+          <Button href="/blog" variant="outline" size="lg">
+            Read the Blog
+          </Button>
         </div>
       </div>
     </section>
