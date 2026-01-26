@@ -12,10 +12,13 @@ export async function GET() {
       )
     }
 
+    // TypeScript guard: KIT_API_KEY is guaranteed to be defined after the check above
+    const apiKey: string = KIT_API_KEY
+
     // Fetch subscribers from Kit.com API
     const response = await fetch(`${KIT_API_BASE_URL}/subscribers`, {
       headers: {
-        'X-Kit-Api-Key': KIT_API_KEY,
+        'X-Kit-Api-Key': apiKey,
       },
     })
 

@@ -70,6 +70,9 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Ki
     }
   }
 
+  // TypeScript guard: KIT_API_KEY is guaranteed to be defined after the check above
+  const apiKey: string = KIT_API_KEY
+
   console.log('[Kit] Using API base URL:', KIT_API_BASE_URL)
 
   try {
@@ -78,7 +81,7 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Ki
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Kit-Api-Key': KIT_API_KEY,
+        'X-Kit-Api-Key': apiKey,
       },
       body: JSON.stringify({
         email_address: params.email,
@@ -143,10 +146,17 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Ki
  * Add a tag to a subscriber
  */
 async function addTagToSubscriber(subscriberId: string, tagName: string): Promise<void> {
+  if (!KIT_API_KEY) {
+    throw new Error('KIT_API_KEY is not configured')
+  }
+
+  // TypeScript guard: KIT_API_KEY is guaranteed to be defined after the check above
+  const apiKey: string = KIT_API_KEY
+
   // First, get or create the tag
   const tagsResponse = await fetchWithTimeout(`${KIT_API_BASE_URL}/tags`, {
     headers: {
-      'X-Kit-Api-Key': KIT_API_KEY,
+      'X-Kit-Api-Key': apiKey,
     },
   })
 
@@ -164,7 +174,7 @@ async function addTagToSubscriber(subscriberId: string, tagName: string): Promis
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Kit-Api-Key': KIT_API_KEY,
+          'X-Kit-Api-Key': apiKey,
         },
         body: JSON.stringify({ name: tagName }),
       })
@@ -177,7 +187,7 @@ async function addTagToSubscriber(subscriberId: string, tagName: string): Promis
         // Fetch tags again to get the ID
         const retryTagsResponse = await fetchWithTimeout(`${KIT_API_BASE_URL}/tags`, {
           headers: {
-            'X-Kit-Api-Key': KIT_API_KEY,
+            'X-Kit-Api-Key': apiKey,
           },
         })
         if (retryTagsResponse.ok) {
@@ -189,7 +199,7 @@ async function addTagToSubscriber(subscriberId: string, tagName: string): Promis
       // If tag creation fails, try fetching again in case it was created concurrently
       const retryTagsResponse = await fetchWithTimeout(`${KIT_API_BASE_URL}/tags`, {
         headers: {
-          'X-Kit-Api-Key': KIT_API_KEY,
+          'X-Kit-Api-Key': apiKey,
         },
       })
       if (retryTagsResponse.ok) {
@@ -208,7 +218,7 @@ async function addTagToSubscriber(subscriberId: string, tagName: string): Promis
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Kit-Api-Key': KIT_API_KEY,
+      'X-Kit-Api-Key': apiKey,
     },
   })
 
