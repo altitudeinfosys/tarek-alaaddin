@@ -1,0 +1,421 @@
+---
+title: "Spring Boot Microservices: Lessons from 20 Years of Enterprise Java"
+description: "Hard-earned lessons from building and scaling Spring Boot microservices in production. What actually matters versus what's just hype."
+date: "2025-01-05"
+category: "development"
+tags: ["java", "spring-boot", "microservices", "architecture", "backend"]
+published: true
+featured: false
+---
+
+## The Microservices Reality Check
+
+After 20 years of Java development and leading teams building enterprise systems, I've seen microservices done right and spectacularly wrong.
+
+**The truth:** Most companies don't need microservices. They need better modularity in their monolith.
+
+But if you **do** need them, here's what actually matters.
+
+## When to Use Microservices
+
+### ✅ Use Microservices When:
+1. **Different scaling needs** - Your search feature needs 50 instances, but billing needs 2
+2. **Independent deployment cycles** - Teams can ship without coordinating
+3. **Clear domain boundaries** - Services align with business domains
+4. **Team size > 30 engineers** - Communication overhead justifies separation
+
+### ❌ Don't Use Microservices When:
+1. You have < 5 engineers
+2. You're building an MVP
+3. You can't define clear service boundaries
+4. You're doing it "because Netflix does it"
+
+<Callout type="warning">
+Microservices are a **team scaling strategy**, not a technology trend. If you can't manage a well-structured monolith, microservices will be worse.
+</Callout>
+
+## The Spring Boot Stack That Actually Works
+
+After trying every combination, this stack has proven reliable in production:
+
+### Core Stack
+```xml
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.2.0</version>
+</parent>
+
+<dependencies>
+    <!-- Web -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-webflux</artifactId>
+    </dependency>
+
+    <!-- Data -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+
+    <!-- Observability -->
+    <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
+</dependencies>
+```
+
+### Why This Stack?
+- **Spring Boot 3.x** - Native compilation, virtual threads, performance wins
+- **WebFlux** - Reactive when you need it, not everywhere
+- **JPA** - Yes, JPA. Stop over-engineering with JOOQ unless you need complex queries
+- **Micrometer** - Best-in-class observability
+
+## Architecture Patterns That Matter
+
+### 1. Domain-Driven Design (DDD)
+
+**Don't:**
+- Service per database table
+- CRUD microservices
+- Shared database between services
+
+**Do:**
+- Service per bounded context
+- Aggregate roots
+- Event-driven communication
+
+**Example:**
+```java
+// BAD: CRUD microservice
+@Service
+public class UserService {
+    public User getUser(Long id) { ... }
+    public User saveUser(User user) { ... }
+    public void deleteUser(Long id) { ... }
+}
+
+// GOOD: Domain service
+@Service
+public class OrderService {
+    public OrderId placeOrder(CreateOrderCommand cmd) {
+        // Business logic here
+        // Publish OrderPlaced event
+    }
+
+    public void cancelOrder(OrderId id, CancelReason reason) {
+        // Domain rules validated
+        // Publish OrderCancelled event
+    }
+}
+```
+
+### 2. API Gateway Pattern
+
+**Use Cases:**
+- Authentication/Authorization
+- Rate limiting
+- Request routing
+- Response transformation
+
+**My Setup:**
+- **Spring Cloud Gateway** for routing
+- **JWT** for authentication
+- **Redis** for rate limiting
+- **Resilience4j** for circuit breaking
+
+**Critical:** Keep the gateway thin. No business logic here.
+
+### 3. Event-Driven Communication
+
+**Use Kafka/RabbitMQ for:**
+- Async operations
+- Event sourcing
+- Cross-service notifications
+
+**Use REST for:**
+- Synchronous queries
+- Client-facing APIs
+- Service-to-service when immediate response needed
+
+**Don't:**
+- Use events as RPC (request/response pattern)
+- Make events too granular (chatty)
+- Skip idempotency handling
+
+<CodeBlock language="java" filename="OrderEventPublisher.java">
+{`@Service
+public class OrderEventPublisher {
+    private final KafkaTemplate<String, OrderEvent> kafka;
+
+    public void publishOrderPlaced(Order order) {
+        OrderPlacedEvent event = new OrderPlacedEvent(
+            order.getId(),
+            order.getCustomerId(),
+            order.getItems(),
+            Instant.now()
+        );
+
+        kafka.send("orders.placed", event);
+    }
+}
+
+// Consumer with idempotency
+@Service
+public class InventoryService {
+    @KafkaListener(topics = "orders.placed")
+    public void onOrderPlaced(OrderPlacedEvent event) {
+        // Check if already processed
+        if (processedEvents.contains(event.getId())) {
+            return; // Idempotent handling
+        }
+
+        reserveInventory(event.getItems());
+        processedEvents.add(event.getId());
+    }
+}`}
+</CodeBlock>
+
+## Database Per Service (The Right Way)
+
+### Pattern: Each service owns its data
+
+```
+┌─────────────────┐     ┌─────────────────┐
+│  Order Service  │     │Inventory Service│
+│  ┌───────────┐  │     │  ┌───────────┐  │
+│  │ Orders DB │  │     │  │ Stock DB  │  │
+│  └───────────┘  │     │  └───────────┘  │
+└─────────────────┘     └─────────────────┘
+         │                       │
+         └──── Events via Kafka ─┘
+```
+
+### How to Handle Cross-Service Queries
+
+**Option 1: API Composition** (Simple cases)
+```java
+@Service
+public class OrderDetailService {
+    private final OrderService orderService;
+    private final CustomerService customerService;
+
+    public OrderDetail getOrderDetail(OrderId id) {
+        Order order = orderService.getOrder(id);
+        Customer customer = customerService.getCustomer(
+            order.getCustomerId()
+        );
+        return new OrderDetail(order, customer);
+    }
+}
+```
+
+**Option 2: CQRS + Read Model** (Complex queries)
+- Write to service-specific database
+- Publish events
+- Build denormalized read models
+- Query the read model
+
+### Data Consistency Patterns
+
+**Saga Pattern** for distributed transactions:
+```java
+@Service
+public class OrderSaga {
+    public void placeOrder(CreateOrderCommand cmd) {
+        // Step 1: Reserve inventory
+        inventoryService.reserve(cmd.getItems());
+
+        // Step 2: Process payment
+        try {
+            paymentService.charge(cmd.getPaymentInfo());
+        } catch (PaymentFailedException e) {
+            // Compensate: Release inventory
+            inventoryService.release(cmd.getItems());
+            throw e;
+        }
+
+        // Step 3: Create order
+        orderService.create(cmd);
+    }
+}
+```
+
+## Observability (Non-Negotiable)
+
+You **cannot** run microservices in production without:
+
+### 1. Distributed Tracing
+**Tool:** Spring Cloud Sleuth + Zipkin
+
+Every request gets a trace ID that follows it across services.
+
+```java
+@Slf4j
+@RestController
+public class OrderController {
+    @PostMapping("/orders")
+    public ResponseEntity<Order> createOrder(
+        @RequestBody CreateOrderRequest req
+    ) {
+        // Trace ID automatically added to logs
+        log.info("Creating order: {}", req);
+        // ...
+    }
+}
+```
+
+### 2. Centralized Logging
+**Stack:** Logback → Logstash → Elasticsearch → Kibana (ELK)
+
+**Structure your logs:**
+```java
+log.info("Order placed",
+    kv("orderId", order.getId()),
+    kv("customerId", order.getCustomerId()),
+    kv("amount", order.getTotal())
+);
+```
+
+### 3. Metrics & Dashboards
+**Tool:** Micrometer + Prometheus + Grafana
+
+**Track these metrics:**
+- Request rate, latency, error rate (RED metrics)
+- JVM memory, GC time
+- Database connection pool stats
+- Kafka consumer lag
+
+## Common Mistakes (And How to Avoid Them)
+
+### Mistake #1: Shared Libraries for Everything
+**Problem:** Couples all services together
+**Solution:** Share only truly stable contracts (API models, events)
+
+### Mistake #2: Synchronous Chains
+**Problem:** Service A → B → C → D (latency adds up)
+**Solution:** Use events for multi-step workflows
+
+### Mistake #3: No Service Versioning
+**Problem:** Breaking changes break everything
+**Solution:** API versioning from day 1
+
+```java
+@RestController
+@RequestMapping("/api/v1/orders")
+public class OrderControllerV1 { ... }
+
+@RestController
+@RequestMapping("/api/v2/orders")
+public class OrderControllerV2 { ... }
+```
+
+### Mistake #4: Ignoring Network Failures
+**Problem:** Cascading failures
+**Solution:** Circuit breakers, retries, timeouts
+
+```java
+@CircuitBreaker(name = "inventoryService",
+                fallbackMethod = "getInventoryFallback")
+public Inventory getInventory(String sku) {
+    return inventoryClient.getInventory(sku);
+}
+
+public Inventory getInventoryFallback(String sku, Exception e) {
+    return Inventory.unavailable(sku);
+}
+```
+
+## Testing Strategy
+
+### Unit Tests (80% coverage)
+- Business logic
+- Domain models
+- Validators
+
+### Integration Tests (Service boundaries)
+```java
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+@AutoConfigureTestDatabase
+class OrderServiceIntegrationTest {
+    @Autowired TestRestTemplate rest;
+    @Autowired OrderRepository repo;
+
+    @Test
+    void shouldCreateOrder() {
+        var request = new CreateOrderRequest(...);
+
+        var response = rest.postForEntity(
+            "/api/v1/orders",
+            request,
+            Order.class
+        );
+
+        assertThat(response.getStatusCode()).isOk();
+        assertThat(repo.findAll()).hasSize(1);
+    }
+}
+```
+
+### Contract Tests (Service boundaries)
+**Tool:** Spring Cloud Contract
+
+Ensures service contracts don't break.
+
+### E2E Tests (Sparingly)
+Only for critical happy paths. Too slow and brittle for comprehensive coverage.
+
+## Deployment & Infrastructure
+
+### Container Strategy
+```dockerfile
+FROM eclipse-temurin:21-jre-alpine
+COPY target/*.jar app.jar
+ENTRYPOINT ["java","-jar","/app.jar"]
+```
+
+### Kubernetes Manifests
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+      - name: order-service
+        image: order-service:1.0.0
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+```
+
+## Final Advice
+
+1. **Start with a modular monolith** - Extract services only when team/scaling needs justify it
+2. **Invest in observability early** - You can't debug what you can't see
+3. **Automate everything** - CI/CD, testing, deployment
+4. **Keep services small** - If a service has >5 database tables, split it
+5. **Document your architecture** - Use ADRs (Architecture Decision Records)
+
+Microservices are powerful when used correctly. But they're not a silver bullet. Understand the tradeoffs.
+
+---
+
+Questions about Spring Boot microservices architecture? [Get in touch](/contact) or check out [my newsletter](/subscribe) for more deep dives on backend development.

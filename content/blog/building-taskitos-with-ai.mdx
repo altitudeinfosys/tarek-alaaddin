@@ -1,0 +1,133 @@
+---
+title: "Building Taskitos: From Idea to AI-Powered Task Manager"
+description: "The journey of building Taskitos, an AI-powered task manager that uses behavioral science to ensure you never miss what matters."
+date: "2025-01-20"
+category: "ai"
+tags: ["ai", "product-development", "taskitos", "saas"]
+image: "/images/blog/taskitos-journey.jpg"
+published: true
+featured: true
+---
+
+## The Problem: Task Managers That Don't Actually Help
+
+After 20 years in software engineering, I've tried every task manager out there. Todoist, Things, Asana, TickTick—you name it. They all had the same fatal flaw: **they were passive**.
+
+You could dump tasks into them all day, but they wouldn't actually ensure you *completed* those tasks. They'd send one polite notification, and if you swiped it away, that was it. Your task silently slipped into digital oblivion.
+
+<Callout type="warning">
+The average task manager has a 23% task completion rate. That means **77% of tasks never get done**.
+</Callout>
+
+## The Vision: Active Accountability
+
+I wanted something different. A task manager that:
+
+1. **Actually cared** if you completed your tasks
+2. **Used AI** to understand your intent when creating tasks
+3. **Applied behavioral science** to increase completion rates
+4. **Nagged persistently** (but intelligently) until tasks were done
+
+That's how Taskitos was born.
+
+## The Tech Stack
+
+Building Taskitos required choosing technologies that could scale while keeping costs manageable:
+
+### Frontend
+- **Next.js 15** with App Router for the web app
+- **React Native (Expo)** for iOS and Android
+- **Tailwind CSS** for rapid UI development
+
+### Backend
+- **Supabase** for PostgreSQL database and real-time subscriptions
+- **Row-Level Security (RLS)** for data protection
+- **pg_cron** for scheduled reminder jobs
+
+### AI Integration
+- **OpenAI GPT-4o-mini** for natural language task parsing
+- **Whisper API** for voice-to-task conversion
+- **Resend** for beautiful email notifications
+
+<ProductCTA product="taskitos" />
+
+## The Behavioral Science
+
+Here's where Taskitos gets interesting. I didn't just build another CRUD app—I implemented proven behavioral science principles:
+
+### 1. Temporal Motivation Theory
+Tasks lose urgency over time. Taskitos combats this with **escalating reminders**:
+- First reminder: 30 minutes after due
+- Second reminder: 2 hours later
+- Third reminder: 6 hours later
+- Auto-reschedule: Next day if still incomplete
+
+### 2. Implementation Intentions
+When you create a task, Taskitos uses AI to extract:
+- **What** you need to do
+- **When** it should be done
+- **Where** (if location matters)
+
+### 3. The Rule of 3
+In "Extreme Focus Mode," Taskitos limits you to **3 priority tasks** at a time. Research shows we can only effectively focus on 3-5 major tasks daily.
+
+## The AI Features That Make It Special
+
+### Voice to Task
+Speak naturally: *"Remind me to call the dentist tomorrow at 2pm"*
+
+Taskitos:
+1. Transcribes with Whisper
+2. Parses with GPT-4o-mini
+3. Extracts the task, time, and intent
+4. Creates the task automatically
+
+### Overwhelm Recovery
+If you have 3+ overdue tasks, Taskitos detects you're overwhelmed and sends a special email with:
+- Simplified prioritization suggestions
+- Option to reschedule in bulk
+- Encouragement (not shame!)
+
+### Smart Rescheduling
+Missed a task? Taskitos doesn't judge. It reschedules intelligently:
+- 1st miss: Tomorrow, same time
+- 2nd miss: +2 days
+- 3rd+ miss: +5 days
+
+## Lessons Learned
+
+### 1. Start With The Hard Part
+I built the persistent nagging system first. If that didn't work, the whole product failed. Don't build the easy stuff first and hope the hard stuff works out.
+
+### 2. AI Isn't Magic
+GPT-4o-mini is amazing but not perfect. I spent weeks fine-tuning prompts to reliably parse dates like "next Tuesday" across time zones. Have fallbacks for when AI fails.
+
+### 3. Behavioral Science > Features
+Users don't want more features. They want to actually complete their tasks. One well-implemented behavioral pattern beats 10 new buttons.
+
+### 4. Cost Optimization Matters
+At scale, AI costs add up quickly. I switched to GPT-4o-mini (vs GPT-4) and saved **90% on API costs** with minimal quality loss.
+
+<Callout type="tip">
+If you're building an AI product, **always start with the smallest viable model**. You can upgrade later if needed.
+</Callout>
+
+## What's Next
+
+Taskitos launched in beta 3 months ago. Current focus:
+- Mobile apps (iOS and Android)
+- Team collaboration features
+- Integration with calendar apps
+- Pricing plans (freemium model)
+
+The journey from "I hate task managers" to "I built one" took 6 months of nights and weekends. Was it worth it? Absolutely. I now have a 92% task completion rate.
+
+## Try Taskitos
+
+If you're tired of passive task managers that let you down, give Taskitos a try. It's free to start, and I'd love your feedback.
+
+[Try Taskitos →](https://taskitos.com)
+
+---
+
+Have questions about building AI products? [Get in touch](/contact) or [subscribe to my newsletter](/subscribe) for more insights on product development and AI integration.
