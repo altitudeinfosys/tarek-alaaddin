@@ -15,7 +15,7 @@ export async function GET() {
     // Fetch subscribers from Kit.com API
     const response = await fetch(`${KIT_API_BASE_URL}/subscribers`, {
       headers: {
-        'Authorization': `Bearer ${KIT_API_KEY}`,
+        'X-Kit-Api-Key': KIT_API_KEY,
       },
     })
 
