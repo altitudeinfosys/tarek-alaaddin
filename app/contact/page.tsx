@@ -1,9 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
-import Footer from '@/components/Footer'
-import ThemeToggle from '@/components/ThemeToggle'
 import Turnstile from '@/components/Turnstile'
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''
@@ -61,30 +58,7 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link
-              href="/"
-              className="text-xl font-bold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-            >
-              Tarek Alaaddin
-            </Link>
-            <div className="flex items-center gap-4">
-              <Link
-                href="/resume"
-                className="text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 transition-colors"
-              >
-                Resume
-              </Link>
-              <ThemeToggle />
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <div className="bg-white dark:bg-gray-900">
       {/* Main Content */}
       <main className="py-16">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -355,8 +329,6 @@ export default function ContactPage() {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   )
 }

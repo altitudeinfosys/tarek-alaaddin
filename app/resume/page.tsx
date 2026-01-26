@@ -6,17 +6,12 @@ import Experience from '@/components/Experience'
 import Skills from '@/components/Skills'
 import AskAIModal from '@/components/AskAIModal'
 import FitCheck from '@/components/FitCheck'
-import Footer from '@/components/Footer'
-import ThemeToggle from '@/components/ThemeToggle'
 
 export default function Home() {
   const [isAIModalOpen, setIsAIModalOpen] = useState(false)
 
   return (
-    <main className="min-h-screen">
-      {/* Theme Toggle */}
-      <ThemeToggle />
-
+    <main>
       {/* Hero Section */}
       <Hero onAskAI={() => setIsAIModalOpen(true)} />
 
@@ -40,9 +35,6 @@ export default function Home() {
         </p>
         <FitCheck />
       </section>
-
-      {/* Footer */}
-      <Footer />
 
       {/* AI Chat Modal */}
       <AskAIModal

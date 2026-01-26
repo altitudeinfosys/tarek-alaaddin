@@ -1,0 +1,253 @@
+---
+title: "AI Tools I Actually Use Daily (And Why)"
+description: "No hype, no fluff. These are the AI tools I use every single day to build products, write code, and stay productive."
+date: "2025-01-10"
+category: "ai"
+tags: ["ai", "tools", "productivity", "development"]
+published: true
+featured: false
+---
+
+## Cutting Through the AI Hype
+
+Every day, there's a new "revolutionary" AI tool. Most are:
+- Rebranded ChatGPT wrappers
+- Solutions looking for problems
+- Tools nobody actually uses after the first week
+
+I build AI products for a living (Taskitos and ExpandNote). Here are the tools I **actually** use daily, and why they're worth your time.
+
+## For Coding: Claude + GitHub Copilot
+
+### Claude (Sonnet 3.5)
+**What I use it for:**
+- Architecture decisions
+- Code reviews
+- Debugging complex issues
+- Writing documentation
+
+**Why Claude over ChatGPT:**
+- Better at following complex instructions
+- More reliable code output
+- Longer context window (200k tokens)
+- Understands nuance better
+
+**Real example:**
+When building Taskitos' persistent reminder system, I gave Claude my entire codebase context (database schema, API routes, email templates) and asked it to design the escalation logic. It produced production-ready code that I barely had to modify.
+
+### GitHub Copilot
+**What I use it for:**
+- Autocomplete on steroids
+- Writing repetitive code
+- Generating test cases
+- Boilerplate reduction
+
+**Why it's worth $10/month:**
+Saves me **2-3 hours per day** on mundane coding tasks. Do the math: that's $300-500/day of time at a senior dev rate.
+
+<Callout type="tip">
+Use Claude for **thinking** and architecture. Use Copilot for **typing** and repetition.
+</Callout>
+
+## For Writing: ChatGPT + Grammarly
+
+### ChatGPT (GPT-4)
+**What I use it for:**
+- First drafts of blog posts
+- Email templates
+- Social media content
+- SEO optimization
+
+**My process:**
+1. Brain dump ideas in ExpandNote (voice capture)
+2. Feed to ChatGPT as outline
+3. Generate first draft
+4. Edit heavily (add personality, cut fluff)
+
+**Critical point:** AI writes generic content. **You** add the unique insights and voice.
+
+### Grammarly
+**What I use it for:**
+- Catching grammar mistakes
+- Tone adjustment
+- Clarity suggestions
+
+Not technically AI, but uses ML. Worth the $12/month if you write daily.
+
+## For Product Development: My Own Tools + OpenAI API
+
+### Taskitos (Task Management)
+**What it does:**
+- AI parses natural language tasks
+- Voice-to-task with Whisper
+- Smart rescheduling with GPT-4o-mini
+
+**Why I built it:**
+Existing tools were passive. Taskitos actively ensures you complete tasks with behavioral science + AI.
+
+**AI integration:**
+```javascript
+// Natural language task parsing
+const response = await openai.chat.completions.create({
+  model: "gpt-4o-mini",
+  messages: [
+    { role: "system", content: TASK_PARSER_PROMPT },
+    { role: "user", content: userInput }
+  ]
+})
+```
+
+**Cost:** ~$0.001 per task creation. Scales beautifully.
+
+<ProductCTA product="taskitos" />
+
+### ExpandNote (Note-Taking)
+**What it does:**
+- Voice-to-text with Whisper
+- AI Profiles (custom prompts triggered by tags)
+- Supports OpenAI, Claude, and 40+ models via OpenRouter
+
+**Why I built it:**
+Notes are useless if you never process them. AI Profiles automate the processing.
+
+**Example AI Profile:**
+```
+Tag: #meeting
+Prompt: "Extract:
+- Decisions made
+- Action items with owners
+- Follow-up needed
+Format as checklist."
+```
+
+Every meeting note automatically becomes actionable.
+
+<ProductCTA product="expandnote" />
+
+## For Learning: NotebookLM + YouTube Transcript Tools
+
+### NotebookLM (Google)
+**What I use it for:**
+- Summarizing technical documentation
+- Creating study guides from PDFs
+- Generating "podcast" overviews of dense content
+
+**Why it's underrated:**
+It's **free**, processes entire documents, and creates surprisingly good audio summaries.
+
+**Real use case:**
+When learning Next.js 15, I fed NotebookLM the entire documentation. It generated a 20-minute "podcast" explaining the key changes. Listened during my commute.
+
+### YouTube Transcript + ChatGPT
+**The combo:**
+1. Get transcript of technical video
+2. Feed to ChatGPT
+3. "Summarize in bullets with code examples"
+
+**Result:** 45-minute video → 5-minute read with actionable takeaways.
+
+## For Email: Superhuman + Claude
+
+### Superhuman
+**What it does:**
+- AI-powered email triage
+- Smart scheduling
+- Snippet expansion
+
+**Worth $30/month?**
+If you handle 50+ emails daily, yes. Otherwise, stick with Gmail + Claude.
+
+### Claude for Email Drafts
+**My workflow:**
+1. Bullet point what I want to say
+2. Claude: "Make this professional but friendly"
+3. Send (after quick review)
+
+**Time saved:** 15-20 minutes daily on email composition.
+
+## AI Tools I Tried and Ditched
+
+### ❌ Notion AI
+**Why I left:** Slow, expensive, and didn't add value over ChatGPT.
+
+### ❌ Jasper/Copy.ai
+**Why I left:** Generic output, obvious AI writing. Better to use ChatGPT directly.
+
+### ❌ Various "AI Productivity Apps"
+**Why I left:** Over-engineered. Simpler to integrate OpenAI API into existing tools.
+
+<Callout type="warning">
+Most AI tools are ChatGPT/Claude wrappers with fancy UIs. Save money and use the APIs directly when possible.
+</Callout>
+
+## My AI Budget Breakdown
+
+| Tool | Cost/Month | Worth It? |
+|------|------------|-----------|
+| GitHub Copilot | $10 | ✅ Yes |
+| ChatGPT Plus | $20 | ✅ Yes |
+| Claude Pro | $20 | ✅ Yes |
+| OpenAI API | ~$50 | ✅ Yes |
+| Grammarly | $12 | ✅ Yes |
+| NotebookLM | Free | ✅ Yes |
+| **Total** | **$112** | **2-3 hours saved daily** |
+
+**ROI:** If you value your time at $50/hour, you're saving $100-150 worth of time **per day**. The tools pay for themselves in the first day.
+
+## How to Choose AI Tools
+
+### Ask These Questions:
+1. **Does it save time on tasks I do daily?**
+   - If no → Skip it
+   - If yes → Try free version first
+
+2. **Could I do this with ChatGPT/Claude + 10 minutes of setup?**
+   - If yes → Don't pay for the wrapper
+   - If no → Consider the specialized tool
+
+3. **Will I still use this in 3 months?**
+   - If unsure → Use free tier first
+   - If certain → Commit to paid
+
+### Red Flags:
+- "AI-powered" with no explanation of what AI does
+- Promises to "10x your productivity" (scam language)
+- No free tier or trial period
+- Startup with unclear business model
+
+## The Future: Agentic AI
+
+The next wave isn't more chatbots. It's **AI agents** that:
+- Take actions on your behalf
+- Integrate with your tools
+- Make decisions within constraints
+
+I'm building this into Taskitos v2:
+- AI agent that reschedules your day when meetings run late
+- Proactive task suggestions based on calendar openings
+- Automatic task breakdown for complex projects
+
+We're moving from AI that **suggests** to AI that **executes**.
+
+## Start Here
+
+If you're new to AI tools, start with this stack:
+1. **ChatGPT Plus** ($20/mo) - General purpose
+2. **GitHub Copilot** ($10/mo) - If you code
+3. **NotebookLM** (Free) - For learning
+
+Total: $30/month
+
+Once you see the value, layer on specialized tools.
+
+---
+
+**Want My Full AI Tooling Guide?**
+
+I'm creating a comprehensive guide with:
+- Exact prompts I use
+- API integration examples
+- Cost optimization tips
+- Tool recommendations by use case
+
+[Subscribe to get it free](/subscribe)
