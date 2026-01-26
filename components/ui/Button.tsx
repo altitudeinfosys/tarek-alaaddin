@@ -40,9 +40,20 @@ export default function Button({
   if (href) {
     const isExternal = href.startsWith('http://') || href.startsWith('https://')
 
-    // Extract disabled and prepare remaining props
-    const { disabled, ...restProps } = props
-    const disabledProps = disabled ? { 'aria-disabled': true, tabIndex: -1 } : {}
+    // Extract safe props for anchor elements (exclude button-specific props)
+    const {
+      disabled,
+      form,
+      formAction,
+      formEncType,
+      formMethod,
+      formNoValidate,
+      formTarget,
+      value,
+      ...anchorProps
+    } = props
+
+    const disabledProps = disabled ? { 'aria-disabled': true as const, tabIndex: -1 } : {}
 
     if (isExternal) {
       return (
@@ -52,7 +63,7 @@ export default function Button({
           target="_blank"
           rel="noopener noreferrer"
           {...disabledProps}
-          {...restProps}
+          {...(anchorProps as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
         >
           {children}
         </a>
@@ -60,7 +71,12 @@ export default function Button({
     }
 
     return (
-      <Link href={href} className={combinedStyles} {...disabledProps} {...restProps}>
+      <Link
+        href={href}
+        className={combinedStyles}
+        {...disabledProps}
+        {...(anchorProps as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
+      >
         {children}
       </Link>
     )
