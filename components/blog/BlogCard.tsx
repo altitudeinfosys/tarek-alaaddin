@@ -17,6 +17,7 @@ export default function BlogCard({ post }: BlogCardProps) {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+    timeZone: 'UTC',
   })
 
   return (

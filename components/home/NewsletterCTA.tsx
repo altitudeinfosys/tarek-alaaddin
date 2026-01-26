@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import Button from '@/components/ui/Button'
 
 export default function NewsletterCTA() {
@@ -19,16 +18,12 @@ export default function NewsletterCTA() {
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link href="/subscribe">
-              <Button size="lg" className="bg-white text-primary-700 hover:bg-gray-100 dark:bg-white dark:text-primary-700 dark:hover:bg-gray-100">
-                Get the Free Guide
-              </Button>
-            </Link>
-            <Link href="/blog">
-              <Button variant="outline" size="lg" className="border-2 border-white text-white hover:bg-white/10">
-                Read the Blog
-              </Button>
-            </Link>
+            <Button href="/subscribe" size="lg" className="bg-white text-primary-700 hover:bg-gray-100 dark:bg-white dark:text-primary-700 dark:hover:bg-gray-100">
+              Get the Free Guide
+            </Button>
+            <Button href="/blog" variant="outline" size="lg" className="border-2 border-white text-white hover:bg-white/10">
+              Read the Blog
+            </Button>
           </div>
 
           <p className="text-sm text-primary-100 mt-6">

@@ -18,6 +18,7 @@ export default function CategoryFilter({ currentCategory, onCategoryChange }: Ca
       {categories.map((category) => (
         <button
           key={category.id}
+          type="button"
           onClick={() => onCategoryChange(category.id)}
           className={`px-4 py-2 rounded-lg font-medium transition-all ${
             currentCategory === category.id

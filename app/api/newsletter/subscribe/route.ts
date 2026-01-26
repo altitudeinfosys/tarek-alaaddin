@@ -24,7 +24,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (TURNSTILE_SECRET_KEY) {
+    // Require TURNSTILE_SECRET_KEY to be configured
+    if (!TURNSTILE_SECRET_KEY) {
+      console.error('TURNSTILE_SECRET_KEY is not configured')
+      return NextResponse.json(
+        { error: 'Server configuration error. Please contact support.' },
+        { status: 500 }
+      )
+    }
+
+    // Verify Turnstile token with proper error handling
+    try {
       const turnstileResponse = await fetch(
         'https://challenges.cloudflare.com/turnstile/v0/siteverify',
         {
@@ -39,6 +49,10 @@ export async function POST(request: NextRequest) {
         }
       )
 
+      if (!turnstileResponse.ok) {
+        throw new Error(`Turnstile API error: ${turnstileResponse.status}`)
+      }
+
       const turnstileData = await turnstileResponse.json()
 
       if (!turnstileData.success) {
@@ -47,6 +61,12 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
+    } catch (error) {
+      console.error('Turnstile verification error:', error)
+      return NextResponse.json(
+        { error: 'Verification failed. Please try again later.' },
+        { status: 500 }
+      )
     }
 
     // Subscribe to newsletter via Kit

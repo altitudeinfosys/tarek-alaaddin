@@ -12,6 +12,36 @@ if (!KIT_API_KEY) {
   console.warn('KIT_API_KEY is not set. Kit integration will not work.')
 }
 
+/**
+ * Fetch with timeout using AbortController
+ * @param url - The URL to fetch
+ * @param options - Fetch options
+ * @param timeoutMs - Timeout in milliseconds (default: 5000)
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs = 5000
+): Promise<Response> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    })
+    clearTimeout(timeout)
+    return response
+  } catch (error) {
+    clearTimeout(timeout)
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Request timeout after ${timeoutMs}ms`)
+    }
+    throw error
+  }
+}
+
 export interface SubscribeParams {
   email: string
   firstName?: string
@@ -41,7 +71,7 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Ki
 
   try {
     // Create subscriber
-    const subscriberResponse = await fetch(`${KIT_API_BASE_URL}/subscribers`, {
+    const subscriberResponse = await fetchWithTimeout(`${KIT_API_BASE_URL}/subscribers`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -109,7 +139,7 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Ki
  */
 async function addTagToSubscriber(subscriberId: string, tagName: string): Promise<void> {
   // First, get or create the tag
-  const tagsResponse = await fetch(`${KIT_API_BASE_URL}/tags`, {
+  const tagsResponse = await fetchWithTimeout(`${KIT_API_BASE_URL}/tags`, {
     headers: {
       'Authorization': `Bearer ${KIT_API_KEY}`,
     },
@@ -124,24 +154,49 @@ async function addTagToSubscriber(subscriberId: string, tagName: string): Promis
 
   // Create tag if it doesn't exist
   if (!tagId) {
-    const createTagResponse = await fetch(`${KIT_API_BASE_URL}/tags`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${KIT_API_KEY}`,
-      },
-      body: JSON.stringify({ name: tagName }),
-    })
+    try {
+      const createTagResponse = await fetchWithTimeout(`${KIT_API_BASE_URL}/tags`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${KIT_API_KEY}`,
+        },
+        body: JSON.stringify({ name: tagName }),
+      })
 
-    if (createTagResponse.ok) {
-      const createTagData = await createTagResponse.json()
-      tagId = createTagData.tag?.id
+      if (createTagResponse.ok) {
+        const createTagData = await createTagResponse.json()
+        tagId = createTagData.tag?.id
+      } else {
+        // Tag might have been created by another concurrent request
+        // Fetch tags again to get the ID
+        const retryTagsResponse = await fetchWithTimeout(`${KIT_API_BASE_URL}/tags`, {
+          headers: {
+            'Authorization': `Bearer ${KIT_API_KEY}`,
+          },
+        })
+        if (retryTagsResponse.ok) {
+          const retryTagsData = await retryTagsResponse.json()
+          tagId = retryTagsData.tags?.find((t: any) => t.name === tagName)?.id
+        }
+      }
+    } catch (error) {
+      // If tag creation fails, try fetching again in case it was created concurrently
+      const retryTagsResponse = await fetchWithTimeout(`${KIT_API_BASE_URL}/tags`, {
+        headers: {
+          'Authorization': `Bearer ${KIT_API_KEY}`,
+        },
+      })
+      if (retryTagsResponse.ok) {
+        const retryTagsData = await retryTagsResponse.json()
+        tagId = retryTagsData.tags?.find((t: any) => t.name === tagName)?.id
+      }
     }
   }
 
   // Add tag to subscriber
   if (tagId) {
-    await fetch(`${KIT_API_BASE_URL}/subscribers/${subscriberId}/tags`, {
+    await fetchWithTimeout(`${KIT_API_BASE_URL}/subscribers/${subscriberId}/tags`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

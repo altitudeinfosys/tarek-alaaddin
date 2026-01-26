@@ -33,7 +33,8 @@ export default function NewsletterForm() {
       return
     }
 
-    if (!turnstileToken) {
+    // Only require Turnstile token if Turnstile is enabled
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
       setStatus('error')
       setErrorMessage('Please complete the verification')
       return

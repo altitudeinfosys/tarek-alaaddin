@@ -63,6 +63,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+    timeZone: 'UTC',
   })
 
   const categoryColors = {
@@ -70,6 +71,8 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
     productivity: 'success' as const,
     development: 'default' as const,
   }
+
+  const categoryVariant = categoryColors[post.category as keyof typeof categoryColors] || 'default'
 
   return (
     <div className="bg-white dark:bg-gray-900 min-h-screen">
@@ -87,7 +90,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
           </Link>
 
           <div className="flex items-center gap-3 mb-4">
-            <Badge variant={categoryColors[post.category]}>
+            <Badge variant={categoryVariant}>
               {post.category}
             </Badge>
             <time className="text-gray-500 dark:text-gray-400">

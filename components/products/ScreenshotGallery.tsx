@@ -42,6 +42,7 @@ export default function ScreenshotGallery({ images, productName }: ScreenshotGal
           {images.map((image, index) => (
             <button
               key={index}
+              type="button"
               onClick={() => setSelectedImage(index)}
               className={`relative aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border-2 transition-all ${
                 selectedImage === index

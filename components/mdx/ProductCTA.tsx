@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import Button from '@/components/ui/Button'
 
 interface ProductCTAProps {
@@ -42,16 +41,12 @@ export default function ProductCTA({ product }: ProductCTAProps) {
             {p.description}
           </p>
           <div className="flex gap-3">
-            <a href={p.url} target="_blank" rel="noopener noreferrer">
-              <Button size="sm">
-                Try {p.name}
-              </Button>
-            </a>
-            <Link href="/products">
-              <Button variant="outline" size="sm">
-                Learn More
-              </Button>
-            </Link>
+            <Button href={p.url} size="sm">
+              Try {p.name}
+            </Button>
+            <Button href="/products" variant="outline" size="sm">
+              Learn More
+            </Button>
           </div>
         </div>
       </div>

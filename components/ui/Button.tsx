@@ -1,10 +1,12 @@
 import { ButtonHTMLAttributes, ReactNode } from 'react'
+import Link from 'next/link'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline'
   size?: 'sm' | 'md' | 'lg'
   children: ReactNode
   fullWidth?: boolean
+  href?: string
 }
 
 export default function Button({
@@ -13,6 +15,8 @@ export default function Button({
   children,
   fullWidth = false,
   className = '',
+  href,
+  type = 'button',
   ...props
 }: ButtonProps) {
   const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed'
@@ -30,10 +34,37 @@ export default function Button({
   }
 
   const widthStyles = fullWidth ? 'w-full' : ''
+  const combinedStyles = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${widthStyles} ${className}`
 
+  // If href is provided, render as Link (internal) or anchor (external)
+  if (href) {
+    const isExternal = href.startsWith('http://') || href.startsWith('https://')
+
+    if (isExternal) {
+      return (
+        <a
+          href={href}
+          className={combinedStyles}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {children}
+        </a>
+      )
+    }
+
+    return (
+      <Link href={href} className={combinedStyles}>
+        {children}
+      </Link>
+    )
+  }
+
+  // Otherwise render as button
   return (
     <button
-      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${widthStyles} ${className}`}
+      type={type}
+      className={combinedStyles}
       {...props}
     >
       {children}
