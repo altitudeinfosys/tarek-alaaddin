@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import Link from 'next/link'
 import { getAllProducts } from '@/data/products'
 import ProductDetail from '@/components/products/ProductDetail'
 
@@ -64,7 +65,7 @@ export default function ProductsPage() {
           <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
             I help entrepreneurs and businesses build AI-powered SaaS products from idea to production.
           </p>
-          <a
+          <Link
             href="/contact"
             className="inline-flex items-center px-8 py-4 bg-white text-primary-700 font-bold rounded-lg hover:bg-gray-100 transition-colors"
           >
@@ -72,7 +73,7 @@ export default function ProductsPage() {
             <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
-          </a>
+          </Link>
         </div>
       </section>
     </div>

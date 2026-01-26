@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+
 const SOCIAL_LINKS = [
   {
     name: 'LinkedIn',
@@ -55,24 +57,24 @@ export default function Footer() {
 
           {/* Navigation */}
           <nav className="flex flex-wrap justify-center gap-6 mb-6 text-sm">
-            <a href="/" className="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
+            <Link href="/" className="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
               Home
-            </a>
-            <a href="/products" className="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
+            </Link>
+            <Link href="/products" className="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
               Products
-            </a>
-            <a href="/blog" className="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
+            </Link>
+            <Link href="/blog" className="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
               Blog
-            </a>
-            <a href="/subscribe" className="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
+            </Link>
+            <Link href="/subscribe" className="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
               Subscribe
-            </a>
-            <a href="/resume" className="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
+            </Link>
+            <Link href="/resume" className="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
               Resume
-            </a>
-            <a href="/contact" className="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
+            </Link>
+            <Link href="/contact" className="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400">
               Contact
-            </a>
+            </Link>
           </nav>
 
           {/* AI Badge */}
