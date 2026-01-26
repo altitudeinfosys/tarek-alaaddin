@@ -195,14 +195,20 @@ async function addTagToSubscriber(subscriberId: string, tagName: string): Promis
   }
 
   // Add tag to subscriber
-  if (tagId) {
-    await fetchWithTimeout(`${KIT_API_BASE_URL}/subscribers/${subscriberId}/tags`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${KIT_API_KEY}`,
-      },
-      body: JSON.stringify({ tag_id: tagId }),
-    })
+  if (!tagId) {
+    throw new Error(`Failed to create or find tag: ${tagName}`)
+  }
+
+  const attachResponse = await fetchWithTimeout(`${KIT_API_BASE_URL}/tags/${tagId}/subscribers/${subscriberId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${KIT_API_KEY}`,
+    },
+  })
+
+  if (!attachResponse.ok) {
+    const errorData = await attachResponse.json().catch(() => ({}))
+    throw new Error(`Failed to attach tag ${tagName}: ${errorData.errors || attachResponse.status}`)
   }
 }

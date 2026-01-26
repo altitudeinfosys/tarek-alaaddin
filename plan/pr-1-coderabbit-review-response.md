@@ -1,6 +1,6 @@
 # PR #1: CodeRabbit Review Response
 
-**PR Link:** https://github.com/altitudeinfosys/tarek-alaaddin/pull/1
+**PR Link:** <https://github.com/altitudeinfosys/tarek-alaaddin/pull/1>
 **Review Date:** 2026-01-26
 **Status:** OPEN - Ready for fixes
 
@@ -58,7 +58,7 @@ c) **Client:** Requires token even when Turnstile widget doesn't render
 
 **CodeRabbit Comments:**
 > Route currently requires turnstileToken but silently skips verification when TURNSTILE_SECRET_KEY is not set; change behavior so if TURNSTILE_SECRET_KEY is missing you return a server error
-
+>
 > Form currently requires a Turnstile token even when the TURNSTILE_SITE_KEY is falsy and the `<Turnstile>` widget doesn't render
 
 **Fix:**
@@ -670,4 +670,4 @@ content/
 ---
 
 *Generated: 2026-01-26*
-*CodeRabbit Review: https://github.com/altitudeinfosys/tarek-alaaddin/pull/1#pullrequestreview-2542000000*
+*CodeRabbit Review: <https://github.com/altitudeinfosys/tarek-alaaddin/pull/1#pullrequestreview-2542000000>*

@@ -63,7 +63,7 @@ export default function AboutSection() {
         <div className="text-center">
           <Link href="/blog">
             <Button variant="outline" size="lg">
-              More About Me
+              Read the Blog
             </Button>
           </Link>
         </div>

@@ -40,6 +40,10 @@ export default function Button({
   if (href) {
     const isExternal = href.startsWith('http://') || href.startsWith('https://')
 
+    // Extract disabled and prepare remaining props
+    const { disabled, ...restProps } = props
+    const disabledProps = disabled ? { 'aria-disabled': true, tabIndex: -1 } : {}
+
     if (isExternal) {
       return (
         <a
@@ -47,6 +51,8 @@ export default function Button({
           className={combinedStyles}
           target="_blank"
           rel="noopener noreferrer"
+          {...disabledProps}
+          {...restProps}
         >
           {children}
         </a>
@@ -54,7 +60,7 @@ export default function Button({
     }
 
     return (
-      <Link href={href} className={combinedStyles}>
+      <Link href={href} className={combinedStyles} {...disabledProps} {...restProps}>
         {children}
       </Link>
     )
