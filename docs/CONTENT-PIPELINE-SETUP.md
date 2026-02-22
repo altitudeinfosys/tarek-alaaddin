@@ -13,15 +13,16 @@ You add a topic to Google Sheets
          |
   [At each time, invokes: claude -p "Run /pipeline-run"]
          |
-  /pipeline-run skill executes 7 phases:
+  /pipeline-run skill executes 8 phases:
          |
-    1. Read next "queued" topic from Google Sheet
-    2. Generate a full blog post (MDX), create branch + PR
-    3. Wait for you to merge the PR (safety gate)
-    4. Generate social media copy (tweet + LinkedIn post)
-    5. Post to X via Chrome browser automation
-    6. Post to LinkedIn via Chrome browser automation
-    7. Update Google Sheet status to "done"
+    1.   Read next "queued" topic from Google Sheet
+    1.5. Research the topic — visit official docs for every tool/product mentioned
+    2.   Generate a full blog post (MDX), create branch + PR
+    3.   Wait for you to merge the PR (safety gate)
+    4.   Generate social media copy (tweet + LinkedIn post)
+    5.   Post to X via Chrome browser automation
+    6.   Post to LinkedIn via Chrome browser automation
+    7.   Update Google Sheet status to "done"
 ```
 
 **Key insight**: We use Chrome browser automation (Claude in Chrome extension) instead of platform APIs. This means:
@@ -77,7 +78,7 @@ Open at [excalidraw.com](https://excalidraw.com) or in VS Code with the Excalidr
 4. Format column B (Status) with data validation:
    - Select column B (below header)
    - Data → Data validation → Dropdown
-   - Add values: `queued`, `generating`, `generated`, `posted-x`, `posted-linkedin`, `done`, `failed`
+   - Add values: `queued`, `researching`, `generating`, `generated`, `posted-x`, `posted-linkedin`, `done`, `failed`
 
 5. **Copy the Sheet URL** — you'll need this. It looks like:
    ```
@@ -203,7 +204,8 @@ Each day at 7:55am, the orchestrator:
 1. Picks 2 random times between 8am and 10pm (at least 2 hours apart)
 2. At each time, runs the pipeline:
    - Finds the next `queued` topic
-   - Generates a blog post and creates a PR
+   - **Researches every product/tool** mentioned — visits official docs, verifies specs/pricing/features
+   - Generates a blog post using verified research, creates a PR
    - Waits for you to merge the PR
    - Posts to X and LinkedIn
    - Marks the topic as `done`
@@ -233,7 +235,8 @@ ls -lt logs/pipeline/*.log | head -3
 
 ```
 queued          → Topic is waiting to be processed
-generating      → Blog post is being written
+researching     → Visiting official docs and building a facts sheet
+generating      → Blog post is being written (using verified research)
 generated       → Blog post PR created, social copy ready
 posted-x        → Tweet posted successfully
 posted-linkedin → LinkedIn post posted successfully
@@ -247,6 +250,7 @@ failed          → Something went wrong (check Notes column for error)
 
 | Situation | What to Do |
 |-----------|------------|
+| Status stuck on `researching` | The research phase failed. Check the run log. Fix the issue and change status back to `queued` to retry. |
 | Status stuck on `generating` | The blog generation failed. Check the run log. Fix the issue and change status back to `queued` to retry. |
 | Status stuck on `generated` | The PR wasn't merged within 24h. Either merge the PR or change status back to `queued`. |
 | Status is `failed` | Read the Notes column for the error. Fix the issue and change status to `queued` to retry. |
@@ -258,12 +262,13 @@ failed          → Something went wrong (check Notes column for error)
 
 ## Safety Features
 
-1. **PR approval gate** — Blog posts require your manual merge before social posting
-2. **Login verification** — Screenshots taken before posting to verify login state
-3. **Duplicate prevention** — Checks if a blog slug already exists before writing
-4. **Rate limiting** — Max 2 posts per day, at least 2 hours apart
-5. **Error isolation** — Each phase updates status independently; failures don't corrupt other queue items
-6. **Audit trail** — Screenshots saved before and after every social post in `logs/pipeline/screenshots/`
+1. **Mandatory research phase** — Every blog post is fact-checked against official documentation before writing; no claims from internal knowledge alone
+2. **PR approval gate** — Blog posts require your manual merge before social posting
+3. **Login verification** — Screenshots taken before posting to verify login state
+4. **Duplicate prevention** — Checks if a blog slug already exists before writing
+5. **Rate limiting** — Max 2 posts per day, at least 2 hours apart
+6. **Error isolation** — Each phase updates status independently; failures don't corrupt other queue items
+7. **Audit trail** — Screenshots saved before and after every social post in `logs/pipeline/screenshots/`
 
 ---
 
@@ -378,7 +383,12 @@ tarek-alaaddin/
 
 ---
 
-## Future Improvements (v2)
+## Recent Improvements (v2)
+
+- **Mandatory research phase**: Phase 1.5 visits official documentation for every tool/product mentioned before writing, building a verified facts sheet. Prevents factual errors from relying on stale internal knowledge.
+- **Known docs URL table**: Common tools have pre-configured documentation URLs for faster lookup.
+
+## Future Improvements (v3)
 
 - **Full auto mode**: Remove the PR approval gate; add a self-review step instead
 - **Blog image generation**: Auto-generate cover images using AI
