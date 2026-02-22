@@ -33,7 +33,7 @@ Master orchestrator for the blog-to-social-media pipeline. Reads topics from a G
 
 | A: Topic | B: Status | C: Date Queued | D: Blog Slug | E: Blog URL | F: X Text | G: LinkedIn Text | H: Notes |
 
-**Status values flow**: `queued` → `generating` → `generated` → `posted-x` → `posted-linkedin` → `done`
+**Status values flow**: `queued` → `researching` → `generating` → `generated` → `posted-x` → `posted-linkedin` → `done`
 
 On failure at any stage: status becomes `failed` and the error is written to the Notes column (H).
 
@@ -64,29 +64,71 @@ On failure at any stage: status becomes `failed` and the error is written to the
    - STOP
 7. Extract the topic from column A of that row
 8. Note the row number for later updates
-9. Update status to `generating`:
+9. Update status to `researching`:
    - Click on the Status cell for that row
-   - Type `generating`
+   - Type `researching`
    - Press Enter
+
+### Phase 1.5: Research Topic
+
+Before generating content, research every product, tool, and technology mentioned in the topic to ensure factual accuracy.
+
+1. **Parse the topic** for product/tool names — identify every tool, framework, API, or service mentioned or implied by the topic.
+
+2. **Research each product/tool** using `WebSearch` and `WebFetch`:
+   - Search for `"{tool name}" official documentation`
+   - Search for `"{tool name}" features pricing {current year}`
+   - Look for recent announcements or changelogs
+   - Fetch key pages from official docs
+   - Priority: official docs > release announcements > technical blogs > community posts
+
+3. **Known documentation URLs** — check these first for common tools:
+
+   | Tool | Documentation URL |
+   |------|------------------|
+   | Claude Code | https://docs.anthropic.com/en/docs/claude-code |
+   | Cursor | https://docs.cursor.com |
+   | Vercel | https://vercel.com/docs |
+   | Supabase | https://supabase.com/docs |
+   | Next.js | https://nextjs.org/docs |
+   | Trigger.dev | https://trigger.dev/docs |
+   | Modal | https://modal.com/docs |
+   | OpenAI | https://platform.openai.com/docs |
+   | Gemini | https://ai.google.dev/docs |
+
+4. **Compile research notes** into a structured summary:
+   - Exact feature names and capabilities for each tool
+   - Current pricing (with date checked)
+   - Context windows, model names, API details
+   - CLI commands, flags, and options
+   - Benchmarks from official sources only
+
+5. **Cross-reference claims** — any stat or feature comparison planned for the blog must come from a verified source. Do not rely on internal knowledge alone for specific numbers, features, or comparisons.
+
+6. **Pass research notes** to Phase 2 as context for blog generation.
 
 ### Phase 2: Generate Blog Post
 
-Follow the `/blog-post` skill workflow, but non-interactively:
+Update Sheet status to `generating`, then follow the `/blog-post` skill workflow non-interactively:
 
-1. **Generate the slug** from the topic (kebab-case, concise)
-2. **Check for duplicate slug**:
+1. **Update Sheet status** to `generating`:
+   - Click on the Status cell for the current row
+   - Type `generating`
+   - Press Enter
+2. **Generate the slug** from the topic (kebab-case, concise)
+3. **Check for duplicate slug**:
    ```bash
    ls /Users/tarekalaaddin/Projects/code/tarek-alaaddin/content/blog/ | grep "SLUG"
    ```
    If exists, append a number or modify the slug.
 
-3. **Check featured post count**:
+4. **Check featured post count**:
    ```bash
    grep -l "featured: true" /Users/tarekalaaddin/Projects/code/tarek-alaaddin/content/blog/*.mdx
    ```
    Keep max 2-3 featured posts. New pipeline posts are NOT featured by default.
 
-4. **Generate the MDX blog post** following the blog-post skill's writing rules:
+5. **Generate the MDX blog post** following the blog-post skill's writing rules:
    - Frontmatter with all required fields (title, description, date, category, tags, image, published: true, featured: false)
    - Match Tarek's voice: conversational, direct, bold opinions, data-driven
    - 1500-3000 words, 8-15 sections
@@ -94,13 +136,13 @@ Follow the `/blog-post` skill workflow, but non-interactively:
    - End with newsletter CTA
    - Write to `/Users/tarekalaaddin/Projects/code/tarek-alaaddin/content/blog/SLUG.mdx`
 
-5. **Build and verify**:
+6. **Build and verify**:
    ```bash
    cd /Users/tarekalaaddin/Projects/code/tarek-alaaddin && npx next build
    ```
    If build fails, fix the issue and rebuild. If it fails 3 times, mark as `failed` in the Sheet and STOP.
 
-6. **Create branch, commit, push, and PR**:
+7. **Create branch, commit, push, and PR**:
    ```bash
    git checkout -b blog/SLUG
    git add content/blog/SLUG.mdx
@@ -109,7 +151,7 @@ Follow the `/blog-post` skill workflow, but non-interactively:
    gh pr create --title "Add blog post: SHORT_TITLE" --body "## Summary\n- New blog post: TITLE\n- Category: CATEGORY\n- Pipeline-generated\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)"
    ```
 
-7. **Update Sheet**: Write the blog slug to column D for that row.
+8. **Update Sheet**: Write the blog slug to column D for that row.
 
 ### Phase 3: Wait for PR Merge (Semi-Auto Gate)
 
@@ -268,6 +310,7 @@ If the pipeline fails mid-run:
 1. Check the Sheet for the current status of the failed row
 2. The status indicates which phase failed
 3. Fix the issue and re-run — the pipeline will resume from the failed phase based on status:
+   - `researching` → restart from Phase 1.5
    - `generating` → restart from Phase 2
    - `generated` → restart from Phase 4
    - `posted-x` → restart from Phase 6
