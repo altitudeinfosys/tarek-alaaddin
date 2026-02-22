@@ -32,3 +32,8 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Pipeline logs (keep .gitkeep files)
+logs/pipeline/**
+!logs/pipeline/.gitkeep
+!logs/pipeline/screenshots/.gitkeep

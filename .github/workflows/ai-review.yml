@@ -1,0 +1,38 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  pull_request_review_comment:
+    types: [created]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ai_review:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: AI Code Review
+        uses: Codium-ai/pr-agent@main
+        env:
+          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github_action.auto_review: "true"
+          github_action.auto_describe: "true"
+          github_action.auto_improve: "true"
+          pr_reviewer.extra_instructions: |
+            Please review this code with the following focus:
+            - Code quality and maintainability
+            - Potential bugs or edge cases
+            - Performance considerations
+            - Security best practices
+            - Adherence to modern TypeScript/React patterns
+          pr_description.extra_instructions: |
+            Please provide a clear summary of the changes in this PR.
+          pr_code_suggestions.extra_instructions: |
+            Focus on practical, actionable improvements that enhance code quality.

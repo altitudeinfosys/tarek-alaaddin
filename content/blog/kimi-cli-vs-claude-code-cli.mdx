@@ -59,7 +59,7 @@ Here's the side-by-side of available commands inside each CLI:
 | Clear context | `/clear` | `/clear` or `/reset` |
 | Compact context | `/compact` | `/compact` |
 | View help | `/help` | `/help` or `/?` |
-| Switch models | Automatic (Opus/Sonnet) | `/model` (toggle thinking mode) |
+| Switch models | `/model` (Opus/Sonnet/Haiku) | `/model` (toggle thinking mode) |
 | Session resume | Automatic persistence | `/sessions` to list and switch |
 | Exit | `/exit` or Ctrl+C | `/exit` |
 
@@ -71,7 +71,7 @@ Here's the side-by-side of available commands inside each CLI:
 | Init project config | Manual creation | `/init` (auto-generates `AGENTS.md`) |
 | Auto-approve mode | `--dangerously-skip-permissions` | `/yolo` |
 | Login/Auth | `claude login` | `/login` or `/setup` |
-| Check usage | Not available in CLI | `/usage` with progress bars |
+| Check usage | `/cost` (session spend tracking) | `/usage` with progress bars |
 | Debug info | Limited | `/debug` (message count, tokens, checkpoints) |
 
 ### Tools & Integrations
@@ -102,14 +102,18 @@ Claude Code has been in production longer. The documentation is comprehensive. T
 
 Kimi CLI is catching up quickly — the open-source community is active (6,600+ GitHub stars) — but the docs are still sparse in places. If you're debugging an edge case at 2 AM, Claude Code's ecosystem gives you better odds of finding help.
 
-### 3. Complex Multi-File Debugging
+### 3. Massive Context Window and Output Limits
 
-When you're dealing with a bug that spans 15 files across multiple services, Claude Code's approach to understanding codebases is noticeably stronger. It handles complex dependency chains, traces errors through call stacks, and proposes fixes that account for side effects across the project.
+Claude Code supports up to **1M tokens** of context — nearly **4x Kimi's 256K** — and up to **128K max output tokens** (vs Kimi's 64K). When you're working on a large codebase, Claude can hold significantly more files in memory simultaneously. It also features automatic context compaction, so conversations can continue indefinitely without losing important context from earlier in the session.
+
+### 4. Complex Multi-File Debugging
+
+When you're dealing with a bug that spans 15 files across multiple services, Claude Code's approach to understanding codebases is noticeably stronger. It handles complex dependency chains, traces errors through call stacks, and proposes fixes that account for side effects across the project. Its specialized sub-agents (Explore, Plan, code-reviewer) can be dispatched in parallel to investigate different parts of the codebase.
 
 Kimi CLI handles simpler multi-file edits well, but developers report that complex debugging sessions — the kind where you need to hold 50+ files in context — feel weaker. More like Sonnet-level reasoning than Opus-level.
 
 <Callout type="warning">
-This gap is narrowing fast. Kimi K2.5 scores 76.8% on SWE-Bench Verified (real-world GitHub issues) compared to Claude's 80.9%. That's close enough that by the next model update, the difference might be negligible.
+This gap is narrowing fast. Kimi K2.5 scores 76.8% on SWE-Bench Verified (real-world GitHub issues) compared to Claude Opus 4.6's 80.8%. That's close enough that by the next model update, the difference might be negligible.
 </Callout>
 
 ## Where Kimi CLI Wins
@@ -126,27 +130,19 @@ Let's compare the real costs:
 
 | | Kimi K2.5 API | Claude Sonnet API | Claude Opus API |
 |---|---|---|---|
-| **Input** | $0.60/M tokens | $3.00/M tokens | $15.00/M tokens |
-| **Output** | $2.50/M tokens | $15.00/M tokens | $75.00/M tokens |
-| **Cache hits** | $0.10/M tokens | $0.30/M tokens | $1.50/M tokens |
+| **Input** | $0.60/M tokens | $3.00/M tokens | $5.00/M tokens |
+| **Output** | $3.00/M tokens | $15.00/M tokens | $25.00/M tokens |
+| **Cache hits** | $0.10/M tokens | $0.30/M tokens | $0.50/M tokens |
 
-Kimi is roughly **5-10x cheaper** than Claude on API pricing. For individual developers or startups burning through tokens during development, this is a massive difference.
+Kimi is roughly **5-8x cheaper** than Claude Opus on API pricing, and significantly cheaper than Sonnet too. For individual developers or startups burning through tokens during development, this is a massive difference.
 
 The Kimi Code membership at **$19/month** gives you substantial daily usage. Claude's Max plan starts at **$100/month** and goes up to $200/month for heavy users.
 
 <Callout type="tip">
-If you're cost-sensitive and doing high-volume development work — lots of code generation, refactoring across large codebases — Kimi's pricing alone might justify switching. You can run 5-10x more queries for the same budget.
+If you're cost-sensitive and doing high-volume development work — lots of code generation, refactoring across large codebases — Kimi's pricing alone might justify switching. You can run 5-8x more queries for the same budget.
 </Callout>
 
-### 3. Larger Context Window
-
-Kimi K2.5 supports **256K tokens** of context with **64K max output**. Claude tops out at **200K context** with **32K max output**.
-
-That extra context matters when you're working with large codebases. More files in context means better understanding of your project's architecture, fewer hallucinated imports, and more accurate cross-file refactors.
-
-The 64K output limit is also meaningful — Claude's 32K limit can be a bottleneck when generating large files or comprehensive documentation.
-
-### 4. Open Source
+### 3. Open Source
 
 Kimi CLI is Apache 2.0 licensed. The entire codebase is on GitHub. You can fork it, modify it, self-host it, and contribute back.
 
@@ -154,7 +150,7 @@ Claude Code is proprietary. You use it as Anthropic provides it.
 
 For teams that need to customize their tooling, audit the code, or run everything on-premises, this is a dealbreaker in Kimi's favor.
 
-### 5. Shell Mode Toggle
+### 4. Shell Mode Toggle
 
 Hit **Ctrl+X** in Kimi CLI and you toggle between AI chat mode and raw shell mode. Need to quickly run `ls`, check a file, or run a test? Toggle to shell, do it, toggle back. No waiting for the AI to process a simple command.
 
@@ -168,11 +164,11 @@ Kimi has a concept called **Flow Skills** — reusable prompt templates with emb
 
 Claude Code has similar functionality with custom slash commands and SKILL.md files, but Kimi's flow system with visual agent diagrams is more structured out of the box.
 
-### Kimi's Agent Swarm (Beta)
+### Agent Architectures: Both Have Sub-Agents
 
-Kimi CLI has a beta feature for spawning up to **100 sub-agents** making up to **1,500 tool calls**. This is designed for massive parallel operations — think refactoring an entire monorepo or running analysis across hundreds of files simultaneously.
+Both CLIs support dispatching sub-agents for parallel work. Claude Code has a mature agent/sub-agent architecture — it can spawn specialized agents (Explore, Plan, Bash, code-reviewer, and more) that work autonomously on subtasks and report back. This is built into the core workflow, not a beta feature.
 
-Claude Code can dispatch parallel sub-agents too, but the scale is more conservative. If you need brute-force parallelism, Kimi's swarm feature is ambitious.
+Kimi CLI takes it further with its **Agent Swarm** (beta) — spawning up to **100 sub-agents** making up to **1,500 tool calls**. This is designed for massive parallel operations like refactoring an entire monorepo. Claude Code's sub-agents are more conservative in scale but more refined in specialization.
 
 ### Claude Code's MCP Ecosystem
 
@@ -182,10 +178,10 @@ While both support MCP (Model Context Protocol), Claude Code's MCP ecosystem is 
 
 Let's look at the numbers that matter for coding:
 
-| Benchmark | Kimi K2.5 | Claude Opus |
+| Benchmark | Kimi K2.5 | Claude Opus 4.6 |
 |-----------|-----------|-------------|
-| **SWE-Bench Verified** (real GitHub issues) | 76.8% | 80.9% |
-| **LiveCodeBench v6** (competitive programming) | 83.1% | 64.0% |
+| **SWE-Bench Verified** (real GitHub issues) | 76.8% | 80.8% |
+| **LiveCodeBench v6** (competitive programming) | 85.0% | 76.0% |
 | **Terminal-Bench 2.0** (terminal operations) | 50.8% | 59.3% |
 
 Claude leads on SWE-Bench (the benchmark most relevant to real-world software engineering) and Terminal-Bench (command-line operations). Kimi dominates LiveCodeBench (algorithmic problem-solving).
@@ -206,11 +202,10 @@ Benchmarks tell you about model capability, not CLI capability. The CLI's tools,
 - Browser automation tools
 
 ### Missing from Claude Code
-- Built-in usage tracking and quota monitoring
 - Open-source codebase
 - Shell mode toggle for quick commands
-- `/model` switching between reasoning modes
-- Agent swarm for massive parallelism
+- Agent swarm for massive parallelism (100+ sub-agents)
+- Figma-to-code workflows
 
 ## My Recommendation
 
@@ -235,7 +230,7 @@ Benchmarks tell you about model capability, not CLI capability. The CLI's tools,
 
 The fact that we're comparing two excellent AI coding CLIs in early 2026 is remarkable. A year ago, this category barely existed. Now we have genuine competition driving both tools to improve rapidly.
 
-Kimi K2.5 closing the gap to within 4 points on SWE-Bench while being 5-10x cheaper is a serious signal. Claude Code's polish and ecosystem depth is a real moat, but moats erode when the competition is moving this fast.
+Kimi K2.5 closing the gap to within 4 points on SWE-Bench while being 5-8x cheaper is a serious signal. Claude Code's polish and ecosystem depth is a real moat, but moats erode when the competition is moving this fast.
 
 My prediction: by mid-2026, the difference between these tools will be small enough that your choice comes down to ecosystem preference (Python vs Node.js) and pricing. We're not there yet — Claude Code still has a meaningful edge on complex tasks — but the gap is closing every month.
 
