@@ -1,0 +1,166 @@
+---
+title: "Modal vs Trigger.dev: Which One Do You Actually Need for AI Workflows?"
+description: "Two platforms, completely different superpowers. A practical guide to choosing between Modal's serverless GPU compute and Trigger.dev's workflow orchestration — and when to use both."
+date: "2026-02-21"
+category: "ai"
+tags: ["ai", "modal", "trigger-dev", "agentic-workflows", "infrastructure"]
+image: "/images/blog/modal-vs-trigger-dev.jpg"
+published: true
+featured: false
+---
+
+## Two Tools That Sound Similar (But Aren't)
+
+If you're building AI-powered products in 2026, you've probably seen both Modal and Trigger.dev show up in your research. They both promise to help you run AI workloads. They both handle infrastructure so you don't have to. They both have generous free tiers.
+
+So they're competitors, right?
+
+**Not even close.** They solve completely different problems. And confusing the two will cost you weeks of building on the wrong platform.
+
+I've used Modal in production — running Python-based AI endpoints as nodes in n8n workflows, generating code with Claude Code and deploying it as a serverless function with a URL I could hit immediately. It's fast, it's elegant, and it's very specifically built for one thing.
+
+Trigger.dev? I hadn't used it until I started digging in for this post. And after spending time with both, I can tell you: **the question isn't which one is better. It's which problem you're actually solving.**
+
+Let me break it down.
+
+## Modal: Serverless Compute on Steroids
+
+**What it is:** A Python-first serverless platform built for compute-heavy AI workloads — inference, training, batch processing, anything that needs GPUs.
+
+**The pitch:** Write a Python function, add a decorator, and Modal gives you a serverless endpoint with GPU access, auto-scaling, and sub-second cold starts. No Docker. No YAML. No DevOps.
+
+### What Modal Does Well
+
+**1. GPU access without the headache.** This is Modal's killer feature. You need an A100 GPU to run inference on a large language model? Add `@app.function(gpu="A100")` to your Python function. That's it. No provisioning instances, no managing CUDA drivers, no fighting cloud provider quotas. Modal handles all of it and scales to **hundreds of GPUs in parallel** when you need them.
+
+**2. Python-native infrastructure.** Everything is defined in code. Your container image, your dependencies, your hardware requirements, your scaling rules — all Python decorators and function calls. If you're a Python developer, the learning curve is almost zero.
+
+**3. Sub-second cold starts.** Modal containers spin up fast. Really fast. Where a traditional serverless platform might take 10-30 seconds to cold-start a container with ML dependencies, Modal does it in under a second. For inference endpoints, this matters enormously.
+
+**4. Instant endpoints.** Deploy a function and you immediately get a URL. I used this exact pattern in my n8n workflows — Claude Code generates the Python function, I deploy it to Modal, and I have a working API endpoint I can plug into any automation pipeline within minutes.
+
+### What Modal Costs
+
+Modal gives you **$30/month in free compute credits** — enough to experiment seriously. After that, you pay per second for the exact CPU, GPU, and memory your code uses. An A10G GPU runs about **$1.10/hour**. The Team plan is **$250/month** with $100 in included credits.
+
+For startups, they offer up to **$25,000 in free compute credits.** That's a lot of GPU time.
+
+<Callout type="tip">
+Modal's pricing model is genuinely usage-based. If your function runs for 3 seconds, you pay for 3 seconds. There's no minimum. When nothing is running, you pay nothing. This makes it excellent for bursty AI workloads that don't need 24/7 compute.
+</Callout>
+
+### Where Modal Falls Short
+
+- **Python only.** If your stack is TypeScript/Node.js, Modal isn't for you (directly). You can call Modal endpoints from any language via HTTP, but you write the functions in Python.
+- **Not a workflow engine.** Modal runs individual functions beautifully. But if you need multi-step workflows with retries, queues, human-in-the-loop approvals, and complex error handling across steps — that's not Modal's job.
+- **No built-in orchestration.** Modal doesn't manage the "what happens between function calls" part. It doesn't know about your agent's reasoning loop or tool-calling chain. It just runs the compute.
+
+## Trigger.dev: The Workflow Orchestrator
+
+**What it is:** A TypeScript-first platform for building and deploying long-running AI workflows, background jobs, and agentic systems with built-in durability.
+
+**The pitch:** Write your workflow logic in TypeScript, deploy it, and Trigger.dev handles the hard parts — no timeouts, automatic retries, queuing, real-time observability, and elastic scaling. Think of it as the **brain** that orchestrates your AI agent's behavior.
+
+### What Trigger.dev Does Well
+
+**1. No timeouts. Period.** This is the feature that makes Trigger.dev different from Lambda, Vercel Functions, or any other serverless platform. AI agent workflows can run for **minutes or hours** — an agent researching a topic, calling multiple tools, waiting for human approval, then generating a report. Traditional serverless platforms kill you at 30 seconds or 5 minutes. Trigger.dev just lets your code run.
+
+**2. Durable execution with retries.** If a step in your workflow fails — an API call times out, a rate limit hits, a model returns garbage — Trigger.dev automatically retries with configurable backoff. Your workflow picks up where it left off. For agentic systems that make dozens of external calls, this reliability is non-negotiable.
+
+**3. Built for AI agent patterns.** Trigger.dev has first-class support for the patterns that AI agents need: tool calling, LLM response streaming, human-in-the-loop workflows where the agent pauses and waits for user input, and multi-step reasoning chains. It integrates with the Vercel AI SDK, so `ai.tool` calls map directly to Trigger.dev tasks.
+
+**4. Real-time observability.** Every run has a live trace view showing exactly what your agent is doing — which step it's on, what it returned, how long each step took, where it failed. When you're debugging why your agent made a weird decision at step 7 of a 12-step workflow, this visibility is invaluable.
+
+**5. TypeScript-native.** If your application is built with Next.js, Remix, Express, or any Node.js framework, Trigger.dev drops right in. Your background jobs and AI workflows live alongside your application code.
+
+### What Trigger.dev Costs
+
+- **Free tier:** $0 (limited usage)
+- **Hobby:** $30/month
+- **Pro:** $150/month
+- **Enterprise:** Starting at $500/month
+
+You only pay when code executes. The pricing is usage-based on top of the platform fee.
+
+### Where Trigger.dev Falls Short
+
+- **No GPU compute.** Trigger.dev orchestrates workflows — it doesn't provide GPU hardware. If you need to run a model locally or do heavy inference, you'll need to call out to a GPU provider.
+- **TypeScript-first.** While it supports running Python scripts via a build extension, the core platform is TypeScript. If your AI stack is entirely Python (which many ML pipelines are), the developer experience won't be as smooth.
+- **Not for raw compute.** Trigger.dev isn't designed to run your fine-tuning job or batch-process a million images. It's designed to orchestrate the workflow that *coordinates* those jobs.
+
+<Callout type="info">
+Think of it this way: Trigger.dev is the **project manager** that decides what needs to happen and in what order. Modal is the **specialist** that does the heavy computational work. They're not competing — they're complementary.
+</Callout>
+
+## The Decision Guide
+
+Here's the practical framework. Forget features lists — think about what you're actually building.
+
+### Use Modal When:
+
+- **You need GPU compute** — inference, fine-tuning, image generation, audio processing
+- **You're building Python-based AI functions** — model serving, data pipelines, batch processing
+- **You want instant API endpoints** — deploy a function, get a URL, call it from anywhere
+- **You need to run compute-intensive code** that doesn't fit in a traditional serverless function
+- **Your AI workflow is simple** — one function in, one result out, no complex multi-step orchestration needed
+
+**Real example:** I needed a Python function that takes a document, runs it through an AI model for extraction, and returns structured data. Claude Code wrote the Python function, I deployed it to Modal, got my endpoint URL, and plugged it into an n8n workflow as an HTTP node. Start to finish: **under 30 minutes.**
+
+### Use Trigger.dev When:
+
+- **You're building multi-step AI agents** — research agents, coding agents, customer support bots that need to call multiple tools
+- **Your workflows run for minutes or hours** — anything that would timeout on Lambda or Vercel
+- **You need durability** — if step 5 of 10 fails, you want automatic retry without re-running steps 1-4
+- **You need human-in-the-loop** — agent pauses, waits for user approval, then continues
+- **Your stack is TypeScript/Next.js** — Trigger.dev integrates natively
+- **You need real-time status updates** — showing users what the agent is doing as it works
+
+**Real example:** An AI agent that researches a topic, scrapes 10 sources, summarizes each one, cross-references the summaries, generates a report, sends it for human review, incorporates feedback, and publishes. That's a 30-minute workflow with 15+ steps — exactly what Trigger.dev was built for.
+
+### Use Both When:
+
+This is the power move. And it's more common than you'd think.
+
+**Trigger.dev orchestrates the workflow. Modal runs the heavy compute.**
+
+Your agent (on Trigger.dev) decides it needs to generate an image. It calls a Modal endpoint running Stable Diffusion on a GPU. Modal generates the image in seconds and returns it. Trigger.dev receives the result and continues to the next step in the workflow.
+
+Or: Your agent needs to transcribe a 2-hour podcast. Trigger.dev manages the workflow — splitting the audio, tracking progress, handling retries. Each chunk gets sent to a Modal function running Whisper on a GPU. Results flow back to Trigger.dev, which stitches them together and moves to the summarization step.
+
+**Trigger.dev is the brain. Modal is the muscle.**
+
+## Head-to-Head Comparison
+
+| Feature | Modal | Trigger.dev |
+|---------|-------|-------------|
+| **Primary language** | Python | TypeScript |
+| **GPU access** | Yes (A100, H100, A10G, etc.) | No |
+| **Timeout limits** | None | None |
+| **Workflow orchestration** | Basic (individual functions) | Advanced (multi-step, retries, queues) |
+| **Human-in-the-loop** | No | Yes |
+| **Real-time streaming** | Limited | Built-in |
+| **Cold start time** | Sub-second | Seconds |
+| **Free tier** | $30/mo in credits | Free plan available |
+| **Best for** | Compute-heavy AI tasks | Workflow orchestration |
+| **Scaling** | Hundreds of GPUs | Elastic task scaling |
+| **Observability** | Function-level logs | Full trace view per run |
+
+## My Take: Start With What You're Building
+
+Don't pick a tool because it's popular. Pick it because it matches **your actual architecture.**
+
+If you're a Python developer building inference endpoints, model pipelines, or compute-heavy functions — **start with Modal.** The developer experience is unmatched for that use case. You'll be productive in an hour.
+
+If you're a TypeScript developer building AI agents, background workflows, or multi-step automation — **start with Trigger.dev.** The durability, retries, and no-timeout execution model is exactly what agentic systems need.
+
+If you're building a serious AI product that needs both compute and orchestration — **use both.** This isn't over-engineering. It's using the right tool for each layer of your stack.
+
+<Callout type="warning">
+The biggest mistake I see developers make is trying to force one tool to do everything. Modal is not a workflow engine. Trigger.dev is not a GPU provider. Trying to make either do what it wasn't designed for will burn more time than just using the right tool from the start.
+</Callout>
+
+The agentic workflow space is evolving fast. Both Modal and Trigger.dev are actively shipping features that push further into AI territory. But their core identities are clear: **Modal is infrastructure for compute. Trigger.dev is infrastructure for orchestration.** Understanding that distinction is half the battle.
+
+---
+
+**Want more deep-dives on AI infrastructure and developer tools?** I write about building AI products, choosing the right stack, and what actually works in production. [Subscribe to my newsletter](/subscribe) for weekly takes you won't find anywhere else.
