@@ -1,0 +1,168 @@
+---
+title: "English Is Now a Programming Language (And Most People Are Terrible at It)"
+description: "You used to need Python to talk to machines. Now you need clear English. The developers and professionals who master communication will outperform everyone who can't articulate what they want."
+date: "2026-02-21"
+category: "ai"
+tags: ["ai", "communication", "career", "prompting", "future-of-work"]
+image: "/images/blog/english-programming-language.jpg"
+published: true
+featured: false
+---
+
+## The Biggest Shift No One Is Talking About
+
+English is becoming a programming language.
+
+Not metaphorically. Not "kind of." **Literally.**
+
+You used to need code to talk to machines. Python. Java. JavaScript. You'd spend years learning syntax, debugging semicolons, memorizing APIs. The barrier to building software was a technical language that most humans couldn't speak.
+
+That barrier is gone.
+
+Today, you type a sentence and the machine **builds** for you. Writes for you. Designs for you. Deploys for you. I've shipped production features in Taskitos by describing what I wanted in plain English to Claude Code — features that would have taken me days to hand-code took hours.
+
+But here's what most people miss about this shift. **The machine is not smart by itself.** It's only as sharp as the words you give it.
+
+If your thinking is messy, your results will be messy. If your words are vague, your output will be vague. Garbage in, garbage out has never been more true — except now the "garbage" isn't bad code. It's bad communication.
+
+<Callout type="warning">
+Jensen Huang told the world to stop teaching kids to code. Andrew Ng said that's terrible advice. They're both right — but they're both missing the bigger point. **The skill that matters most in the AI era isn't coding OR domain expertise. It's the ability to think clearly and say what you mean.**
+</Callout>
+
+## The Two-Person Problem
+
+Imagine two people open the same AI tool. Same model. Same subscription. Same capabilities.
+
+**Person one types:** "Help me with my business."
+
+**Person two types:** "Create a 3-step marketing plan for my online fitness course, targeting busy parents, using Instagram and email, over the next 30 days. Include specific content ideas and a weekly posting schedule."
+
+Same tool. Same cost. But person two walks away with a roadmap. Person one walks away confused — and probably blames the AI.
+
+What's the difference? Person two treats English like **code.** Clear. Specific. Structured. They know what they want, and they say exactly what they want.
+
+I see this every single day when I'm building with AI tools. The quality gap between a vague instruction and a precise one isn't 10% or 20%. It's the difference between **usable output and complete waste of time.**
+
+## What I Learned Building Products With AI
+
+When I built Taskitos, I spent more time crafting the system prompts than writing traditional application code. The AI agent that parses your tasks, detects urgency, and decides when to escalate reminders — its entire intelligence comes from how precisely I described the behavior I wanted.
+
+Here's a real example. Early on, I told the AI: "Parse the user's task and figure out when to remind them."
+
+The results were chaos. Random reminder times. Missed context. The AI would set a reminder for "pick up groceries" three days from now because I didn't specify what "urgent" meant.
+
+So I rewrote the instruction: "Analyze the task text for time-sensitivity signals. If the task contains words like 'today', 'tonight', 'ASAP', or 'before [time]', classify as urgent and set the first reminder within 2 hours. If the task has a specific date, set the first reminder 24 hours before. For tasks with no time signal, default to a reminder at 9 AM the next business day."
+
+Same AI model. Same capabilities. But the second instruction produced a system that actually works in production — because I **programmed** it with precise English.
+
+<Callout type="tip">
+The best prompt engineers aren't people who memorized magic phrases. They're people who think clearly enough to break a vague goal into specific, ordered instructions. That's not a new skill — it's the oldest skill in leadership: giving clear direction.
+</Callout>
+
+## English Has a Compiler Now
+
+Here's the thing about traditional programming languages. They're **unforgiving.** Miss a semicolon in Java and nothing compiles. Misspell a variable in Python and your program crashes. The compiler catches your sloppiness.
+
+English never had a compiler. You could be vague, rambling, and contradictory in an email, and the human on the other end would fill in the gaps. We've spent our entire lives getting away with imprecise communication because other humans are incredibly good at guessing what we mean.
+
+AI doesn't guess. Or rather — it guesses **too well.** It takes your vague input and confidently produces output that matches your words, not your intent. And the gap between those two things is where most people fail.
+
+Think about it this way:
+
+- **In Python**, `print("hello")` always produces `hello`
+- **In English-as-code**, "write me something good" produces whatever the model interprets "good" to mean based on zero context
+
+The developers who understand this are already pulling ahead. They're not just writing prompts — they're writing **specifications.** They're defining inputs, expected outputs, edge cases, and constraints. They're treating every interaction with AI the way a senior engineer treats a system design doc.
+
+## The Communication Skill Gap Is Real
+
+A **McKinsey study** found that companies with 80-100% AI adoption among developers saw productivity gains over **110%.** Companies with lower adoption? Basically flat.
+
+The difference wasn't the tools. Every company had access to the same AI models. The difference was **how people communicated with those tools.** The high-performing companies invested in prompt engineering practices, clear specification writing, and structured AI workflows.
+
+Meanwhile, GitLab found that developers were expected to be **24% faster** with AI tools. The actual measurement? They were **19% slower.** Not because the tools were bad — because most people are using them the way they text their friends. Casual. Vague. Hoping the AI reads their mind.
+
+It won't.
+
+## Why This Is About Way More Than Prompting
+
+I want to be clear about something. This isn't just an "AI tip." This is a fundamental career skill that applies to every interaction you have — human or machine.
+
+The person who can clearly articulate what they want to an AI is the same person who writes clear project requirements. Who gives focused feedback in code reviews. Who runs effective meetings. Who writes emails that actually get responses.
+
+**Communication has always been the highest-leverage skill in any career.** We just never had a machine that made the gap between good and bad communicators this visible.
+
+Before AI, a vague manager could say "make it better" and a smart team would figure it out. Now, that same vague manager says "make it better" to an AI and gets back garbage — with no team to bail them out.
+
+The feedback loop is instant and brutal. Bad communication used to be a soft problem. Now it's a **hard** problem with measurable output.
+
+<Callout type="info">
+After 20 years in software engineering, I've seen every management fad come and go. But this is different. Communication skills aren't a "nice to have" anymore. They're the literal interface between human intention and machine execution. If you can't express what you want, you can't build what you want.
+</Callout>
+
+## How to Start "Coding" in English
+
+You don't need a course for this. You need practice and a framework. Here's what I use every day when working with AI tools:
+
+### 1. State the Role
+
+Don't just ask a question. Tell the AI what role to play.
+
+Bad: "Help me with my code."
+Good: "You're a senior backend engineer reviewing a Spring Boot REST API. Focus on error handling and thread safety."
+
+### 2. Be Specific About the Output
+
+Don't say "write something." Say exactly what format, length, and structure you want.
+
+Bad: "Write me a workout plan."
+Good: "Write a 4-week home workout plan. No equipment. 30 minutes per day. Focused on fat loss and basic strength. For a complete beginner. Format as a weekly table."
+
+### 3. Provide Context and Constraints
+
+The more boundaries you set, the better the output. Constraints aren't limitations — they're **precision.**
+
+Bad: "Create a landing page."
+Good: "Create a landing page for a B2B SaaS product targeting engineering managers. Above the fold: headline, subheading, and one CTA button. Use a professional tone, not playful. Mobile-first. No stock photo vibes."
+
+### 4. Specify What You Don't Want
+
+This is the one most people miss. Telling the AI what to avoid is just as important as telling it what to do.
+
+"Don't use jargon. Don't include more than 3 bullet points per section. Don't suggest solutions that require a paid tool."
+
+### 5. Iterate Like a Developer
+
+Your first prompt is your first draft. Read the output, identify what's wrong, and refine. This is debugging — except you're debugging your own communication.
+
+The best AI users I know treat it as a conversation, not a one-shot request. Each follow-up sharpens the output. Just like writing code, you iterate until it works.
+
+## The New Competitive Edge
+
+Here's the uncomfortable truth for the tech industry.
+
+The developer who writes mediocre code but communicates brilliantly will outperform the 10x coder who can't articulate what they want. Not in five years. **Now.**
+
+I see it in hiring. I see it in open source. I see it in how quickly different people on my team ship features using the same AI tools. The differentiator is never "who has the best AI subscription." It's always **who can express their intent most precisely.**
+
+This applies beyond tech, too. The lawyer who can describe a contract clause precisely to an AI will draft faster than one who can't. The marketer who can specify their audience, tone, and constraints will generate better campaigns. The entrepreneur who can articulate their vision clearly will prototype faster.
+
+Every profession is becoming a programming profession. And the programming language is English.
+
+## Sloppy In, Sloppy Out
+
+From now on, every prompt you send is like writing code.
+
+Every email you write is like writing a function — it should have clear inputs and expected outputs.
+
+Every meeting you run is like an API call — the quality of the response depends entirely on the quality of the request.
+
+So sharpen your thinking. Sharpen your language. Stop treating communication as a soft skill and start treating it as **the skill.**
+
+Because English has become a programming language. And the people who learn to code with their words will be the ones who program their own future.
+
+The ones who don't? They'll be typing "help me with my business" while the world builds without them.
+
+---
+
+**Want more insights on building in the AI era?** I write about AI product development, communication as a technical skill, and what actually works in modern software engineering. [Subscribe to my newsletter](/subscribe) for weekly takes you won't find anywhere else.
