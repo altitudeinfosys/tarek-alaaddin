@@ -1,0 +1,286 @@
+---
+title: "The Simplest Claude Code Setup: Your Folder Is Your Project"
+description: "Forget complex configurations. The most powerful Claude Code setup is also the simplest — a folder, a CLAUDE.md file, and you're done. Here's how I set up every new project in under 60 seconds."
+date: "2026-02-22"
+category: "ai"
+tags: ["claude-code", "ai", "developer-tools", "productivity", "project-setup"]
+image: "/images/blog/simplest-claude-code-setup.jpg"
+published: true
+featured: false
+---
+
+## Stop Overthinking Your AI Setup
+
+Every time someone asks me how I use Claude Code, they expect some elaborate configuration. Custom MCP servers. Complex automation scripts. A 500-line CLAUDE.md file with every edge case documented.
+
+**The truth?** My most productive Claude Code projects start with nothing more than a folder.
+
+That's it. A folder. Your folder IS your project. And once you internalize this, everything about working with Claude Code clicks into place.
+
+## The 60-Second Setup
+
+Here's the entire setup process for a new Claude Code project:
+
+```bash
+mkdir my-project
+cd my-project
+claude
+```
+
+**Three commands. You're done.** Claude Code uses your current terminal directory as its working directory. There's no project file to create, no IDE to configure, no workspace settings to fiddle with. You `cd` into a folder, you type `claude`, and you're working.
+
+<Callout type="tip">
+Run `/init` inside Claude Code to auto-generate a CLAUDE.md file based on your project's structure. It examines package files, documentation, configuration, and code structure to create a tailored starting point.
+</Callout>
+
+But let me show you the setup that I actually use for every new project — the one that turns a bare folder into a fully-contextualized AI workspace.
+
+## The Folder Structure That Actually Works
+
+After building dozens of projects with Claude Code, I've settled on this structure:
+
+```
+my-project/
+├── CLAUDE.md           # Project instructions for Claude
+├── input/              # Specs, requirements, reference material
+│   ├── spec.md
+│   └── reference.pdf
+├── output/             # Claude's deliverables
+│   └── (generated files land here)
+└── .claude/            # Optional: advanced config
+    ├── settings.json
+    └── rules/
+        └── code-style.md
+```
+
+**That's the whole thing.** Four parts:
+
+1. **CLAUDE.md** — The brain. Project context that Claude reads at every session start.
+2. **input/** — What you give Claude. Specs, examples, reference documents.
+3. **output/** — What Claude gives you. Generated code, reports, analyses.
+4. **.claude/** — Optional power-user config. Rules, settings, skills.
+
+The beauty is that you only need #1 to start. Everything else grows organically as the project demands it.
+
+## Why a Folder Beats Everything Else
+
+I've used Cursor, Copilot, Windsurf, and half a dozen other AI coding tools. They all require you to open a project in their IDE, configure their extension, set up their workspace. Claude Code doesn't care about any of that.
+
+**Claude Code discovers your project from the working directory.** When you run `claude` in a folder:
+
+- It reads `CLAUDE.md` (or `.claude/CLAUDE.md`) for project context
+- It recursively reads any `CLAUDE.md` files in parent directories
+- It loads `.claude/rules/*.md` for modular instructions
+- It loads `.claude/settings.json` for permissions and preferences
+- It creates auto-memory at `~/.claude/projects/<project>/memory/`
+
+If the folder is a git repo, Claude derives the project path from the git root — so all subdirectories share the same memory. **If it's not a git repo, the working directory itself becomes the project identifier.**
+
+This means you can create an AI project for literally anything. It doesn't have to be code. I use Claude Code folders for:
+
+- **Blog post research** — input folder has topic notes, output folder gets the draft
+- **Data analysis** — input has CSVs, output has insights
+- **Architecture planning** — input has requirements, output has design docs
+- **Content pipelines** — input has topics from a queue, output has finished posts
+
+<Callout type="info">
+Claude Code's memory persists between sessions. The first 200 lines of its auto-generated `MEMORY.md` file load at every session start, so Claude remembers your project patterns, debugging insights, and architecture decisions — even days later.
+</Callout>
+
+## The CLAUDE.md File: Your 80/20 Move
+
+If you do only one thing, write a CLAUDE.md file. It's the single highest-leverage action for any Claude Code project.
+
+Here's the template I use for every new project:
+
+```markdown
+# Project: [Name]
+
+## What This Is
+[One paragraph describing what the project does and why it exists]
+
+## Key Commands
+- Build: `npm run build`
+- Test: `npm test`
+- Lint: `npm run lint`
+
+## Architecture
+[Brief description of how the project is structured]
+
+## Rules
+- [Coding standard 1]
+- [Coding standard 2]
+- [Any project-specific constraints]
+```
+
+**That's 15 lines.** And it makes Claude dramatically more effective because:
+
+1. Claude stops guessing your project structure and asks fewer clarifying questions
+2. Build/test commands run on the first try instead of Claude searching for them
+3. Coding standards are enforced automatically
+4. Architecture context means Claude makes better file placement decisions
+
+<Callout type="warning">
+Keep your CLAUDE.md concise. If it's too long, Claude ignores half of it because important rules get lost in the noise. Official recommendation: be specific ("Use 2-space indentation") rather than vague ("Format code properly").
+</Callout>
+
+## The Input/Output Pattern
+
+This is the pattern that changed how I think about AI-assisted work. Instead of asking Claude to figure out what to do, **I give it inputs and expect outputs.**
+
+**Input folder examples:**
+- `input/spec.md` — "Build a REST API with these endpoints..."
+- `input/design.png` — "Implement this UI design..."
+- `input/data.csv` — "Analyze this dataset and find trends..."
+- `input/article.md` — "Write a response piece to this article..."
+
+**Output folder examples:**
+- `output/api/` — Generated API code
+- `output/analysis.md` — Data analysis results
+- `output/draft.mdx` — Blog post draft
+
+The prompt becomes dead simple:
+
+```
+Read the spec in input/spec.md and implement it. Put all generated code in output/.
+```
+
+Claude reads the input, does the work, puts the results where you told it to. No ambiguity. No back-and-forth about file placement. No accidental overwrites of your source material.
+
+## Leveling Up: The .claude/ Directory
+
+Once a project grows beyond a quick task, the `.claude/` directory unlocks serious power without adding complexity.
+
+### Modular Rules
+
+Instead of cramming everything into CLAUDE.md, split rules into focused files:
+
+```
+.claude/rules/
+├── code-style.md     # Formatting, naming conventions
+├── testing.md        # Test requirements, frameworks
+└── security.md       # Security policies
+```
+
+All `.md` files in `.claude/rules/` load automatically as project memory. You can even scope rules to specific file patterns:
+
+```markdown
+---
+paths:
+  - "src/api/**/*.ts"
+---
+
+# API Rules
+- All endpoints must validate input
+- Use standard error response format
+```
+
+### Skills for Repeatable Workflows
+
+If you find yourself giving Claude the same instructions repeatedly, turn them into a skill:
+
+```
+.claude/skills/
+└── deploy/
+    └── SKILL.md
+```
+
+Skills are invoked with slash commands (`/deploy`) and contain the full workflow instructions. I use them for deploying, reviewing PRs, running content pipelines, and generating boilerplate.
+
+### Settings for Guardrails
+
+`.claude/settings.json` controls what Claude can and can't do:
+
+```json
+{
+  "permissions": {
+    "allow": ["Bash(npm run *)"],
+    "deny": ["Read(./.env)", "Read(./secrets/**)"]
+  }
+}
+```
+
+This is project-level configuration that travels with your repo. Your team shares the same guardrails.
+
+## The Memory Hierarchy (Why It Just Works)
+
+Claude Code's memory system is a hierarchy — and it's one of the best-designed parts of the tool:
+
+| Level | Location | Shared With |
+|-------|----------|-------------|
+| **User** | `~/.claude/CLAUDE.md` | Just you, all projects |
+| **Project** | `./CLAUDE.md` | Team via git |
+| **Local** | `./CLAUDE.local.md` | Just you, this project |
+| **Rules** | `.claude/rules/*.md` | Team via git |
+| **Auto Memory** | `~/.claude/projects/*/memory/` | Just you |
+
+**More specific instructions override broader ones.** Your project CLAUDE.md overrides your global one. Local overrides project. This means:
+
+- Your personal coding preferences go in `~/.claude/CLAUDE.md`
+- Team standards go in the project's `CLAUDE.md`
+- Your personal sandbox URLs go in `CLAUDE.local.md` (auto-gitignored)
+
+No conflicts. No merge issues. Just clean, layered configuration.
+
+## Real Examples From My Setup
+
+Here's what my actual Claude Code folder for this blog looks like:
+
+```
+tarek-alaaddin/
+├── CLAUDE.md                    # Project rules, git workflow
+├── .claude/
+│   ├── skills/
+│   │   ├── pipeline-run/        # Full content pipeline
+│   │   ├── post-to-x/          # Tweet posting automation
+│   │   └── post-to-linkedin/   # LinkedIn posting automation
+│   └── settings.json
+├── content/blog/                # Blog posts (output)
+├── docs/                        # Pipeline docs (input/reference)
+└── ...
+```
+
+And here's what a simple data analysis project looks like:
+
+```
+sales-analysis/
+├── CLAUDE.md        # "Analyze Q4 sales data. Focus on regional trends."
+├── input/
+│   ├── q4-sales.csv
+│   └── regions.json
+└── output/
+    └── (Claude puts analysis here)
+```
+
+**Same pattern. Different scale.** The folder-as-project model scales from a 5-minute task to a multi-month application.
+
+## The Anti-Patterns (What Not to Do)
+
+After running Claude Code daily for months, here are the setups that fail:
+
+1. **The 500-line CLAUDE.md** — If Claude has to read a novel before every task, important instructions get buried. Keep it under 50 lines for most projects.
+
+2. **No CLAUDE.md at all** — You end up re-explaining the same context every session. Even 5 lines of context saves minutes per interaction.
+
+3. **Mixing input and output** — When Claude's generated files live alongside your source material, things get overwritten. Keep them separate.
+
+4. **The kitchen sink session** — Starting one task, asking something unrelated, then going back. Use `/clear` between unrelated tasks.
+
+5. **Over-configuring before you need it** — Start with just CLAUDE.md. Add `.claude/rules/` when you need modularity. Add skills when you have repeatable workflows. Don't set up infrastructure you won't use.
+
+## The Takeaway
+
+The most powerful Claude Code setup is also the simplest:
+
+1. **Create a folder** — that's your project
+2. **Add a CLAUDE.md** — 10-15 lines of context
+3. **Use input/output folders** — clear boundaries for what goes in and what comes out
+4. **Grow organically** — add rules, skills, and settings only when you need them
+
+You don't need a git repo. You don't need an IDE. You don't need complex configuration. A folder, a markdown file, and `claude` in your terminal. That's the setup.
+
+**The folder is the project. Keep it simple.**
+
+---
+
+**Want more hands-on AI development tips?** I write about using Claude Code, building with AI, and shipping faster as a solo developer. [Subscribe to my newsletter](/subscribe) for weekly takes you won't find anywhere else.
