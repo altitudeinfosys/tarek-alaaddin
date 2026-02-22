@@ -59,7 +59,7 @@ Here's the side-by-side of available commands inside each CLI:
 | Clear context | `/clear` | `/clear` or `/reset` |
 | Compact context | `/compact` | `/compact` |
 | View help | `/help` | `/help` or `/?` |
-| Switch models | Automatic (Opus/Sonnet) | `/model` (toggle thinking mode) |
+| Switch models | `/model` (Opus/Sonnet/Haiku) | `/model` (toggle thinking mode) |
 | Session resume | Automatic persistence | `/sessions` to list and switch |
 | Exit | `/exit` or Ctrl+C | `/exit` |
 
@@ -71,7 +71,7 @@ Here's the side-by-side of available commands inside each CLI:
 | Init project config | Manual creation | `/init` (auto-generates `AGENTS.md`) |
 | Auto-approve mode | `--dangerously-skip-permissions` | `/yolo` |
 | Login/Auth | `claude login` | `/login` or `/setup` |
-| Check usage | Not available in CLI | `/usage` with progress bars |
+| Check usage | `/cost` (session spend tracking) | `/usage` with progress bars |
 | Debug info | Limited | `/debug` (message count, tokens, checkpoints) |
 
 ### Tools & Integrations
@@ -102,9 +102,13 @@ Claude Code has been in production longer. The documentation is comprehensive. T
 
 Kimi CLI is catching up quickly — the open-source community is active (6,600+ GitHub stars) — but the docs are still sparse in places. If you're debugging an edge case at 2 AM, Claude Code's ecosystem gives you better odds of finding help.
 
-### 3. Complex Multi-File Debugging
+### 3. Massive Context Window (1M Tokens)
 
-When you're dealing with a bug that spans 15 files across multiple services, Claude Code's approach to understanding codebases is noticeably stronger. It handles complex dependency chains, traces errors through call stacks, and proposes fixes that account for side effects across the project.
+Claude Code supports up to **1M tokens** of context — nearly **4x Kimi's 256K**. When you're working on a large codebase, Claude can hold significantly more files in memory simultaneously. It also features automatic context compaction, so conversations can continue indefinitely without losing important context from earlier in the session.
+
+### 4. Complex Multi-File Debugging
+
+When you're dealing with a bug that spans 15 files across multiple services, Claude Code's approach to understanding codebases is noticeably stronger. It handles complex dependency chains, traces errors through call stacks, and proposes fixes that account for side effects across the project. Its specialized sub-agents (Explore, Plan, code-reviewer) can be dispatched in parallel to investigate different parts of the codebase.
 
 Kimi CLI handles simpler multi-file edits well, but developers report that complex debugging sessions — the kind where you need to hold 50+ files in context — feel weaker. More like Sonnet-level reasoning than Opus-level.
 
@@ -138,13 +142,11 @@ The Kimi Code membership at **$19/month** gives you substantial daily usage. Cla
 If you're cost-sensitive and doing high-volume development work — lots of code generation, refactoring across large codebases — Kimi's pricing alone might justify switching. You can run 5-10x more queries for the same budget.
 </Callout>
 
-### 3. Larger Context Window
+### 3. Output Token Limit
 
-Kimi K2.5 supports **256K tokens** of context with **64K max output**. Claude tops out at **200K context** with **32K max output**.
+Kimi K2.5 supports **256K tokens** of context with **64K max output**. Claude Code supports up to **1M tokens** of context (with automatic context compaction to keep conversations going indefinitely) but caps at **32K max output** per response.
 
-That extra context matters when you're working with large codebases. More files in context means better understanding of your project's architecture, fewer hallucinated imports, and more accurate cross-file refactors.
-
-The 64K output limit is also meaningful — Claude's 32K limit can be a bottleneck when generating large files or comprehensive documentation.
+Claude actually wins on context window by a wide margin — **1M vs 256K**. But Kimi's **64K output limit** is double Claude's 32K, which matters when generating large files or comprehensive documentation in a single response.
 
 ### 4. Open Source
 
@@ -168,11 +170,11 @@ Kimi has a concept called **Flow Skills** — reusable prompt templates with emb
 
 Claude Code has similar functionality with custom slash commands and SKILL.md files, but Kimi's flow system with visual agent diagrams is more structured out of the box.
 
-### Kimi's Agent Swarm (Beta)
+### Agent Architectures: Both Have Sub-Agents
 
-Kimi CLI has a beta feature for spawning up to **100 sub-agents** making up to **1,500 tool calls**. This is designed for massive parallel operations — think refactoring an entire monorepo or running analysis across hundreds of files simultaneously.
+Both CLIs support dispatching sub-agents for parallel work. Claude Code has a mature agent/sub-agent architecture — it can spawn specialized agents (Explore, Plan, Bash, code-reviewer, and more) that work autonomously on subtasks and report back. This is built into the core workflow, not a beta feature.
 
-Claude Code can dispatch parallel sub-agents too, but the scale is more conservative. If you need brute-force parallelism, Kimi's swarm feature is ambitious.
+Kimi CLI takes it further with its **Agent Swarm** (beta) — spawning up to **100 sub-agents** making up to **1,500 tool calls**. This is designed for massive parallel operations like refactoring an entire monorepo. Claude Code's sub-agents are more conservative in scale but more refined in specialization.
 
 ### Claude Code's MCP Ecosystem
 
@@ -206,11 +208,10 @@ Benchmarks tell you about model capability, not CLI capability. The CLI's tools,
 - Browser automation tools
 
 ### Missing from Claude Code
-- Built-in usage tracking and quota monitoring
 - Open-source codebase
 - Shell mode toggle for quick commands
-- `/model` switching between reasoning modes
-- Agent swarm for massive parallelism
+- Agent swarm for massive parallelism (100+ sub-agents)
+- Figma-to-code workflows
 
 ## My Recommendation
 
