@@ -1,8 +1,8 @@
 ---
 name: pipeline-run
-description: Automated content pipeline — reads a topic from the Google Sheets queue, generates a blog post, creates social media copy, posts to X and LinkedIn, and updates the queue status. Can run fully automated via scheduler or manually.
+description: "Automated content pipeline - reads a topic from the Google Sheets queue, generates a blog post, creates social media copy, posts to X and LinkedIn, and updates the queue status. Can run fully automated via scheduler or manually."
 user-invocable: true
-arguments: "optional: topic override to bypass queue, or 'dry-run' to test without posting"
+arguments: "optional: topic override to bypass queue, or dry-run to test without posting"
 ---
 
 # Content Pipeline Runner
