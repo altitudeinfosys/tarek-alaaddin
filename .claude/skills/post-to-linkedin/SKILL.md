@@ -1,6 +1,6 @@
 ---
 name: post-to-linkedin
-description: Post content to LinkedIn using Chrome browser automation. Provide the post text and this skill handles navigation, composing, posting, and verification via screenshots.
+description: "Post content to LinkedIn using Chrome browser automation. Provide the post text and this skill handles navigation, composing, posting, and verification via screenshots."
 user-invocable: true
 arguments: "LinkedIn post text, 150-300 words recommended"
 ---

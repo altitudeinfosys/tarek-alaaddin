@@ -1,6 +1,6 @@
 ---
 name: post-to-x
-description: Post a tweet to X (Twitter) using Chrome browser automation. Provide the tweet text and this skill handles navigation, typing, posting, and verification via screenshots.
+description: "Post a tweet to X using Chrome browser automation. Provide the tweet text and this skill handles navigation, typing, posting, and verification via screenshots."
 user-invocable: true
 arguments: "tweet text to post, 280 chars max"
 ---
