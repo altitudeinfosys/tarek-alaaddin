@@ -30,17 +30,30 @@ export async function generateMetadata({ params }: BlogPostPageProps) {
     }
   }
 
+  const url = `https://tarekalaaddin.com/blog/${params.slug}`
+
   return {
     title: `${post.title} | Tarek Alaaddin`,
     description: post.description,
     keywords: post.tags,
+    alternates: {
+      canonical: url,
+    },
     openGraph: {
       title: post.title,
       description: post.description,
+      url,
+      siteName: 'Tarek Alaaddin',
+      locale: 'en_US',
       type: 'article',
       publishedTime: post.date,
       authors: ['Tarek Alaaddin'],
       tags: post.tags,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.description,
     },
   }
 }

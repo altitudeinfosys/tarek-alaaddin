@@ -27,7 +27,7 @@ Master orchestrator for the blog-to-social-media pipeline. Reads topics from a G
 
 ## Google Sheet Setup
 
-**Sheet URL**: The content queue Google Sheet should be bookmarked or its URL stored.
+**Sheet URL**: `https://docs.google.com/spreadsheets/d/1xfPdknbYRaftoy-BndQp6rkT3NTaebfcyr9nXTqunPA/edit?gid=0#gid=0`
 
 **Expected columns** (Row 1 = headers):
 
