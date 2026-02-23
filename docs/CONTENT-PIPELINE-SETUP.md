@@ -7,9 +7,9 @@
 ```
 You add a topic to Google Sheets
          |
-  [launchd triggers daily at 7:55am]
+  [launchd triggers daily at midnight]
          |
-  [pipeline-orchestrator.sh picks 2 random times between 8am-10pm]
+  [pipeline-orchestrator.sh picks 3 random times between 6am-10pm, 4+ hours apart]
          |
   [At each time, invokes: claude -p "Run /pipeline-run"]
          |
@@ -59,7 +59,7 @@ Open at [excalidraw.com](https://excalidraw.com) or in VS Code with the Excalidr
 
 | File | Purpose |
 |------|---------|
-| `~/Library/LaunchAgents/com.tarek.content-pipeline.plist` | macOS scheduled job (7:55am daily) |
+| `~/Library/LaunchAgents/com.tarek.content-pipeline.plist` | macOS scheduled job (midnight daily) |
 
 ---
 
@@ -164,7 +164,7 @@ claude -p "/post-to-linkedin Testing my automated content pipeline. This is a te
 Once manual testing passes:
 
 ```bash
-# Load the launchd job (starts running tomorrow at 7:55am)
+# Load the launchd job (starts running at next midnight)
 launchctl load ~/Library/LaunchAgents/com.tarek.content-pipeline.plist
 
 # Verify it's loaded
@@ -200,8 +200,8 @@ launchctl unload ~/Library/LaunchAgents/com.tarek.content-pipeline.plist
 
 ### What Happens Automatically
 
-Each day at 7:55am, the orchestrator:
-1. Picks 2 random times between 8am and 10pm (at least 2 hours apart)
+Each day at midnight, the orchestrator:
+1. Picks 3 random times between 6am and 10pm (at least 4 hours apart)
 2. At each time, runs the pipeline:
    - Finds the next `queued` topic
    - **Researches every product/tool** mentioned — visits official docs, verifies specs/pricing/features
@@ -266,74 +266,311 @@ failed          → Something went wrong (check Notes column for error)
 2. **PR approval gate** — Blog posts require your manual merge before social posting
 3. **Login verification** — Screenshots taken before posting to verify login state
 4. **Duplicate prevention** — Checks if a blog slug already exists before writing
-5. **Rate limiting** — Max 2 posts per day, at least 2 hours apart
+5. **Rate limiting** — Max 3 posts per day, at least 4 hours apart
 6. **Error isolation** — Each phase updates status independently; failures don't corrupt other queue items
 7. **Audit trail** — Screenshots saved before and after every social post in `logs/pipeline/screenshots/`
 
 ---
 
-## Mac Mini Migration
+## Mac Mini Setup Guide
 
-When you're ready to move this to a dedicated Mac Mini:
+Complete step-by-step guide for setting up the content pipeline on a dedicated Mac Mini.
 
-### Migration Checklist
+### Prerequisites
 
-1. **Clone the repo:**
+Before starting, have these ready:
+- Mac Mini connected to power, display, keyboard, and internet
+- Your Anthropic API key (from [console.anthropic.com](https://console.anthropic.com))
+- Your GitHub account credentials
+- Your X (Twitter), LinkedIn, and Google account credentials
+
+### Step 1: Install Homebrew
+
+```bash
+# Check if Homebrew is already installed
+brew --version
+
+# If not installed, install it:
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Follow the post-install instructions to add Homebrew to your PATH
+# (usually involves adding a line to ~/.zprofile)
+```
+
+### Step 2: Install Node.js and npm
+
+```bash
+# Install Node.js (includes npm)
+brew install node
+
+# Verify installation
+node --version
+npm --version
+```
+
+### Step 3: Install Claude Code CLI
+
+```bash
+npm install -g @anthropic-ai/claude-code
+
+# Verify installation
+claude --version
+```
+
+### Step 4: Install GitHub CLI
+
+```bash
+brew install gh
+
+# Authenticate with GitHub
+gh auth login
+# Select: GitHub.com → HTTPS → Yes (authenticate Git) → Login with a web browser
+# Follow the browser prompts to complete authentication
+
+# Verify
+gh auth status
+```
+
+### Step 5: Clone the Repo
+
+```bash
+mkdir -p ~/Projects/code
+cd ~/Projects/code
+git clone https://github.com/altitudeinfosys/tarek-alaaddin.git
+cd tarek-alaaddin
+
+# Verify
+git status
+ls content/blog/
+```
+
+### Step 6: Set Environment Variables
+
+```bash
+# Open your shell profile
+nano ~/.zshrc
+
+# Add this line (replace with your actual key):
+export ANTHROPIC_API_KEY="sk-ant-your-key-here"
+
+# Save and exit (Ctrl+O, Enter, Ctrl+X)
+
+# Reload the profile
+source ~/.zshrc
+
+# Verify the key is set
+echo $ANTHROPIC_API_KEY
+```
+
+### Step 7: Install Chrome + Claude in Chrome Extension
+
+1. Download and install [Google Chrome](https://www.google.com/chrome/)
+2. Open Chrome
+3. Go to the Chrome Web Store and search for **"Claude in Chrome"**
+4. Click **Add to Chrome** and confirm
+5. Pin the extension to the toolbar for easy access
+
+### Step 8: Log Into All Services in Chrome
+
+Open each of these in Chrome and log in. **Stay logged in** (don't sign out):
+
+1. **Google Sheets**: Go to [sheets.google.com](https://sheets.google.com) and log in with your Google account
+2. **X (Twitter)**: Go to [x.com](https://x.com) and log in with your account
+3. **LinkedIn**: Go to [linkedin.com](https://linkedin.com) and log in with your account
+
+Verify the Content Pipeline Queue sheet is accessible:
+```
+https://docs.google.com/spreadsheets/d/1xfPdknbYRaftoy-BndQp6rkT3NTaebfcyr9nXTqunPA/edit
+```
+
+### Step 9: Configure Mac Mini for Always-On
+
+The pipeline runs at scheduled times throughout the day, so the Mac Mini must never sleep.
+
+1. **Prevent sleeping**:
+   - System Settings → Energy Saver (or Battery → Options on laptops)
+   - Set "Turn display off after" to **Never** (or a long interval like 3 hours — the pipeline doesn't need the display)
+   - Enable **Prevent automatic sleeping when the display is off**
+   - Enable **Start up automatically after a power failure**
+
+2. **Disable screen lock** (optional, but prevents login screen blocking Chrome):
+   - System Settings → Lock Screen
+   - Set "Require password after screen saver begins or display is turned off" to **Never** (or a long interval)
+
+3. **Enable auto-login** (so the pipeline starts after a reboot):
+   - System Settings → Users & Groups → Automatic Login
+   - Select your user account
+   - Note: This requires FileVault to be off
+
+4. **Keep Chrome running**:
+   - Add Chrome to Login Items: System Settings → General → Login Items → Add Google Chrome
+   - This ensures Chrome launches automatically on boot
+
+### Step 10: Copy and Install the launchd Plist
+
+```bash
+# If the plist doesn't exist yet on the Mac Mini, create it:
+mkdir -p ~/Library/LaunchAgents
+
+# Copy from the MacBook Pro (run this ON the MacBook Pro):
+# scp ~/Library/LaunchAgents/com.tarek.content-pipeline.plist macmini:~/Library/LaunchAgents/
+
+# Or create it directly on the Mac Mini:
+cat > ~/Library/LaunchAgents/com.tarek.content-pipeline.plist << 'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.tarek.content-pipeline</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/tarekalaaddin/Projects/code/tarek-alaaddin/scripts/pipeline-orchestrator.sh</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>0</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/Users/tarekalaaddin/Projects/code/tarek-alaaddin/logs/pipeline/launchd-stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/tarekalaaddin/Projects/code/tarek-alaaddin/logs/pipeline/launchd-stderr.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin</string>
+        <key>HOME</key>
+        <string>/Users/tarekalaaddin</string>
+    </dict>
+    <key>WorkingDirectory</key>
+    <string>/Users/tarekalaaddin/Projects/code/tarek-alaaddin</string>
+    <key>RunAtLoad</key>
+    <false/>
+    <key>KeepAlive</key>
+    <false/>
+</dict>
+</plist>
+PLIST
+
+# If the Mac Mini username is different from "tarekalaaddin",
+# update ALL paths in the plist AND in scripts/pipeline-orchestrator.sh (REPO_DIR variable)
+```
+
+### Step 11: Test Each Component Manually
+
+Run these in order to verify everything works:
+
+```bash
+cd ~/Projects/code/tarek-alaaddin
+
+# 1. Verify Claude Code can run
+claude --version
+
+# 2. Verify GitHub CLI
+gh auth status
+
+# 3. Test a simple Claude command
+claude -p "Say hello"
+
+# 4. Test the pipeline in dry-run mode (no actual posting)
+claude -p "Run /pipeline-run dry-run"
+
+# 5. If dry-run succeeds, test a full run with a test topic in the Sheet
+# (Add a test topic with status "queued" first)
+claude -p "Run /pipeline-run"
+```
+
+### Step 12: Enable the Scheduler
+
+```bash
+# Load the launchd job
+launchctl load ~/Library/LaunchAgents/com.tarek.content-pipeline.plist
+
+# Verify it's loaded
+launchctl list | grep content-pipeline
+# Should show: -  0  com.tarek.content-pipeline
+```
+
+### Step 13: Verify It's Working
+
+```bash
+# Check if the schedule was generated (after midnight)
+cat ~/Projects/code/tarek-alaaddin/logs/pipeline/schedule.log
+
+# Watch the schedule log in real-time
+tail -f ~/Projects/code/tarek-alaaddin/logs/pipeline/schedule.log
+
+# List recent run logs
+ls -lt ~/Projects/code/tarek-alaaddin/logs/pipeline/*.log | head -5
+
+# Check launchd stdout/stderr for errors
+cat ~/Projects/code/tarek-alaaddin/logs/pipeline/launchd-stdout.log
+cat ~/Projects/code/tarek-alaaddin/logs/pipeline/launchd-stderr.log
+```
+
+Monitor the first 2-3 days closely. Check the Google Sheet each morning to confirm topics are progressing through the status flow.
+
+### To Stop the Scheduler
+
+```bash
+launchctl unload ~/Library/LaunchAgents/com.tarek.content-pipeline.plist
+```
+
+---
+
+## Running Manually from MacBook Pro
+
+You can run the pipeline manually from your MacBook Pro at any time. Manual runs are independent of the Mac Mini's scheduled runs.
+
+### One-Time Setup on MacBook Pro
+
+1. Clone the same repo (if not already done):
    ```bash
+   cd ~/Projects/code
    git clone https://github.com/altitudeinfosys/tarek-alaaddin.git
-   cd tarek-alaaddin
    ```
 
-2. **Install Claude Code CLI:**
+2. Install Claude Code CLI:
    ```bash
    npm install -g @anthropic-ai/claude-code
    ```
 
-3. **Set up environment variables:**
-   ```bash
-   # Add to ~/.zshrc or ~/.bash_profile
-   export ANTHROPIC_API_KEY="your-key-here"
-   ```
-
-4. **Copy the launchd plist:**
-   ```bash
-   # From MacBook Pro:
-   scp ~/Library/LaunchAgents/com.tarek.content-pipeline.plist macmini:~/Library/LaunchAgents/
-   ```
-   If the Mac Mini username differs, update paths in:
-   - The plist file
-   - `scripts/pipeline-orchestrator.sh` (the `REPO_DIR` variable)
-
-5. **Install GitHub CLI:**
+3. Install GitHub CLI:
    ```bash
    brew install gh
    gh auth login
    ```
 
-6. **Set up Chrome:**
-   - Install Google Chrome
-   - Install Claude in Chrome extension
-   - Log into X, LinkedIn, and Google Sheets
-   - Keep Chrome running
-
-7. **Configure Mac Mini for always-on:**
-   - System Settings → Energy Saver → Prevent automatic sleeping
-   - System Settings → Lock Screen → set to Never (or a long interval)
-
-8. **Test manually:**
+4. Set your Anthropic API key in `~/.zshrc`:
    ```bash
-   claude -p "Run /pipeline-run dry-run"
+   export ANTHROPIC_API_KEY="sk-ant-your-key-here"
    ```
 
-9. **Enable the scheduler:**
-   ```bash
-   launchctl load ~/Library/LaunchAgents/com.tarek.content-pipeline.plist
-   ```
+5. Open Chrome and log into X, LinkedIn, and Google Sheets
+6. Install the Claude in Chrome extension
 
-10. **Monitor the first few runs** by checking logs:
-    ```bash
-    tail -f logs/pipeline/schedule.log
-    ```
+### Running a Manual Pipeline
+
+```bash
+cd ~/Projects/code/tarek-alaaddin
+git pull  # Get latest changes
+
+# Option A: Non-interactive (runs fully automated)
+claude -p "Run /pipeline-run"
+
+# Option B: Interactive (you can watch and intervene)
+claude
+# Then type: /pipeline-run
+
+# Option C: Dry run (test without posting)
+claude -p "Run /pipeline-run dry-run"
+```
+
+**Note**: Manual runs from the MacBook Pro don't affect the Mac Mini's scheduled runs. If both run at the same time, each will pick a different queued topic from the Sheet (the status field prevents double-processing).
 
 ---
 
@@ -387,6 +624,9 @@ tarek-alaaddin/
 
 - **Mandatory research phase**: Phase 1.5 visits official documentation for every tool/product mentioned before writing, building a verified facts sheet. Prevents factual errors from relying on stale internal knowledge.
 - **Known docs URL table**: Common tools have pre-configured documentation URLs for faster lookup.
+- **3 daily runs**: Increased from 2 to 3 posts per day, with at least 4 hours between runs, spread across 6am-10pm.
+- **X hashtags**: X/Twitter posts now include 2-3 relevant, specific hashtags (e.g., #ClaudeCode) to improve discoverability.
+- **Midnight scheduling**: The orchestrator now triggers at midnight and sleeps until the first run, allowing the full 6am-10pm window.
 
 ## Future Improvements (v3)
 
