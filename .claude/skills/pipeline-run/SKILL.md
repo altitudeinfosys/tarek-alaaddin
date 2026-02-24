@@ -199,7 +199,9 @@ Format:
 
 Rules:
 - Max 280 characters total (including URL)
-- No hashtags on X (they hurt reach)
+- Include 2-3 relevant hashtags at the end
+- Hashtags count toward the 280 character limit
+- Choose specific, discoverable hashtags (e.g., #ClaudeCode not #AI)
 - Make the hook compelling enough to stop scrolling
 - URL counts as ~23 characters (t.co shortening)
 
@@ -292,8 +294,8 @@ Rules:
 
 ## Rate Limiting
 
-- Max 2 pipeline runs per day
-- Min 2 hours between runs
+- Max 3 pipeline runs per day
+- Min 4 hours between runs
 - The orchestrator shell script (`scripts/pipeline-orchestrator.sh`) enforces this at the scheduling level
 
 ## Dry Run Mode
