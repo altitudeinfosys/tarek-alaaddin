@@ -17,13 +17,52 @@ Master orchestrator for the blog-to-social-media pipeline. Reads topics from a G
 
 ## Prerequisites
 
-- Chrome must be running with the Claude in Chrome extension active
+- **Browser**: Chrome with Claude in Chrome extension active (preferred), OR Playwright MCP tools available (fallback)
 - User must be logged into:
   - Google Sheets (for the content queue)
   - X (x.com) for Twitter posting
   - LinkedIn (linkedin.com) for LinkedIn posting
 - The project repo must be at `/Users/tarekalaaddin/Projects/code/tarek-alaaddin/`
 - `gh` CLI must be authenticated for GitHub operations
+
+## Browser Backend
+
+The pipeline supports two browser automation backends. It will auto-detect which is available.
+
+### Detection Logic
+
+1. Try Chrome Extension first: call `mcp__claude-in-chrome__tabs_context_mcp`
+2. If it responds successfully → use **Chrome Extension** backend
+3. If it fails or is unavailable → use **Playwright** backend (call `mcp__plugin_playwright_playwright__browser_navigate` to verify it works)
+4. Log which backend is active before proceeding
+
+### Tool Mapping Reference
+
+Use this table to pick the correct tool based on the active backend:
+
+| Action | Chrome Extension | Playwright |
+|--------|-----------------|------------|
+| Get tab context | `tabs_context_mcp` | `browser_tabs` (action: list) |
+| Create new tab | `tabs_create_mcp` | `browser_tabs` (action: new) |
+| Navigate to URL | `navigate` | `browser_navigate` |
+| Read page structure | `read_page` | `browser_snapshot` |
+| Extract page text | `get_page_text` | `browser_snapshot` or `browser_evaluate` with `document.body.innerText` |
+| Find element | `find` (natural language query) | `browser_snapshot` → find ref by role/text |
+| Click element | `computer` (action: left_click) | `browser_click` (ref from snapshot) |
+| Type text | `computer` (action: type) | `browser_type` (ref from snapshot) |
+| Press key | `computer` (action: key) | `browser_press_key` |
+| Take screenshot | `computer` (action: screenshot) | `browser_take_screenshot` |
+| Wait | `computer` (action: wait) | `browser_wait_for` |
+| Execute JS | `javascript_tool` | `browser_evaluate` |
+| Fill form | `form_input` | `browser_fill_form` |
+
+> **Playwright element interaction**: Unlike Chrome Extension's `find()` which accepts natural language queries, Playwright requires taking a `browser_snapshot` first, then using element `ref` IDs from the snapshot to interact. Always snapshot before clicking or typing.
+
+### Playwright Prerequisites
+
+- Playwright MCP server must be configured with `--user-data-dir` for login persistence
+- **First-time setup**: Run the pipeline once, then log into Google Sheets, X, and LinkedIn manually in the Playwright browser window. Subsequent runs reuse the saved session.
+- If sessions expire, log in again manually in the Playwright browser
 
 ## Google Sheet Setup
 
@@ -41,8 +80,12 @@ On failure at any stage: status becomes `failed` and the error is written to the
 
 ### Phase 0: Pre-Flight Checks
 
-1. Get browser tab context: `mcp__claude-in-chrome__tabs_context_mcp`
-2. Verify Chrome is responsive by creating a test tab
+1. **Detect browser backend**:
+   - Try Chrome Extension: call `tabs_context_mcp`
+   - If connected → set backend = Chrome Extension, create a new tab
+   - If not connected → set backend = Playwright, navigate to a test page (e.g. `https://www.google.com`) to verify Playwright is working
+   - Log: "Using [Chrome Extension / Playwright] backend"
+2. Verify the browser is responsive by loading a page
 3. Check that the project repo is clean:
    ```bash
    cd /Users/tarekalaaddin/Projects/code/tarek-alaaddin && git status
@@ -54,10 +97,10 @@ On failure at any stage: status becomes `failed` and the error is written to the
 
 ### Phase 1: Read Queue from Google Sheet
 
-1. Create a new tab: `mcp__claude-in-chrome__tabs_create_mcp`
-2. Navigate to the Google Sheet URL using `mcp__claude-in-chrome__navigate`
+1. Create a new tab (see Tool Mapping table)
+2. Navigate to the Google Sheet URL
 3. Wait for the sheet to load (3 seconds)
-4. Use `mcp__claude-in-chrome__read_page` or `mcp__claude-in-chrome__get_page_text` to read the sheet contents
+4. Read the sheet contents using page structure reading or text extraction (see Tool Mapping table)
 5. Find the first row where column B (Status) = `queued`
 6. If no queued topics found:
    - Log: "No queued topics found. Pipeline complete."
@@ -237,7 +280,7 @@ Rules:
 ### Phase 5: Post to X
 
 1. Update Sheet status to `posting-x`
-2. Invoke the `/post-to-x` skill logic:
+2. Invoke the `/post-to-x` skill logic (which also supports both browser backends):
    - Navigate to x.com/compose/post in a new tab
    - Type the tweet text
    - Take a pre-post screenshot (save to `logs/pipeline/screenshots/`)
@@ -252,7 +295,7 @@ Rules:
 ### Phase 6: Post to LinkedIn
 
 1. Update Sheet status to `posting-linkedin`
-2. Invoke the `/post-to-linkedin` skill logic:
+2. Invoke the `/post-to-linkedin` skill logic (which also supports both browser backends):
    - Navigate to linkedin.com/feed in a new tab
    - Click "Start a post"
    - Type the LinkedIn post text
