@@ -1,13 +1,13 @@
 ---
 name: post-to-x
-description: "Post a tweet to X using Chrome browser automation. Provide the tweet text and this skill handles navigation, typing, posting, and verification via screenshots."
+description: "Post a tweet to X using browser automation (Chrome Extension or Playwright fallback). Provide the tweet text and this skill handles navigation, typing, posting, and verification via screenshots."
 user-invocable: true
 arguments: "tweet text to post, 280 chars max"
 ---
 
 # Post to X (Twitter)
 
-Posts a tweet to X using Chrome browser automation (`mcp__claude-in-chrome` tools). No API key needed — uses the logged-in browser session.
+Posts a tweet to X using browser automation. Supports two backends: Chrome Extension (preferred) or Playwright MCP tools (fallback). No API key needed — uses the logged-in browser session.
 
 ## Usage
 
@@ -16,9 +16,34 @@ Posts a tweet to X using Chrome browser automation (`mcp__claude-in-chrome` tool
 
 ## Prerequisites
 
-- Chrome must be running with the Claude in Chrome extension active
-- User must be logged into X (x.com) in Chrome
-- The `mcp__claude-in-chrome` MCP tools must be available
+- **Browser**: Chrome with Claude in Chrome extension active (preferred), OR Playwright MCP tools available (fallback)
+- User must be logged into X (x.com) in the active browser
+- For Playwright: the MCP server must be configured with `--user-data-dir` for login persistence
+
+## Browser Backend
+
+This skill auto-detects the available browser backend. If called from `/pipeline-run`, the backend is already detected — reuse it.
+
+### Detection Logic
+
+1. Try Chrome Extension: call `tabs_context_mcp`
+2. If connected → use **Chrome Extension**
+3. If not → use **Playwright**
+
+### Tool Mapping Reference
+
+| Action | Chrome Extension | Playwright |
+|--------|-----------------|------------|
+| Get tab context | `tabs_context_mcp` | `browser_tabs` (action: list) |
+| Create new tab | `tabs_create_mcp` | `browser_tabs` (action: new) |
+| Navigate to URL | `navigate` | `browser_navigate` |
+| Find element | `find` (natural language) | `browser_snapshot` → find ref by role/text |
+| Click element | `computer` (left_click) | `browser_click` (ref from snapshot) |
+| Type text | `computer` (type) | `browser_type` (ref from snapshot) |
+| Take screenshot | `computer` (screenshot) | `browser_take_screenshot` |
+| Wait | `computer` (wait) | `browser_wait_for` |
+
+> **Playwright element interaction**: Unlike Chrome Extension's `find()` which accepts natural language queries, Playwright requires taking a `browser_snapshot` first, then using element `ref` IDs from the snapshot to interact. Always snapshot before clicking or typing.
 
 ## Process
 
@@ -31,23 +56,25 @@ Posts a tweet to X using Chrome browser automation (`mcp__claude-in-chrome` tool
 
 ### Step 2: Pre-Flight Check
 
-1. Get browser tab context: `mcp__claude-in-chrome__tabs_context_mcp`
-2. Create a new tab: `mcp__claude-in-chrome__tabs_create_mcp`
-3. Navigate to `https://x.com/compose/post` using `mcp__claude-in-chrome__navigate`
-4. Wait 3 seconds for page load: `mcp__claude-in-chrome__computer` with action `wait`
-5. Take a screenshot to verify login state: `mcp__claude-in-chrome__computer` with action `screenshot`
+1. Detect browser backend (or reuse if already detected by pipeline)
+2. Create a new tab
+3. Navigate to `https://x.com/compose/post`
+4. Wait 3 seconds for page load
+5. Take a screenshot to verify login state
 6. **If not logged in** (login page visible): STOP and tell the user "You're not logged into X. Please log in manually and try again."
 
 ### Step 3: Compose Tweet
 
-1. Use `mcp__claude-in-chrome__find` to locate the compose textbox (query: "tweet compose text area" or "What's happening")
-2. Click on the textbox using `mcp__claude-in-chrome__computer` with action `left_click`
-3. Type the tweet text using `mcp__claude-in-chrome__computer` with action `type`
+1. Find the compose textbox (query: "tweet compose text area" or "What's happening")
+   - **Chrome Extension**: use `find` with natural language query
+   - **Playwright**: take a `browser_snapshot`, locate the textbox by its role (`textbox`) or label text, use its ref
+2. Click on the textbox
+3. Type the tweet text
 4. Wait 1 second for text to render
 
 ### Step 4: Verify Before Posting
 
-1. Take a screenshot: `mcp__claude-in-chrome__computer` with action `screenshot`
+1. Take a screenshot
 2. Verify the tweet text appears correctly in the compose box
 3. **If running in pipeline mode** (called from `/pipeline-run`): proceed to posting automatically
 4. **If running manually**: Show the screenshot to the user and ask: "Tweet is ready. Should I post it?"
@@ -55,13 +82,15 @@ Posts a tweet to X using Chrome browser automation (`mcp__claude-in-chrome` tool
 
 ### Step 5: Post the Tweet
 
-1. Use `mcp__claude-in-chrome__find` to locate the Post button (query: "Post button")
-2. Click the Post button using `mcp__claude-in-chrome__computer` with action `left_click`
+1. Find the Post button
+   - **Chrome Extension**: use `find` with query "Post button"
+   - **Playwright**: take a `browser_snapshot`, locate the button by text "Post", use its ref
+2. Click the Post button
 3. Wait 3 seconds for the post to submit
 
 ### Step 6: Verify Post Success
 
-1. Take a screenshot: `mcp__claude-in-chrome__computer` with action `screenshot`
+1. Take a screenshot
 2. Check for success indicators:
    - The compose modal dismissed
    - No error messages visible
@@ -71,7 +100,7 @@ Posts a tweet to X using Chrome browser automation (`mcp__claude-in-chrome` tool
 
 ### Step 7: Cleanup
 
-1. Close the tab: use `mcp__claude-in-chrome__navigate` to go to `about:blank` or close the tab
+1. Close the tab or navigate to `about:blank`
 
 ## Error Handling
 
