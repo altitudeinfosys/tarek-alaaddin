@@ -1,0 +1,185 @@
+---
+title: "Resumes Are Broken. I Built an AI Agent That Interviews Back."
+description: "Traditional resumes disappear into a black hole. I flipped the script — my portfolio has an AI chatbot that answers recruiter questions and evaluates whether a job fits ME. Here's how I built it with Next.js and Claude."
+date: "2026-02-23"
+category: "ai"
+tags: ["ai", "claude", "resume", "next-js", "portfolio", "chatbot"]
+image: "/images/blog/ai-resume-agent.jpg"
+published: true
+featured: false
+---
+
+## The Resume Black Hole Problem
+
+You spend two hours tailoring a resume. You paste it into an ATS. You click submit. And then... silence. A month later you get a generic rejection email, or worse — nothing at all.
+
+**Here's what actually happens to your resume:** An ATS parses it (badly). A recruiter spends 6 seconds scanning it. Your 20 years of experience gets reduced to whether you included the right keywords in the right format.
+
+The whole system is backwards. You're formatting yourself into a document that's optimized for machines that can't understand context, reviewed by humans who don't have time to read, and evaluated by criteria you can't see.
+
+I decided to flip the script entirely.
+
+## What If Your Resume Could Talk Back?
+
+Instead of sending a static PDF into the void, I built something different: an AI-powered portfolio page at [tarekalaaddin.com/resume](https://tarekalaaddin.com/resume) that does two things no traditional resume can:
+
+1. **An AI chatbot** that answers recruiter questions about me — in real time, with context, in my voice
+2. **A Fit Check tool** where recruiters paste a job description and get an honest assessment of how well I match — strengths, gaps, and all
+
+The recruiter doesn't have to guess whether my "backend development" means I wrote a REST API once or I've been building distributed systems for 20 years. They just ask. And the AI answers with specifics.
+
+## How the AI Chatbot Works
+
+The chatbot sits behind a modal triggered by the "Ask AI About Me" button. When a recruiter opens it, they see suggested questions like:
+
+- *What's your biggest technical achievement?*
+- *Tell me about your leadership experience*
+- *Why are you looking for a new role?*
+
+Under the hood, it's a multi-turn conversation powered by Claude. Every message goes to a Next.js API route that:
+
+1. Loads my resume and career context from markdown files
+2. Passes the full conversation history to Claude with a system prompt
+3. Returns a conversational, honest answer
+
+The system prompt tells Claude to be helpful and personable, answer only from my actual resume data, and admit when it doesn't have information rather than making things up.
+
+```typescript
+const systemPrompt = `You are an AI assistant on Tarek Alaaddin's
+resume website. Answer questions about Tarek's experience, skills,
+and career in a helpful and personable way.
+
+Be honest about strengths and areas of growth.
+If asked about salary, say Tarek prefers to discuss compensation directly.
+
+Here is Tarek's resume: ${resumeContext}`
+```
+
+<Callout type="tip">
+I use Claude Haiku for the chatbot (fast, cheap) and Claude Sonnet for the Fit Check (needs deeper analysis). Matching model capability to task complexity keeps costs minimal while maintaining quality.
+</Callout>
+
+The key insight: **the AI has context that a PDF never could.** I wrote detailed "AI context" sections for each role — not just bullet points, but the story behind each decision, the challenges, the trade-offs. Things I'd say in an interview but could never fit on a one-page resume.
+
+## How the Fit Check Works
+
+This is the feature that flips the power dynamic. Instead of me wondering whether I'm a good fit, the recruiter gets an instant, structured analysis.
+
+The recruiter pastes any job description into a text area. The system then:
+
+1. **Selects the right resume version** — I maintain three versions (fullstack, backend, leadership), and the system auto-selects based on keywords in the job description
+2. **Sends both the resume and JD to Claude Sonnet** for deep analysis
+3. **Returns a structured result**: a 0-100 match score, a list of strengths with evidence, any gaps, and an honest assessment paragraph
+
+The match score is color-coded: green for 80+, yellow for 60-79, red below 60. No sugar-coating. If a role asks for 10 years of Python and I have 3, the AI says so.
+
+```typescript
+interface FitCheckResult {
+  score: number       // 0-100 match percentage
+  strengths: string[] // Skills that align, with evidence
+  gaps: string[]      // Requirements I don't fully meet
+  assessment: string  // Honest 2-3 sentence take
+  resumeType: string  // Which resume version was used
+}
+```
+
+<Callout type="warning">
+Honesty is the whole point. If the Fit Check just said "great match!" for every job, it would be useless. Recruiters respect candor. Showing gaps builds trust and saves everyone time.
+</Callout>
+
+## The Smart Resume Loader
+
+One of the more underrated pieces is the resume selection logic. Not every recruiter is looking for the same version of me.
+
+A backend engineering manager role needs to see my Java/Spring Boot expertise and team leadership experience. A full-stack role should highlight my React and Next.js work. A director-level position should emphasize my track record of leading 15-person teams and delivering projects on aggressive timelines.
+
+The `resume-loader.ts` module handles this automatically. It scores the job description against keyword lists for each resume type and picks the best match:
+
+- **Leadership keywords** (lead, director, architect, team, mentor) → leadership resume
+- **Backend keywords** (API, microservices, Java, cloud, infrastructure) → backend resume
+- **Fullstack keywords** (React, TypeScript, frontend, web, UI) → fullstack resume
+
+Leadership keywords get priority because if a role mentions "tech lead" anywhere, the recruiter wants to see leadership evidence regardless of the tech stack.
+
+## The Tech Stack
+
+The whole thing is surprisingly simple:
+
+- **Next.js** with App Router for the frontend and API routes
+- **Anthropic Claude API** (Haiku for chat, Sonnet for fit analysis)
+- **TypeScript** throughout
+- **Tailwind CSS** for styling
+- **Markdown files** for resume data (no database needed)
+
+No vector embeddings. No RAG pipeline. No pgvector. The resume data is small enough that it fits entirely in Claude's context window as plain text. Over-engineering this with embedding-based retrieval would add complexity without improving answers.
+
+<Callout type="tip">
+Start with the simplest thing that works. My resume data is maybe 3,000 words across all three versions. That's well within Claude's context window. Only add RAG if your data grows beyond what fits in a prompt.
+</Callout>
+
+The total Anthropic API cost for the resume page is negligible — chat responses via Haiku cost fractions of a cent, and even the Sonnet-powered Fit Check runs under a penny per analysis.
+
+## Why This Beats a Traditional Resume
+
+| Traditional Resume | AI Resume Agent |
+|---|---|
+| Static one-page PDF | Interactive, conversational |
+| Same version for every role | Auto-selects relevant version |
+| Recruiter guesses if you fit | Structured fit analysis with evidence |
+| Keywords optimized for ATS | Natural language answers to any question |
+| No way to explain context | Deep context behind every role |
+| You hope someone reads it | The recruiter gets exactly what they need |
+
+The fundamental shift is from **push** to **pull**. Instead of pushing a document and hoping it lands, I'm letting recruiters pull exactly the information they want, in the format that's most useful to them.
+
+## The Recruiter Experience
+
+A recruiter lands on my portfolio. They see:
+
+1. **Hero section** with my name, title, and a status badge ("Open to opportunities")
+2. Two prominent buttons: "Ask AI About Me" and "Check Job Fit"
+3. Below: my experience timeline, skills grid
+
+If they click "Ask AI About Me," they can have a conversation. They can ask follow-up questions. They can probe into specific technologies or projects. It's like a preliminary interview — but I don't have to be there.
+
+If they click "Check Job Fit," they paste the job description from their ATS, hit a button, and in seconds they know whether to schedule a call. No guesswork. No phone screen just to figure out basic alignment.
+
+**The recruiter's time is valuable.** Instead of forcing them to decode my resume format, extract relevant experience, and mentally map it to their open role, I'm doing that work for them. Automatically. Every time.
+
+## How to Build Your Own
+
+If you want to build something similar, here's the minimal version:
+
+1. **Write your resume data** as markdown files. Be thorough — the AI can only answer from what you give it.
+2. **Create a Next.js API route** that takes messages, prepends your resume as system context, and calls the Claude API.
+3. **Build a simple chat UI** — a modal with a message list and input field is enough.
+4. **Add the Fit Check** as a second API route that takes a job description, compares it against your resume, and returns structured JSON.
+5. **Deploy to Vercel** and add your Anthropic API key as an environment variable.
+
+The whole thing took me a weekend to build. The resume content took longer than the code — which is exactly how it should be.
+
+## What I'd Add Next
+
+The current version is functional but there's room to grow:
+
+- **Streaming responses** for the chatbot (currently it waits for the full response)
+- **Project portfolio deep-dives** — let the AI walk through specific projects with code examples
+- **Fit Check history** so recruiters can compare multiple roles
+- **Analytics** to see which questions recruiters ask most (to improve my resume content)
+- **Voice mode** — let recruiters literally talk to my resume
+
+## The Bigger Point
+
+Resumes were designed for a world where the only way to communicate your experience was a printed piece of paper. We're not in that world anymore.
+
+If you're a developer, you have the tools to build a better way to present yourself. An AI agent that represents you is not a gimmick — it's a competitive advantage. It shows technical skill, it respects the recruiter's time, and it communicates your experience more effectively than any PDF ever could.
+
+The code is straightforward. The API costs are trivial. And the impact on how recruiters perceive you? That's the real return on investment.
+
+**Stop sending PDFs into the void.** Build something that talks back.
+
+Check out the live implementation at [tarekalaaddin.com/resume](https://tarekalaaddin.com/resume).
+
+---
+
+*Want to build your own AI resume agent? Follow me for more posts on practical AI development. Or better yet — go to my resume page and ask the AI how I built it.*
