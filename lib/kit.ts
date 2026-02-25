@@ -45,7 +45,7 @@ async function fetchWithTimeout(
 export interface SubscribeParams {
   email: string
   firstName?: string
-  topics: {
+  topics?: {
     productivity: boolean
     ai: boolean
     marketing: boolean
@@ -75,6 +75,8 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Ki
 
   console.log('[Kit] Using API base URL:', KIT_API_BASE_URL)
 
+  const topics = params.topics ?? { productivity: true, ai: true, marketing: true }
+
   try {
     // Create subscriber
     const subscriberResponse = await fetchWithTimeout(`${KIT_API_BASE_URL}/subscribers`, {
@@ -88,9 +90,9 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Ki
         first_name: params.firstName || '',
         state: 'active',
         fields: {
-          topic_productivity: params.topics.productivity ? 'true' : 'false',
-          topic_ai: params.topics.ai ? 'true' : 'false',
-          topic_marketing: params.topics.marketing ? 'true' : 'false',
+          topic_productivity: topics.productivity ? 'true' : 'false',
+          topic_ai: topics.ai ? 'true' : 'false',
+          topic_marketing: topics.marketing ? 'true' : 'false',
         },
       }),
     })
@@ -116,13 +118,13 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Ki
     )
 
     // Add topic-specific tags
-    if (params.topics.productivity) {
+    if (topics.productivity) {
       tagPromises.push(addTagToSubscriber(subscriberId, 'interest-productivity'))
     }
-    if (params.topics.ai) {
+    if (topics.ai) {
       tagPromises.push(addTagToSubscriber(subscriberId, 'interest-ai'))
     }
-    if (params.topics.marketing) {
+    if (topics.marketing) {
       tagPromises.push(addTagToSubscriber(subscriberId, 'interest-marketing'))
     }
 
@@ -145,7 +147,7 @@ export async function subscribeToNewsletter(params: SubscribeParams): Promise<Ki
 /**
  * Add a tag to a subscriber
  */
-async function addTagToSubscriber(subscriberId: string, tagName: string): Promise<void> {
+export async function addTagToSubscriber(subscriberId: string, tagName: string): Promise<void> {
   if (!KIT_API_KEY) {
     throw new Error('KIT_API_KEY is not configured')
   }
