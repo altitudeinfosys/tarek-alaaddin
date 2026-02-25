@@ -19,8 +19,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const trimmedEmail = email.trim()
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(trimmedEmail)) {
       return NextResponse.json(
         { error: 'Invalid email address' },
         { status: 400 }
@@ -29,8 +30,8 @@ export async function POST(request: NextRequest) {
 
     // Subscribe with all topics enabled (popup doesn't offer topic selection)
     const result = await subscribeToNewsletter({
-      email,
-      firstName: firstName || undefined,
+      email: trimmedEmail,
+      firstName: firstName?.trim() || undefined,
     })
 
     if (!result.success) {

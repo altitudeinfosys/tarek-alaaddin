@@ -42,7 +42,9 @@ export default function NewsletterPopup() {
     if (!shouldShow()) return
 
     const handleScroll = () => {
-      const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)
+      const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight
+      if (scrollableHeight <= 0) return
+      const scrollPercent = window.scrollY / scrollableHeight
       if (scrollPercent >= SCROLL_THRESHOLD) {
         setState('visible')
         window.removeEventListener('scroll', handleScroll)
