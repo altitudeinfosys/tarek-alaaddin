@@ -1,0 +1,301 @@
+---
+title: "Every Claude Product Explained: Code, Desktop, Agent SDK, and Cowork — What Each One Actually Does"
+description: "Anthropic now has four distinct Claude products and most people are using the wrong one. Here's what each does, when to use it, and how to get maximum value from the full Claude ecosystem."
+date: "2026-02-24"
+category: "ai"
+tags: ["ai", "claude-code", "anthropic", "agent-sdk", "claude-desktop", "cowork", "developer-tools"]
+image: "/images/blog/every-claude-product-explained.jpg"
+published: true
+featured: false
+---
+
+## Anthropic Has Four Products Now. Most People Only Know One.
+
+If you ask the average developer what Claude is, they'll say "it's a chatbot." If you ask a more technical developer, they'll say "it's Claude Code." Both are underselling it — badly.
+
+As of February 2026, Anthropic ships **four distinct products** under the Claude brand, each built for a completely different workflow:
+
+1. **Claude Desktop** — the chat app for thinking and creating
+2. **Claude Code** — the terminal agent for building software
+3. **Claude Agent SDK** — the framework for building your own AI agents
+4. **Claude Cowork** — the autonomous desktop agent for knowledge work
+
+Here's the problem: most people are stuck on one of these and don't realize the others exist. Or they've heard the names but have no idea what the actual differences are. I've been deep in the Anthropic ecosystem since Claude Code launched, and I'll break down exactly what each product does, where it shines, and where it falls short.
+
+## Claude Desktop: The Foundation Most People Start With
+
+Claude Desktop is Anthropic's native app — the thing you download from [claude.com/download](https://claude.com/download). Available on macOS and Windows (no Linux), it's the most accessible entry point into the Claude ecosystem.
+
+**What it does:** Conversational AI with file analysis, document creation, Artifacts (interactive code/apps), Projects (organized workspaces), and MCP integrations. Think of it as the Swiss Army knife — good at a lot of things, master of none.
+
+### What You Can Do With It
+
+- **Chat with Claude's best models** — Opus 4.6, Sonnet 4.6, and Haiku 4.5 are all available
+- **Upload and analyze files** — PDFs (up to 1,000 pages), spreadsheets, images, code files
+- **Create deliverables** — Claude can generate Excel spreadsheets, PowerPoint decks, Word docs, and PDFs directly
+- **Build Artifacts** — interactive web apps, data visualizations, and tools that run in the browser — no local dev environment needed
+- **Organize with Projects** — dedicated workspaces with knowledge bases and custom instructions
+- **Connect external tools via MCP** — Slack, Figma, Notion, Google Workspace, and dozens more via Desktop Extensions (one-click install)
+
+### Where It Falls Short
+
+- **No Linux support** — if you're on Ubuntu, you're stuck with claude.ai or Claude Code
+- **Rate limits hit fast** — even Pro users can exhaust limits in 10-15 minutes of heavy Opus usage
+- **No image generation** — Claude analyzes images but cannot create them
+- **No real-time voice** — no dictation or voice conversations
+- **1M context window is beta** — not stable enough for production workloads
+
+<Callout type="info">
+**Who should use Claude Desktop?** Non-developers, product managers, writers, analysts, and anyone who needs AI for thinking, writing, and document work. If your primary workflow is "ask Claude a question and get a response," this is your tool.
+</Callout>
+
+### Pricing
+
+| Plan | Price | Claude Desktop Access |
+|------|-------|-----------------------|
+| Free | $0/month | Yes, limited Sonnet only |
+| Pro | $20/month | Full model access |
+| Max | $100-200/month | 5-20x Pro usage |
+| Team | $25-150/seat/month | Shared workspaces + admin |
+| Enterprise | Custom | Full suite + compliance |
+
+## Claude Code: The Terminal Agent That Changed How I Build Software
+
+Claude Code is where things get serious. It's an agentic coding tool that lives in your terminal, reads your entire codebase, edits files, runs commands, manages git, and ships features — all through natural language.
+
+I've written about Claude Code extensively because it fundamentally changed my development workflow. It's not a chatbot that suggests code. It's an agent that **does the work**.
+
+### What It Does That Desktop Can't
+
+- **Full codebase awareness** — it reads, navigates, and reasons across thousands of files
+- **Direct file editing** — creates, modifies, and deletes code across multiple files simultaneously
+- **Terminal command execution** — runs builds, tests, linters, anything your shell can do
+- **Git workflow automation** — commits, branches, PRs, merge conflict resolution
+- **Multi-agent teams** — spawn subagents that work on different parts of a problem in parallel
+- **MCP tool integration** — connect to databases, browsers, APIs, and custom tooling
+- **CI/CD integration** — automated PR reviews via GitHub Actions, Slack bot for bug reports
+
+### Where It Runs
+
+This is the part that surprises people. Claude Code isn't just a CLI anymore:
+
+- **Terminal** (the core experience)
+- **VS Code, Cursor, Windsurf** (via extension)
+- **JetBrains IDEs** (via plugin)
+- **Desktop app** (built into Claude Desktop)
+- **Web** (claude.ai/code — no local setup)
+- **Mobile** (Remote Control on iOS/Android)
+
+### The Cost Reality
+
+Claude Code pricing trips people up because there are two paths:
+
+**Subscription path:** Pro ($20/month) gives you access. Max ($100-200/month) gives you serious capacity — up to ~480 Sonnet hours or ~40 Opus hours per week.
+
+**API path:** Pay per token. Sonnet 4.6 runs $3/M input, $15/M output. In practice, the average developer spends ~$6/day via API. 90th percentile is below $12/day.
+
+<Callout type="warning">
+**The hidden cost trap:** Extended thinking tokens are billed as output tokens. Agent teams use ~7x more tokens than standard sessions. If you're running complex multi-agent workflows on the API, costs can spike. Monitor with `/cost` during sessions.
+</Callout>
+
+### What You Can't Do
+
+- **Usage limits are shared** — Claude Desktop, Claude Code, and claude.ai all draw from the same bucket
+- **Context window degradation** — performance drops in the final 20% of the context window
+- **No persistent state between sessions** — unless you use the memories feature or `/resume`
+- **Free plan gets zero access** — Claude Code requires at least Pro
+
+## Claude Agent SDK: Build Your Own Claude Code
+
+Here's where it gets really interesting. The Agent SDK is Anthropic's framework for building AI agents programmatically. The key insight: **it wraps the exact same runtime, tools, and agent loop that power Claude Code** and exposes them as a Python or TypeScript library.
+
+If Claude Code is the car, the Agent SDK is the engine block sold separately for people who want to build their own vehicle.
+
+### What You Get Out of the Box
+
+Every tool Claude Code uses internally is available to your agents:
+
+| Tool | What It Does |
+|------|-------------|
+| Read | Read any file |
+| Write | Create new files |
+| Edit | Precise edits to existing files |
+| Bash | Run terminal commands |
+| Glob | Find files by pattern |
+| Grep | Search file contents |
+| WebSearch | Search the web |
+| WebFetch | Fetch and parse web pages |
+| Task | Spawn subagents |
+
+Plus hooks for guardrails (block dangerous commands, audit logging), MCP integration for external tools, session persistence, and multi-agent orchestration.
+
+### A Working Agent in 10 Lines
+
+```python
+from claude_agent_sdk import AgentSession
+
+session = AgentSession(
+    model="claude-sonnet-4-6",
+    allowed_tools=["Read", "Glob", "Grep", "Bash"],
+    system_prompt="You are a code reviewer. Analyze code quality and suggest improvements.",
+)
+
+result = await session.send_message("Review the authentication module in src/auth/")
+print(result.text)
+```
+
+That's it. No tool execution plumbing. No conversation state management. No result routing. The SDK handles the entire agent loop.
+
+### How It Differs from the Anthropic API
+
+This is the question everyone asks, and the answer matters:
+
+| | Anthropic API (Direct) | Agent SDK |
+|---|---|---|
+| Agent loop | You build it | Built-in |
+| Tool execution | You implement it | Automatic |
+| Built-in tools | None | 10+ tools |
+| Context management | Manual | Auto-compaction |
+| Multi-agent | You orchestrate | Native subagents |
+| Sessions | Stateless | Persistent + resumable |
+
+**The API is a message-completion interface.** You send messages, get responses, handle everything yourself. **The Agent SDK is a full agent runtime.** It's the difference between using a database driver and using an ORM — one gives you full control, the other gives you productivity.
+
+<Callout type="info">
+**Who should use the Agent SDK?** Developers building products that need autonomous AI capabilities — automated code review pipelines, research assistants, customer support agents, CI/CD automation, internal tools. If you're building something that needs Claude to *do* things (not just *say* things), this is your tool.
+</Callout>
+
+### Pricing and Access
+
+The SDK itself is free. You pay for API usage:
+
+| Model | Input (per 1M tokens) | Output (per 1M tokens) |
+|-------|----------------------|------------------------|
+| Haiku 4.5 | $1 | $5 |
+| Sonnet 4.6 | $3 | $15 |
+| Opus 4.6 | $5 | $25 |
+
+**Critical limitation:** You cannot use claude.ai subscription credentials (Free/Pro/Max) with the Agent SDK. You must use an API key. This is a real barrier for individual developers who want to experiment without per-token billing.
+
+### Supported Languages
+
+| Language | Package | Install |
+|----------|---------|---------|
+| Python | `claude-agent-sdk` | `pip install claude-agent-sdk` |
+| TypeScript | `@anthropic-ai/claude-agent-sdk` | `npm install @anthropic-ai/claude-agent-sdk` |
+
+Both include the Claude Code CLI bundled — no separate installation needed.
+
+## Claude Cowork: Claude Code for Non-Developers
+
+Cowork launched in January 2026 and it's the product most people are sleeping on. If Claude Code is an autonomous agent for developers, Cowork is an autonomous agent for **everyone else** — PMs, analysts, marketers, HR, finance, operations.
+
+It runs inside Claude Desktop (macOS and Windows) and operates within a sandboxed environment where it can read, write, and create files on your local machine. Describe a goal, and Cowork plans and executes the steps independently.
+
+### What Makes It Different from Chat
+
+Regular Claude chat is reactive — you ask, it answers. Cowork is **proactive**. You say "analyze this quarter's sales data, build a comparison dashboard, and draft a summary for the board meeting," and it:
+
+1. Opens the spreadsheets
+2. Analyzes the data
+3. Creates visualizations
+4. Drafts the summary
+5. Saves everything to your specified folder
+
+All without you touching the keyboard between steps.
+
+### The MCP Connector Ecosystem
+
+Cowork's real power comes from its integrations. As of February 2026:
+
+- **Google Workspace** — Drive, Gmail, Calendar, Docs
+- **Microsoft 365** — Excel, PowerPoint (via add-ins with cross-app context)
+- **Slack, Figma, Notion, Canva, Box**
+- **Enterprise tools** — DocuSign, FactSet, Apollo, Clay, WordPress
+- **Custom plugins** — organizations can build and distribute through private marketplaces
+
+### Who It's Actually For
+
+Cowork targets the 90% of knowledge workers who will never open a terminal. Think:
+
+- **Finance teams** creating quarterly reports from raw data
+- **HR** drafting offer letters and onboarding documents
+- **Marketing** building campaign analyses across multiple platforms
+- **Operations** automating document workflows
+
+<Callout type="warning">
+**Cowork is still a research preview.** It launched in January 2026, and features are evolving. On macOS, it requires Apple Silicon (M1+) — Intel Macs can use Chat and Code tabs but not Cowork. Windows support landed on February 11, 2026, with full feature parity.
+</Callout>
+
+### Pricing
+
+Cowork requires a paid plan — it's available on Pro ($20/month), Max ($100-200/month), Team ($25-150/seat/month), and Enterprise. It shares the same usage quota as Claude Desktop and Claude Code, and agentic tasks consume significantly more of your allocation than simple chat.
+
+## The Decision Matrix: Which Claude Product Do You Need?
+
+Here's the honest breakdown:
+
+| | Claude Desktop | Claude Code | Agent SDK | Cowork |
+|---|---|---|---|---|
+| **Primary user** | Everyone | Developers | Platform engineers | Knowledge workers |
+| **Interaction mode** | Chat | Terminal/IDE | Programmatic | Autonomous agent |
+| **Can edit files?** | Via Artifacts only | Yes, directly | Yes, directly | Yes, locally |
+| **Can run commands?** | No | Yes | Yes | Sandboxed |
+| **Multi-agent?** | No | Yes (teams) | Yes (subagents) | Yes (sub-tasks) |
+| **MCP support?** | Desktop Extensions | Full | Full + in-process | Connectors |
+| **Requires coding?** | No | No (but helps) | Yes | No |
+| **Pricing** | Free-$200/mo | Pro+ or API | API only | Pro+ |
+| **Best for** | Thinking & writing | Building software | Building AI products | Automating work |
+
+## My Recommendations: How to Actually Use the Full Ecosystem
+
+After months of using all four, here's what I've landed on:
+
+**Daily driver: Claude Code.** It's where I spend 80% of my Claude time. Writing features, debugging, running pipelines, managing git — it handles everything.
+
+**Quick thinking: Claude Desktop.** When I need to brainstorm, analyze a document, or create a quick Artifact, I switch to Desktop. It's faster for non-code tasks.
+
+**Custom automation: Agent SDK.** My content pipeline (the one that generated this very blog post) runs on the Agent SDK. Any time I need Claude to do something repeatable and programmable, I build it with the SDK.
+
+**Team collaboration: Cowork.** For non-developer teammates who need AI automation — creating reports, analyzing data, managing documents — Cowork is the bridge.
+
+### The Power Move: Use All Four Together
+
+The real unlock is using them in combination:
+
+1. **Plan in Desktop** — brainstorm architecture, analyze requirements, create Artifacts
+2. **Build in Claude Code** — implement features, run tests, ship PRs
+3. **Automate with Agent SDK** — build CI/CD pipelines, monitoring, automated reviews
+4. **Delegate with Cowork** — hand off documentation, reporting, and non-code tasks
+
+This isn't theoretical. It's literally how I run my workflow today. Each product has a clear lane, and trying to force one product to do everything is how you get frustrated.
+
+## The Pricing Reality
+
+Here's the thing nobody talks about: **all four products share the same usage quota on subscription plans.** If you're on Pro ($20/month) and you burn through your limit with Claude Code, you can't switch to Desktop for more capacity — you're done until it resets.
+
+This makes the Max plan ($100-200/month) almost mandatory for heavy users. Alternatively, the API pay-per-use model through the Agent SDK gives you unlimited capacity at $3-15 per million tokens, which works out to ~$100-200/month for an active developer.
+
+**My recommendation:** Start with Pro ($20/month) to explore all four products. If you're hitting limits regularly, upgrade to Max or switch Claude Code to API billing.
+
+## What's Missing (and What I Want to See)
+
+Even with four products, there are gaps:
+
+- **No Linux desktop app** — Claude Code works on Linux, but Desktop and Cowork don't
+- **No Agent SDK support for subscription billing** — you must use API keys, which blocks casual experimentation
+- **Cowork is still rough** — it's a research preview and it shows. File handling is sometimes clunky, and the plugin ecosystem is young
+- **Shared usage limits** — heavy Claude Code usage shouldn't cannibalize Desktop chat capacity. Anthropic needs to separate these buckets
+- **Agent teams are experimental** — the multi-agent feature in Claude Code is powerful but uses 7x more tokens and isn't production-stable yet
+
+## The Bottom Line
+
+Anthropic isn't building a chatbot company. They're building an **AI workforce platform** — and these four products are the first wave.
+
+Claude Desktop is the interface. Claude Code is the builder. The Agent SDK is the platform. Cowork is the operator. Together, they cover the full spectrum from "help me think about this" to "go do this autonomously."
+
+The developers and teams who figure out how to use all four together will have a massive productivity advantage. The ones who stick to just the chatbot are leaving 80% of the value on the table.
+
+---
+
+**Want to stay ahead of the AI tools curve?** I break down new releases, compare products, and share what's actually working in my workflow every week. [Subscribe to my newsletter](/subscribe) for weekly takes you won't find anywhere else.
