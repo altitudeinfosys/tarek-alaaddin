@@ -183,6 +183,8 @@ Update Sheet status to `generating`, then follow the `/blog-post` skill workflow
 
 Evaluate the generated blog post using parallel sub-agents (Sonnet + Gemini) before building and creating the PR. Auto-revises content if issues are found.
 
+**Critique file path**: `/tmp/pipeline-critique-SLUG.txt` (deterministic path using the blog slug — persists across tool invocations, no shell variable scoping issues).
+
 1. **Update Sheet status** to `critiquing`:
    - Click on the Status cell for the current row
    - Type `critiquing`
@@ -191,21 +193,33 @@ Evaluate the generated blog post using parallel sub-agents (Sonnet + Gemini) bef
 2. **Load critique context**:
    - Read the generated MDX file from `/Users/tarekalaaddin/Projects/code/tarek-alaaddin/content/blog/SLUG.mdx`
    - Recall research notes from Phase 1.5
-   - Read the 2 most recent published posts from `content/blog/` as voice/style references
+   - Read the 2 most recent published posts from `content/blog/` as voice/style references — extract a ~200-word excerpt from each to use as voice calibration in step 4
 
-3. **Save blog content + research notes to a temp file** for Gemini CLI:
+3. **Write blog content + research notes to the critique file**:
    ```bash
-   CRITIQUE_FILE=$(mktemp) && echo "$CRITIQUE_FILE"
+   cat > /tmp/pipeline-critique-SLUG.txt << 'CRITIQUEOF'
+   === BLOG POST ===
+   <full MDX content from step 2>
+
+   === RESEARCH NOTES ===
+   <research notes summary from Phase 1.5>
+   CRITIQUEOF
    ```
-   Write the full MDX content and research notes summary to this file.
+   Verify the file was written:
+   ```bash
+   wc -w /tmp/pipeline-critique-SLUG.txt
+   ```
 
 4. **Dispatch parallel sub-agents** — launch BOTH in a SINGLE message:
+
+   > **Sub-agent failure handling**: If one agent fails or returns a malformed response (missing SCORE line), proceed with the other agent's results alone. Only fail the critique phase if BOTH agents fail. Parse SCORE as integer; if non-numeric, treat as 5 (neutral).
 
    **Sonnet — Content Quality, Voice & Structure:**
    ```
    Tool: Task
    subagent_type: "general-purpose"
    model: "sonnet"
+   max_turns: 3
    description: "Sonnet content critique"
    prompt: |
      You are a senior content editor. Critique this blog post across these dimensions:
@@ -216,7 +230,10 @@ Evaluate the generated blog post using parallel sub-agents (Sonnet + Gemini) bef
      - Strong hook in first paragraph, engaging section headers
      - Variety in sentence length and structure
      - Compare against these reference posts for voice calibration:
-       [paste 200-word excerpt from each reference post]
+       --- Reference Post 1 excerpt ---
+       <inline the ~200-word excerpt from reference post 1 here>
+       --- Reference Post 2 excerpt ---
+       <inline the ~200-word excerpt from reference post 2 here>
 
      **b) Structure & MDX:**
      - Frontmatter has all required fields (title, description, date, category, tags, image, published: true, featured: false)
@@ -252,11 +269,12 @@ Evaluate the generated blog post using parallel sub-agents (Sonnet + Gemini) bef
      <paste full MDX content here>
    ```
 
-   **Gemini — Factual Accuracy:**
+   **Gemini — Factual Accuracy** (haiku orchestrates the Bash call; Gemini runs via CLI):
    ```
    Tool: Task
    subagent_type: "Bash"
    model: "haiku"
+   max_turns: 2
    description: "Gemini factual accuracy check"
    prompt: |
      Run this command and return the COMPLETE output:
@@ -269,18 +287,22 @@ Evaluate the generated blog post using parallel sub-agents (Sonnet + Gemini) bef
      - INFO: Claims that could be more specific
 
      Format: List each finding with the claim text and your assessment.
-     End with: FACTUAL_SCORE: [1-10]" < "CRITIQUE_FILE_PATH"
+     End with: SCORE: [1-10]" < "/tmp/pipeline-critique-SLUG.txt" || echo "GEMINI_FAILED: gemini CLI returned non-zero exit code"
 
-     Replace CRITIQUE_FILE_PATH with: <actual temp file path>
+     Replace SLUG in the file path with the actual blog slug.
+     Return the full output. If the command fails, return the error message.
    ```
 
 5. **Collect results and synthesize critique report**:
 
-   After both agents return, synthesize:
+   After both agents return, synthesize. Parse `SCORE:` from each agent's output as an integer. If a score is missing or non-numeric, default to 5.
+
    ```
    CONTENT CRITIQUE REPORT
    ========================
-   Overall Score: [average of both scores]
+   Sonnet Score: [N]/10
+   Gemini Score: [N]/10
+   Overall Score: [average of both scores, rounded]
    Revision Required: [YES if either agent says YES or any CRITICAL issues]
 
    CRITICAL:
@@ -293,6 +315,8 @@ Evaluate the generated blog post using parallel sub-agents (Sonnet + Gemini) bef
    - [deduplicated list]
    ```
 
+   If one agent failed, note it and use only the successful agent's score as the overall score.
+
    Decision:
    - Score >= 8 AND no CRITICAL issues → **PASS** → skip to step 8
    - Otherwise → **REVISE** → continue to step 6
@@ -301,56 +325,79 @@ Evaluate the generated blog post using parallel sub-agents (Sonnet + Gemini) bef
    - Read the current MDX file
    - Apply all CRITICAL fixes first, then WARNINGS
    - Rewrite MDX file to the same path
+   - **Verify word count** after each revision:
+     ```bash
+     wc -w /Users/tarekalaaddin/Projects/code/tarek-alaaddin/content/blog/SLUG.mdx
+     ```
+     If word count dropped below 1500, revert the revision and proceed with the pre-revision version.
+   - Update the critique file with the revised content:
+     ```bash
+     cat > /tmp/pipeline-critique-SLUG.txt << 'CRITIQUEOF'
+     === BLOG POST ===
+     <revised MDX content>
+
+     === RESEARCH NOTES ===
+     <same research notes>
+     CRITIQUEOF
+     ```
    - Re-dispatch sub-agents (repeat steps 4-5)
-   - After 2 cycles: proceed regardless, flag remaining issues
+   - After 2 cycles: proceed regardless, flag remaining issues in the PR
 
    Guardrails:
-   - Never reduce word count below 1500
+   - Never reduce word count below 1500 (enforced by word count check above)
    - Never remove Callout components
    - Preserve overall section structure
    - Address specific findings, don't rewrite from scratch
 
 7. **Record critique results** in Sheet Notes column (H):
-   - `Critique: PASSED on attempt N, Score: X/10`
-   - If warnings remain: append brief summary
+   - Format: `Critique: PASSED on attempt {cycle_number}, Score: {overall_score}/10`
+   - If warnings remain: append brief summary of unresolved warnings
+   - Store the overall score and cycle number — these are used in the PR body (step 11)
 
-8. **Cleanup temp file**:
+8. **Cleanup critique file**:
    ```bash
-   rm -f "$CRITIQUE_FILE"
+   rm -f /tmp/pipeline-critique-SLUG.txt
    ```
 
-9. **Proceed to build** (continue to Phase 2 step 6 below)
+9. **Proceed to build** (continue to step 10 below)
 
 ### Phase 2 (continued): Build, Branch & PR
 
-6. **Build and verify**:
-   ```bash
-   cd /Users/tarekalaaddin/Projects/code/tarek-alaaddin && npx next build
-   ```
-   If build fails, fix the issue and rebuild. If it fails 3 times, mark as `failed` in the Sheet and STOP.
+10. **Build and verify**:
+    ```bash
+    cd /Users/tarekalaaddin/Projects/code/tarek-alaaddin && npx next build
+    ```
+    If build fails, fix the issue and rebuild. If it fails 3 times, mark as `failed` in the Sheet and STOP.
 
-7. **Create branch, commit, push, and PR**:
-   ```bash
-   git checkout -b blog/SLUG
-   git add content/blog/SLUG.mdx
-   git commit -m "Add blog post: POST_TITLE"
-   git push -u origin blog/SLUG
-   gh pr create --title "Add blog post: SHORT_TITLE" --body "$(cat <<'EOF'
-   ## Summary
-   - New blog post: TITLE
-   - Category: CATEGORY
-   - Pipeline-generated
-   - Critique score: X/10 (passed on attempt N)
+11. **Create branch, commit, push, and PR**:
+    ```bash
+    git checkout -b blog/SLUG
+    git add content/blog/SLUG.mdx
+    git commit -m "Add blog post: POST_TITLE"
+    git push -u origin blog/SLUG
+    ```
+    Create the PR, substituting actual values from the critique report (step 7):
+    - Replace `CRITIQUE_SCORE` with the overall score from step 7 (e.g., `8`)
+    - Replace `CRITIQUE_ATTEMPT` with the cycle number from step 7 (e.g., `1`)
+    - Replace `REMAINING_WARNINGS` with the list of unresolved warnings, or omit the section if none
+    ```bash
+    gh pr create --title "Add blog post: SHORT_TITLE" --body "$(cat <<'EOF'
+    ## Summary
+    - New blog post: TITLE
+    - Category: CATEGORY
+    - Pipeline-generated
+    - Critique score: CRITIQUE_SCORE/10 (passed on attempt CRITIQUE_ATTEMPT)
 
-   ## Remaining Critique Warnings
-   [If any warnings remain from Phase 2.5, list them here. Otherwise omit this section.]
+    ## Remaining Critique Warnings
+    REMAINING_WARNINGS
 
-   🤖 Generated with [Claude Code](https://claude.com/claude-code)
-   EOF
-   )"
-   ```
+    🤖 Generated with [Claude Code](https://claude.com/claude-code)
+    EOF
+    )"
+    ```
+    If there are no remaining warnings, omit the "Remaining Critique Warnings" section entirely.
 
-8. **Update Sheet**: Write the blog slug to column D for that row.
+12. **Update Sheet**: Write the blog slug to column D for that row.
 
 ### Phase 3: Wait for PR Merge (Semi-Auto Gate)
 
@@ -489,7 +536,7 @@ Rules:
 | PR is merged | Phase 3 | Wait or mark failed |
 | Logged into X | Phase 5 | Skip X, continue to LinkedIn |
 | Logged into LinkedIn | Phase 6 | Skip LinkedIn, update status |
-| Critique passes | Phase 2.5 | Auto-revise up to 2x, then proceed with warnings |
+| Critique score < 8 or has CRITICAL issues | Phase 2.5 | Auto-revise up to 2x, then proceed with warnings |
 | Sheet is accessible | Phase 1 | STOP with error |
 
 ## Rate Limiting
@@ -501,7 +548,7 @@ Rules:
 ## Dry Run Mode
 
 When invoked with `dry-run`:
-- Phases 0-2.5 run normally (blog post is generated, critiqued, branch + PR created)
+- Phases 0-2.5 run normally (blog post is generated, critiqued, branch + PR created). Note: critique phase runs in dry-run intentionally — this tests the full quality gate pipeline.
 - Phase 3 skips PR wait
 - Phases 5-6 skip actual posting (screenshots are still taken of the compose view)
 - Phase 7 marks status as `dry-run-complete` instead of `done`
@@ -514,7 +561,7 @@ If the pipeline fails mid-run:
 3. Fix the issue and re-run — the pipeline will resume from the failed phase based on status:
    - `researching` → restart from Phase 1.5
    - `generating` → restart from Phase 2
-   - `critiquing` → restart from Phase 2.5 (re-read existing MDX and critique it)
+   - `critiquing` → restart from Phase 2.5 step 2 (re-read existing MDX and critique it, revision cycle count resets to 0)
    - `generated` → restart from Phase 4
    - `posted-x` → restart from Phase 6
    - `posting-x` or `posting-linkedin` → retry that phase
