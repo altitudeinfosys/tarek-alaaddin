@@ -72,7 +72,7 @@ Use this table to pick the correct tool based on the active backend:
 
 | A: Topic | B: Status | C: Date Queued | D: Blog Slug | E: Blog URL | F: X Text | G: LinkedIn Text | H: Notes |
 
-**Status values flow**: `queued` → `researching` → `generating` → `generated` → `posted-x` → `posted-linkedin` → `done`
+**Status values flow**: `queued` → `researching` → `generating` → `critiquing` → `generated` → `posted-x` → `posted-linkedin` → `done`
 
 On failure at any stage: status becomes `failed` and the error is written to the Notes column (H).
 
@@ -179,6 +179,150 @@ Update Sheet status to `generating`, then follow the `/blog-post` skill workflow
    - End with newsletter CTA
    - Write to `/Users/tarekalaaddin/Projects/code/tarek-alaaddin/content/blog/SLUG.mdx`
 
+### Phase 2.5: AI Content Critique
+
+Evaluate the generated blog post using parallel sub-agents (Sonnet + Gemini) before building and creating the PR. Auto-revises content if issues are found.
+
+1. **Update Sheet status** to `critiquing`:
+   - Click on the Status cell for the current row
+   - Type `critiquing`
+   - Press Enter
+
+2. **Load critique context**:
+   - Read the generated MDX file from `/Users/tarekalaaddin/Projects/code/tarek-alaaddin/content/blog/SLUG.mdx`
+   - Recall research notes from Phase 1.5
+   - Read the 2 most recent published posts from `content/blog/` as voice/style references
+
+3. **Save blog content + research notes to a temp file** for Gemini CLI:
+   ```bash
+   CRITIQUE_FILE=$(mktemp) && echo "$CRITIQUE_FILE"
+   ```
+   Write the full MDX content and research notes summary to this file.
+
+4. **Dispatch parallel sub-agents** — launch BOTH in a SINGLE message:
+
+   **Sonnet — Content Quality, Voice & Structure:**
+   ```
+   Tool: Task
+   subagent_type: "general-purpose"
+   model: "sonnet"
+   description: "Sonnet content critique"
+   prompt: |
+     You are a senior content editor. Critique this blog post across these dimensions:
+
+     **a) Voice & Writing Quality:**
+     - Matches target voice: conversational, direct, bold opinions, data-driven
+     - No AI-writing cliches ("In today's rapidly evolving...", "It's worth noting...", "In conclusion...")
+     - Strong hook in first paragraph, engaging section headers
+     - Variety in sentence length and structure
+     - Compare against these reference posts for voice calibration:
+       [paste 200-word excerpt from each reference post]
+
+     **b) Structure & MDX:**
+     - Frontmatter has all required fields (title, description, date, category, tags, image, published: true, featured: false)
+     - 8-15 sections, 1500-3000 words, 2-3 Callout components with varied types
+     - Code blocks have language annotations
+     - Ends with newsletter CTA
+
+     **c) SEO & Discoverability:**
+     - Title 50-70 characters, includes primary keyword
+     - Description 150-160 characters
+     - H2s include relevant search terms
+     - Tags are specific and discoverable
+
+     **d) Technical Accuracy** (if topic is technical):
+     - Code examples syntactically correct
+     - CLI commands use correct flags
+     - No contradictions within the post
+
+     Format response as:
+     SCORE: [1-10]
+     REVISION_REQUIRED: [YES/NO]
+
+     CRITICAL (must fix):
+     - [list with line references]
+
+     WARNINGS (should fix):
+     - [list with line references]
+
+     SUGGESTIONS (nice to have):
+     - [list]
+
+     BLOG POST:
+     <paste full MDX content here>
+   ```
+
+   **Gemini — Factual Accuracy:**
+   ```
+   Tool: Task
+   subagent_type: "Bash"
+   model: "haiku"
+   description: "Gemini factual accuracy check"
+   prompt: |
+     Run this command and return the COMPLETE output:
+
+     gemini -p "You are a fact-checker. Review this blog post against the research notes provided.
+     Cross-reference EVERY specific claim (prices, features, dates, versions, stats, comparisons)
+     against the research notes. Flag:
+     - CRITICAL: Claims that contradict the research notes (wrong facts)
+     - WARNING: Claims not supported by research notes (unverified)
+     - INFO: Claims that could be more specific
+
+     Format: List each finding with the claim text and your assessment.
+     End with: FACTUAL_SCORE: [1-10]" < "CRITIQUE_FILE_PATH"
+
+     Replace CRITIQUE_FILE_PATH with: <actual temp file path>
+   ```
+
+5. **Collect results and synthesize critique report**:
+
+   After both agents return, synthesize:
+   ```
+   CONTENT CRITIQUE REPORT
+   ========================
+   Overall Score: [average of both scores]
+   Revision Required: [YES if either agent says YES or any CRITICAL issues]
+
+   CRITICAL:
+   - [deduplicated list from both agents]
+
+   WARNINGS:
+   - [deduplicated list from both agents]
+
+   SUGGESTIONS:
+   - [deduplicated list]
+   ```
+
+   Decision:
+   - Score >= 8 AND no CRITICAL issues → **PASS** → skip to step 8
+   - Otherwise → **REVISE** → continue to step 6
+
+6. **Auto-revise** (max 2 cycles):
+   - Read the current MDX file
+   - Apply all CRITICAL fixes first, then WARNINGS
+   - Rewrite MDX file to the same path
+   - Re-dispatch sub-agents (repeat steps 4-5)
+   - After 2 cycles: proceed regardless, flag remaining issues
+
+   Guardrails:
+   - Never reduce word count below 1500
+   - Never remove Callout components
+   - Preserve overall section structure
+   - Address specific findings, don't rewrite from scratch
+
+7. **Record critique results** in Sheet Notes column (H):
+   - `Critique: PASSED on attempt N, Score: X/10`
+   - If warnings remain: append brief summary
+
+8. **Cleanup temp file**:
+   ```bash
+   rm -f "$CRITIQUE_FILE"
+   ```
+
+9. **Proceed to build** (continue to Phase 2 step 6 below)
+
+### Phase 2 (continued): Build, Branch & PR
+
 6. **Build and verify**:
    ```bash
    cd /Users/tarekalaaddin/Projects/code/tarek-alaaddin && npx next build
@@ -191,7 +335,19 @@ Update Sheet status to `generating`, then follow the `/blog-post` skill workflow
    git add content/blog/SLUG.mdx
    git commit -m "Add blog post: POST_TITLE"
    git push -u origin blog/SLUG
-   gh pr create --title "Add blog post: SHORT_TITLE" --body "## Summary\n- New blog post: TITLE\n- Category: CATEGORY\n- Pipeline-generated\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+   gh pr create --title "Add blog post: SHORT_TITLE" --body "$(cat <<'EOF'
+   ## Summary
+   - New blog post: TITLE
+   - Category: CATEGORY
+   - Pipeline-generated
+   - Critique score: X/10 (passed on attempt N)
+
+   ## Remaining Critique Warnings
+   [If any warnings remain from Phase 2.5, list them here. Otherwise omit this section.]
+
+   🤖 Generated with [Claude Code](https://claude.com/claude-code)
+   EOF
+   )"
    ```
 
 8. **Update Sheet**: Write the blog slug to column D for that row.
@@ -333,6 +489,7 @@ Rules:
 | PR is merged | Phase 3 | Wait or mark failed |
 | Logged into X | Phase 5 | Skip X, continue to LinkedIn |
 | Logged into LinkedIn | Phase 6 | Skip LinkedIn, update status |
+| Critique passes | Phase 2.5 | Auto-revise up to 2x, then proceed with warnings |
 | Sheet is accessible | Phase 1 | STOP with error |
 
 ## Rate Limiting
@@ -344,7 +501,7 @@ Rules:
 ## Dry Run Mode
 
 When invoked with `dry-run`:
-- Phases 0-2 run normally (blog post is generated, branch + PR created)
+- Phases 0-2.5 run normally (blog post is generated, critiqued, branch + PR created)
 - Phase 3 skips PR wait
 - Phases 5-6 skip actual posting (screenshots are still taken of the compose view)
 - Phase 7 marks status as `dry-run-complete` instead of `done`
@@ -357,6 +514,7 @@ If the pipeline fails mid-run:
 3. Fix the issue and re-run — the pipeline will resume from the failed phase based on status:
    - `researching` → restart from Phase 1.5
    - `generating` → restart from Phase 2
+   - `critiquing` → restart from Phase 2.5 (re-read existing MDX and critique it)
    - `generated` → restart from Phase 4
    - `posted-x` → restart from Phase 6
    - `posting-x` or `posting-linkedin` → retry that phase
