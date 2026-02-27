@@ -1,0 +1,197 @@
+---
+title: "Stop Paying for 20 Features When You Need 2: Build AI Agents Instead"
+description: "I cut my $400/month SaaS stack to $60 using custom AI agents. Here's the exact approach, tools, and mindset shift that made it work."
+date: "2026-02-26"
+category: "ai"
+tags: ["ai", "ai-agents", "solopreneur", "claude-code", "chatgpt", "productivity", "automation"]
+image: "/images/blog/solopreneur-ai-agents.jpg"
+published: true
+featured: false
+---
+
+I audited my SaaS subscriptions last year and found I was paying $400 a month for tools where I used maybe 10% of the features. So I replaced most of them with custom AI agents that cost $60 total. This is what I learned.
+
+## I Was Paying $400/Month for Features I Never Used
+
+Last year, I sat down and audited every SaaS subscription I was paying for. The total came to just over $400 a month. CRM, email marketing, social scheduling, project management, analytics, customer support — the usual solopreneur stack.
+
+Then I counted how many features I actually used in each tool.
+
+The CRM? Two features out of maybe forty. The project management tool? Three. The email marketing platform? Literally just the broadcast send feature and one automation. I was paying full price for entire product suites when I needed a fraction of what they offered.
+
+And I had justified every single one of those purchases at the time. "I might need those features later." "It's only $30 a month." "Switching costs are too high."
+
+No more.
+
+## The Solopreneur's Dilemma: Full-Price Tools for Half-Use Cases
+
+I'm not alone in this. According to Founder Reports, there are 29.8 million solopreneurs in the United States generating a combined $1.7 trillion in revenue. And a recent survey found that 78% of them expect AI to fundamentally change how they operate.
+
+The pattern is everywhere. You need a tool that does one specific thing. You search Product Hunt or G2, find a SaaS that technically does that thing — along with 15 other things you don't care about — and subscribe. Multiply that by 8 or 10 tools. Now you're spending hundreds a month, learning 10 different interfaces, and wrestling with integrations that barely work.
+
+The SaaS model was built for teams with budgets. Not for one person trying to ship fast.
+
+<Callout type="warning">
+**The $285 billion SaaS market is facing a correction** (per Deloitte's 2026 tech predictions). When one person with AI agents can accomplish the work of five traditional employees, per-seat pricing collapses. The disruption isn't coming — it's already here.
+</Callout>
+
+## What Changed: AI Agents Actually Work Now
+
+Here's the thing that shifted for me in 2025 and accelerated into 2026: AI agents stopped being demos and started being tools.
+
+Not the "autonomous AGI" hype you see on Twitter. I mean practical, scoped agents that do one job reliably. An agent that drafts social media posts from my blog content. An agent that researches competitors before I write. An agent that manages my content pipeline from topic selection to publishing.
+
+The key word is **scoped**. These aren't general-purpose assistants trying to do everything. They're specialists with clear inputs, clear outputs, and guardrails around their authority.
+
+## My Stack: Three Tools, Zero SaaS Bloat
+
+I replaced most of that $400/month tool stack with three AI platforms:
+
+### Claude Code ($20/month — Pro plan)
+
+This is the backbone. Claude Code isn't just a chatbot — it's an agentic coding tool that understands your entire codebase. I use it to build everything else.
+
+What makes it different from just chatting with an AI:
+- **It plans, then executes.** Give it a task and it figures out which files to read, what to change, and in what order.
+- **Sub-agents.** It can spawn specialized workers that handle different parts of a task in parallel. I have sub-agents that do code review, fact-checking, and content critique — all running simultaneously.
+- **Skills system.** You write a markdown file describing a workflow, and Claude Code turns it into a reusable slash command. My `/pipeline-run` command handles my entire blog-to-social-media workflow from reading a Google Sheet to posting on X and LinkedIn.
+- **MCP integrations.** It connects to external tools — Google Sheets, GitHub, Supabase — without building custom APIs.
+
+I treat Claude Code like a senior developer on my team. I give it context, set expectations, and let it execute. When it makes mistakes, I refine the instructions and it gets better. (If you want to understand the full Claude ecosystem, I wrote a deep dive on [every Claude product explained](/blog/every-claude-product-explained).)
+
+### ChatGPT Plus ($20/month)
+
+ChatGPT handles the thinking work that doesn't involve code:
+- **Agent Mode** — autonomous multi-step task execution, available to Plus subscribers as of mid-2025. I use this for market research workflows that require browsing multiple sites and synthesizing findings.
+- **Custom GPTs** — I have one configured with my brand voice, writing style, and content guidelines. When I need a first draft, it already knows how I write. No prompt engineering every time.
+- **Canvas** — collaborative document editing where I can iterate on drafts with AI. Better than chat for long-form content.
+- **Projects** — organized workspaces where I keep context grouped by client or initiative.
+
+The $200/month Pro plan exists if you need GPT-5 reasoning, but Plus covers 90% of what a solopreneur needs.
+
+### Perplexity Pro ($20/month or $200/year)
+
+Perplexity is my research layer:
+- **Sourced answers with citations** — every claim comes with links to the original source. No hallucinated facts.
+- **Deep Research** — generates comprehensive reports on any topic. I used to spend 2-3 hours compiling competitive analyses manually. Now it's a 5-minute prompt.
+- **$5/month API credit** — useful if you're building research features into your own tools.
+
+Where ChatGPT is good at generating and reasoning, Perplexity is better at finding and verifying. They complement each other.
+
+**Total monthly cost: $60.** Down from $400+. And the tools do more.
+
+<Callout type="info">
+**The math is brutal for traditional SaaS.** A mid-tier support platform like Zendesk or Intercom costs $50-150/seat/month, and most solopreneurs don't need even half the features. An AI agent handling 60-80% of routine support tickets? You can build that on a $20/month AI subscription. The pattern repeats across every SaaS category.
+</Callout>
+
+## How I Actually Build Agents: It's Simpler Than You Think
+
+I'm not writing complex frameworks or training custom models. The approach is embarrassingly simple:
+
+### Step 1: Identify the Repeated Task
+
+Every week, I do the same content workflow: pick a topic, research it, write a blog post, generate social copy, post to X, post to LinkedIn, update my tracking sheet. That's 4-6 hours of work, every week.
+
+### Step 2: Write It Down as Instructions
+
+Before touching any code, I write the process in plain English. Literally a step-by-step document: "First, read the Google Sheet. Find the first row where status is 'queued'. Extract the topic." And so on for each phase.
+
+### Step 3: Turn It Into a Skill File
+
+In Claude Code, a "skill" is just a markdown file that describes a workflow. Mine lives at `.claude/skills/pipeline-run/SKILL.md`. It's about 400 lines of instructions covering seven phases — from reading the queue to finalizing the post. Here's what part of it looks like:
+
+```markdown
+### Phase 1: Read Queue from Google Sheet
+
+1. **Fetch sheet data via CSV export**:
+   - Navigate to the export URL (carries auth cookies)
+   - Parse CSV: split by newlines, then by commas
+   - Build a row array with topic, status, date
+
+2. **Find the first row where Status = `queued`**
+
+3. If no queued topics found → STOP
+
+4. **Navigate to the sheet UI** for status updates:
+   - Click on the Status cell, type `researching`, press Enter
+```
+
+No Python framework. No LangChain. No custom API endpoints. Just markdown instructions that an AI agent follows step by step.
+
+### Step 4: Iterate on the Process
+
+This is the part people skip. The first version of any agent is mediocre. The magic is in refinement. When my content pipeline misread the Google Sheet because of canvas rendering issues, I didn't scrap it — I changed the approach to use CSV exports instead. When the AI critique phase was too lenient, I added parallel reviewers — multiple AI models cross-checking each other's work for factual accuracy and writing quality.
+
+Each failure makes the agent better. Same as training a human employee.
+
+## Treating Agents Like Employees
+
+This mindset shift is everything. I don't think of these as "AI tools." I think of them as employees with very specific job descriptions.
+
+**Training:** When an agent makes a mistake, I update its instructions. Just like you'd coach a team member. The CLAUDE.md file in my project is the employee handbook — coding standards, workflow rules, safety checks.
+
+**Authority levels:** My agents have guardrails. The content pipeline can create branches and pull requests, but it can't merge to main without my approval. It can draft social posts, but it won't publish without a dry-run first. Clear boundaries, just like delegating to a real person.
+
+**Performance reviews:** I track what works and what doesn't. The AI critique phase gives me a quality score for each blog post. If scores trend down, I know the instructions need updating.
+
+**Specialization:** I don't ask one agent to do everything. I have specialists. One for content. One for code review. One for research. Just like you wouldn't hire one person to do sales, marketing, engineering, and support.
+
+<Callout type="tip">
+**The 80/20 rule applies.** AI agents handle 80-90% of repetitive and creative work. The remaining 10-20% — strategic decisions, relationship building, creative direction — that's where you focus your human energy.
+</Callout>
+
+## What You Can Build This Weekend
+
+If you're a solopreneur who writes code (or is willing to learn), here's what you can build with a weekend and a $20 Claude Code subscription:
+
+**Content pipeline agent** — reads topics from a spreadsheet, researches them, generates blog posts, creates social media copy. My version handles the entire workflow from queue to published post.
+
+**Email triage agent** — scans incoming emails, categorizes by priority, drafts responses for routine inquiries, flags urgent items for your attention.
+
+**Research agent** — given a topic or competitor, it searches the web, compiles findings, and generates a structured brief with sources.
+
+**Customer support agent** — monitors a support inbox or channel, answers common questions using your documentation, escalates anything it can't handle.
+
+**Expense categorization agent** — reads receipts and invoices you upload, categorizes them, and generates a summary spreadsheet. Not a full bookkeeping replacement (use a real accountant for that), but handles the data entry grunt work.
+
+None of these require machine learning expertise. They require clear instructions and good process thinking.
+
+## Why Most Solopreneurs Dismiss AI Agents Too Fast
+
+**"AI makes too many mistakes."** Scoped agents with good instructions and verification steps are remarkably reliable. My content pipeline has a dual-AI critique phase that catches factual errors before I ever see the post. The key is building in checkpoints, not hoping for perfection.
+
+**"I don't want to maintain custom tools."** Fair point, but maintaining a custom agent is simpler than you think. It's a markdown file with instructions. When something breaks, you update the instructions. No dependencies to manage, no deployments to worry about. Compare that to wrestling with Zapier integrations that break every time a connected service updates their API.
+
+**"The AI will replace me."** No. The AI replaces the grunt work. You're still the strategist, the relationship builder, the person with judgment. The solopreneur who uses AI agents isn't being replaced — they're being multiplied.
+
+**"I should just hire someone."** At what cost? A virtual assistant runs $15-25/hour. A developer, $75-150/hour. An AI agent that handles the work of both? $60/month total. And it works 24/7 without PTO.
+
+## The Future Is Fewer Tools, More Agents
+
+Here's my prediction: within two years, the average solopreneur's tech stack will look radically different. Instead of 10 SaaS subscriptions, they'll have 2-3 AI platforms and a collection of custom agents built on top of them.
+
+The tools that survive will be the ones that either become agent platforms themselves (Notion with AI, Linear with AI) or become so specialized that building a replacement isn't worth it (Stripe for payments, Vercel for deployments).
+
+Everything in between — the CRMs, the project managers, the analytics dashboards, the scheduling tools — is at risk of being replaced by an agent that does exactly what you need and nothing more.
+
+According to Netguru's 2026 AI adoption report, 89% of US small businesses already use AI for daily tasks. The question isn't whether this shift happens. It's whether you're building the agents or still paying for the features you don't use.
+
+## Your First Agent Starts With a Markdown File
+
+The barrier to building AI agents is a markdown file and a $20 subscription. That's it. You don't need ML expertise, transformer architecture knowledge, or a computer science degree. You need:
+
+1. A process you repeat at least weekly
+2. The ability to write that process as step-by-step instructions
+3. Twenty dollars a month
+
+My content pipeline started as a rough markdown document I wrote in an hour. Six months later, it handles my entire blog-to-social-media workflow autonomously. Not because I'm a great AI engineer — because I kept refining the instructions every time something broke.
+
+The solopreneurs who figure this out first will have an unfair advantage for the next few years. Everyone else will keep paying $400 a month for features they don't use.
+
+Pick one task you do every week. Write down every step. Feed those steps to an AI agent. Iterate until it works.
+
+That's the whole playbook.
+
+---
+
+*I share the actual tools, workflows, and agent configurations I use to run my business. Subscribe to get the breakdowns — including the skill files and prompts behind each agent I build.*
