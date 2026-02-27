@@ -74,6 +74,24 @@ Use this table to pick the correct tool based on the active backend:
 
 **Status values flow**: `queued` → `researching` → `generating` → `critiquing` → `generated` → `posted-x` → `posted-linkedin` → `done`
 
+**Writing multiline text to cells**: Google Sheets treats Enter as "move to next row." To insert a newline *within* a cell (needed for X Text and LinkedIn Text columns), use this pattern:
+
+```javascript
+// Split text on newlines, type each line, press Ctrl+Enter between lines
+const lines = text.split('\n');
+for (let i = 0; i < lines.length; i++) {
+  if (lines[i].length > 0) {
+    await page.keyboard.type(lines[i]);
+  }
+  if (i < lines.length - 1) {
+    await page.keyboard.press('Control+Enter'); // newline within cell
+  }
+}
+await page.keyboard.press('Tab'); // confirm cell and move to next column
+```
+
+This applies to both Playwright (`page.keyboard`) and Chrome Extension (`computer` action with key `ctrl+Enter`). **Never use `keyboard.type()` directly with text containing `\n` characters** — it will spill into subsequent rows.
+
 On failure at any stage: status becomes `failed` and the error is written to the Notes column (H).
 
 ## Process
@@ -477,7 +495,9 @@ Rules:
 - End with a question to drive comments
 - Mention "link in comments" if you want to maximize reach (LinkedIn deprioritizes posts with links)
 
-1. **Update Sheet**: Write X text to column F, LinkedIn text to column G
+1. **Update Sheet**: Write X text to column F, LinkedIn text to column G.
+   - Click on cell F{row}, then use the **multiline text pattern** from the Google Sheet Setup section (Ctrl+Enter between lines, never raw `\n`). Press Tab to confirm and move to column G.
+   - Click on cell G{row}, then use the same multiline text pattern for LinkedIn copy. Press Tab to confirm.
 2. **Update status** to `generated`
 
 ### Phase 5: Post to X
