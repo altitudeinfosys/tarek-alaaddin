@@ -64,6 +64,36 @@ Use this table to pick the correct tool based on the active backend:
 - **First-time setup**: Run the pipeline once, then log into Google Sheets, X, and LinkedIn manually in the Playwright browser window. Subsequent runs reuse the saved session.
 - If sessions expire, log in again manually in the Playwright browser
 
+### Browser Resilience
+
+The pipeline autonomously recovers from browser crashes and stuck sessions. **No user permission is needed** to kill stuck browser processes — the objective is pipeline completion.
+
+#### Auto-Recovery Procedure
+
+When any browser tool call fails with a timeout, connection error, or unresponsive page:
+
+1. **Identify the failure type**:
+   - `TimeoutError` / `Target closed` / `Connection refused` → browser crash
+   - `Opening in existing browser session` / profile lock error → stale Chrome process
+   - `Page not found` / `Navigation timeout` → transient network issue
+
+2. **For browser crash or profile lock** (Playwright backend):
+   ```bash
+   # Find and kill stuck Chrome processes holding the Playwright profile
+   CHROME_PIDS=$(lsof +D "/Users/tarekalaaddin/Library/Caches/ms-playwright/mcp-chrome-profile" 2>/dev/null | awk 'NR>1{print $2}' | sort -u)
+   if [ -n "$CHROME_PIDS" ]; then
+     echo "$CHROME_PIDS" | xargs kill -9 2>/dev/null
+     sleep 2
+   fi
+   ```
+   Then retry the browser operation.
+
+3. **For Chrome Extension backend**: If `tabs_context_mcp` fails, fall back to Playwright backend automatically. Re-run browser detection.
+
+4. **Retry logic**: Retry the failed browser operation up to 3 times with 5-second waits between attempts. If all 3 retries fail, mark the current phase as `failed` and stop.
+
+5. **Log all recovery actions**: Write to Notes column (H) when auto-recovery occurs, e.g., "Auto-recovered: killed stuck Chrome PID, retried Phase 5"
+
 ## Google Sheet Setup
 
 **Sheet URL**: `https://docs.google.com/spreadsheets/d/1xfPdknbYRaftoy-BndQp6rkT3NTaebfcyr9nXTqunPA/edit?gid=0#gid=0`
@@ -75,6 +105,8 @@ Use this table to pick the correct tool based on the active backend:
 **Status values flow**: `queued` → `researching` → `generating` → `critiquing` → `generated` → `posted-x` → `posted-linkedin` → `done`
 
 On failure at any stage: status becomes `failed` and the error is written to the Notes column (H).
+
+**Dropdown validation note**: The Status column (B) uses data validation with a dropdown. Some pipeline statuses (`researching`, `critiquing`, `posting-x`, `posting-linkedin`) may not be in the dropdown list and will trigger a validation warning popup. **Dismiss these warnings automatically** — click "OK" or press Escape if a validation warning appears after typing a status value. The value is saved regardless of the warning.
 
 ## Process
 
@@ -399,28 +431,45 @@ Evaluate the generated blog post using parallel sub-agents (Sonnet + Gemini) bef
 
 12. **Update Sheet**: Write the blog slug to column D for that row.
 
-### Phase 3: Wait for PR Merge (Semi-Auto Gate)
+### Phase 3: Wait for PR Merge (Active Polling)
 
-This is the approval gate. The blog PR must be merged before social posting proceeds.
+The pipeline actively monitors PR merge status and continues automatically when merged.
 
-1. Check PR status every 5 minutes:
+1. **Start polling loop** using a background Bash command:
    ```bash
-   gh pr view blog/SLUG --json state -q '.state'
+   PR_BRANCH="blog/SLUG"
+   TIMEOUT=3600  # 1 hour max wait
+   INTERVAL=120  # Check every 2 minutes
+   ELAPSED=0
+   while [ $ELAPSED -lt $TIMEOUT ]; do
+     STATE=$(gh pr view "$PR_BRANCH" --json state -q '.state' 2>/dev/null)
+     if [ "$STATE" = "MERGED" ]; then
+       echo "PR_MERGED"
+       exit 0
+     elif [ "$STATE" = "CLOSED" ]; then
+       echo "PR_CLOSED"
+       exit 1
+     fi
+     sleep $INTERVAL
+     ELAPSED=$((ELAPSED + INTERVAL))
+   done
+   echo "PR_TIMEOUT"
+   exit 2
    ```
-2. If state is `MERGED`:
-   - Continue to Phase 4
-   - Update local main:
-     ```bash
-     git checkout main && git pull
-     ```
-3. If state is `CLOSED` (rejected):
-   - Mark queue item as `failed` with note "PR was closed/rejected"
-   - STOP
-4. If state is `OPEN` after 24 hours:
-   - Mark queue item as `failed` with note "PR not merged within 24h"
-   - STOP
-5. **For automated runs**: Poll using a loop with 5-minute sleep intervals
-6. **For manual runs**: Tell the user "PR is open. Merge it when ready, then run `/pipeline-run` again to continue."
+   Run this as a background task using `run_in_background: true`.
+
+2. **While waiting**, inform the user:
+   - "PR created. Monitoring for merge — will continue automatically when merged."
+   - Include the PR URL for the user to review and merge.
+
+3. **Check the background task** periodically using `TaskOutput` (non-blocking with `block: false`).
+
+4. **On result**:
+   - `PR_MERGED` → Update local main (`git checkout main && git pull`) → Continue to Phase 4
+   - `PR_CLOSED` → Mark queue item as `failed` with note "PR was closed/rejected" → STOP
+   - `PR_TIMEOUT` → Mark queue item as `failed` with note "PR not merged within 1 hour" → STOP
+
+5. **For dry-run mode**: Skip polling entirely, proceed directly to Phase 4.
 
 ### Phase 4: Generate Social Media Copy
 
@@ -488,6 +537,11 @@ Rules:
    - Type the tweet text
    - Take a pre-post screenshot (save to `logs/pipeline/screenshots/`)
    - Click Post
+     - **Known issue**: X's Post button sometimes has overlay elements intercepting clicks.
+     - **Workaround**: If the standard click fails (TimeoutError with "subtree intercepts pointer events"):
+       1. Get button coordinates via JavaScript: `document.querySelector('[data-testid="tweetButton"]').getBoundingClientRect()`
+       2. Click by coordinates using `page.mouse.click(x, y)` (Playwright) or `computer` action with coordinates (Chrome Extension)
+       3. Verify success by checking if URL changed from `/compose/post` to `/home`
    - Wait 3 seconds
    - Take a post-post screenshot (save to `logs/pipeline/screenshots/`)
    - Verify success
@@ -533,11 +587,13 @@ Rules:
 | Git repo is clean | Phase 0 | Stash changes or STOP |
 | No duplicate slug | Phase 2 | Modify slug |
 | Build passes | Phase 2 | Fix or mark failed |
-| PR is merged | Phase 3 | Wait or mark failed |
+| PR is merged | Phase 3 | Auto-poll for 1 hour, then mark failed |
 | Logged into X | Phase 5 | Skip X, continue to LinkedIn |
 | Logged into LinkedIn | Phase 6 | Skip LinkedIn, update status |
 | Critique score < 8 or has CRITICAL issues | Phase 2.5 | Auto-revise up to 2x, then proceed with warnings |
 | Sheet is accessible | Phase 1 | STOP with error |
+| Browser crash/timeout | Any browser phase | Auto-recover: kill stuck processes, retry 3x |
+| PR not merged | Phase 3 | Poll for 1 hour, then mark failed |
 
 ## Rate Limiting
 
@@ -565,6 +621,7 @@ If the pipeline fails mid-run:
    - `generated` → restart from Phase 4
    - `posted-x` → restart from Phase 6
    - `posting-x` or `posting-linkedin` → retry that phase
+   - Browser crash during any phase → Auto-recover (kill stuck processes, retry). If unrecoverable, mark as `failed` with error details in Notes column.
 
 ## Logging
 
