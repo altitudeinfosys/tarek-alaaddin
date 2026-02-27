@@ -74,6 +74,8 @@ Use this table to pick the correct tool based on the active backend:
 
 **Status values flow**: `queued` → `researching` → `generating` → `critiquing` → `generated` → `posted-x` → `posted-linkedin` → `done`
 
+**Sheet formatting**: Text wrapping should be OFF for columns F (X Text) and G (LinkedIn Text), with single-line row heights. Column A (Topic) keeps wrapping ON for readability. This ensures all rows are visible when navigating the sheet. Long content in F and G columns will overflow but won't expand row heights. The pipeline reads data via CSV export, so visual formatting does not affect functionality — these settings are purely for human readability.
+
 On failure at any stage: status becomes `failed` and the error is written to the Notes column (H).
 
 ## Process
@@ -97,20 +99,29 @@ On failure at any stage: status becomes `failed` and the error is written to the
 
 ### Phase 1: Read Queue from Google Sheet
 
-1. Create a new tab (see Tool Mapping table)
-2. Navigate to the Google Sheet URL
-3. Wait for the sheet to load (3 seconds)
-4. Read the sheet contents using page structure reading or text extraction (see Tool Mapping table)
-5. Find the first row where column B (Status) = `queued`
-6. If no queued topics found:
+1. **Fetch sheet data via CSV export** (reliable, avoids canvas rendering issues):
+   - Navigate to: `https://docs.google.com/spreadsheets/d/1xfPdknbYRaftoy-BndQp6rkT3NTaebfcyr9nXTqunPA/export?format=csv`
+   - The browser carries auth cookies, so this works even for private sheets
+   - Extract the page text content (raw CSV)
+   - Parse CSV: split by newlines, then by commas (handle quoted fields)
+   - Build a row array: `[{row: N, topic: "...", status: "...", ...}, ...]`
+
+2. **Find the first row where Status = `queued`**
+   - Scan the parsed rows for the first with status column = `queued`
+
+3. If no queued topics found:
    - Log: "No queued topics found. Pipeline complete."
    - STOP
-7. Extract the topic from column A of that row
-8. Note the row number for later updates
-9. Update status to `researching`:
-   - Click on the Status cell for that row
+
+4. Extract the topic and note the row number
+
+5. **Navigate to the sheet UI** for status updates:
+   - Navigate to the Google Sheet URL
+   - Wait for load (3 seconds)
+   - Click on cell B{row} (Status cell for the queued row)
    - Type `researching`
    - Press Enter
+   - If a validation warning popup appears, dismiss it (click OK or press Escape)
 
 ### Phase 1.5: Research Topic
 
