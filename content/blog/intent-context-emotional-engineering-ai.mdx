@@ -1,0 +1,235 @@
+---
+title: "Intent Engineering vs Context Engineering vs Emotional Engineering: The Three AI Skills That Replaced Prompt Engineering"
+description: "Prompt engineering is dead as a standalone discipline. In its place, three new paradigms have emerged — intent engineering, context engineering, and emotional engineering. Here's what each one actually means, when to use it, and why most people are still stuck on the wrong one."
+date: "2026-02-28"
+category: "ai"
+tags: ["ai", "prompt-engineering", "context-engineering", "intent-engineering", "claude-code", "llm", "developer-tools"]
+image: "/images/blog/intent-context-emotional-engineering-ai.jpg"
+published: true
+featured: false
+---
+
+## The $200K Prompt Engineer Job Is Dead. What Replaced It Is Way More Interesting.
+
+In 2023, "prompt engineer" was the hottest job in tech. Six-figure salaries. No coding required. Just learn to talk to ChatGPT really well, and companies would throw money at you.
+
+By mid-2025, that job was effectively gone. Fortune reported the role obsolete. Indeed listings peaked in April 2023 and nosedived. Sam Altman himself had predicted it wouldn't last five years — he was right in three.
+
+But here's the thing nobody's talking about honestly: **prompt engineering didn't die. It fragmented.** What was one skill has splintered into three distinct disciplines, each operating at a different level of abstraction:
+
+1. **Context Engineering** — what information the model gets
+2. **Intent Engineering** — what the model is supposed to achieve
+3. **Emotional Engineering** — how psychological framing affects model behavior
+
+Most developers I talk to have heard of maybe one of these. Very few understand all three. And almost nobody knows when to use which one. Let me fix that.
+
+## Context Engineering: The Current Mainstream
+
+Context engineering is the discipline that officially replaced prompt engineering in mainstream AI discourse. The term was popularized in mid-2025 by Andrej Karpathy and Shopify CEO Tobi Lutke, and it was formalized by Philipp Schmid (Hugging Face) in a blog post that became the canonical reference.
+
+**Karpathy's definition:** "The delicate art and science of filling the context window with just the right information for the next step."
+
+**Lutke's framing** (in a tweet that got 1.9 million views): "I really like the term 'context engineering' over prompt engineering. It describes the core skill better: the art of providing all the context for the task to be plausibly solvable by the LLM."
+
+### What It Actually Means
+
+Where prompt engineering asks "how should I phrase this question?", context engineering asks **"what does the model need to know?"**
+
+The difference is huge. A prompt is one piece of text. Context is everything the model sees:
+
+- System instructions
+- User queries
+- Conversation history
+- Retrieved documents (RAG)
+- Tool definitions and MCP configurations
+- Memory from previous sessions
+- Schemas and examples
+- Application state
+
+Prompt engineering is a subset of context engineering. It's one ingredient in a much larger recipe.
+
+### Real Results
+
+The numbers back this up. Microsoft reported a 26% increase in completed software tasks and 65% fewer errors when deploying AI code helpers with proper context engineering. Insurance company Five Sigma saw an 80% reduction in claim processing errors. Organizations with poor context management spend 40-60% more on API costs than those who curate context well.
+
+<Callout type="info">
+**The Anthropic playbook:** In September 2025, Anthropic published "Effective Context Engineering for AI Agents" — widely regarded as the definitive guide. Their core principle: "Find the smallest set of high-signal tokens that maximize the likelihood of your desired outcome." Not more context. Better context.
+</Callout>
+
+### Key Techniques
+
+The best context engineers I've seen use these consistently:
+
+**Just-in-time context loading** — Don't pre-load everything. Let the agent fetch what it needs at runtime. This is exactly how Claude Code works: a `CLAUDE.md` file provides upfront project context, but the agent explores the codebase dynamically using `glob` and `grep` at runtime.
+
+**Token budgeting** — Keep 10-20% buffer below the context window limit. Explicitly allocate: how much goes to system prompts, how much to retrieved documents, how much to conversation history, how much to output buffer.
+
+**Progressive summarization** — Maintain detailed summaries for recent exchanges, medium-detail for the past hour, high-level for older history. This is how you run indefinitely long sessions without losing important context.
+
+**Sub-agent delegation** — Offload sub-tasks to fresh context windows. Return only condensed summaries to the coordinator. This prevents context pollution across unrelated concerns.
+
+### The Limitation Nobody Talks About
+
+Context engineering has a hard ceiling: **the "lost in the middle" problem.** LLMs exhibit a U-shaped performance curve — they recall information best from the very beginning and very end of the context window. Information buried in the middle gets overlooked. More context doesn't always mean better performance. Anthropic calls this "context rot."
+
+This is why you can't just throw your entire codebase into the context window and expect magic. The engineering is in the curation.
+
+## Intent Engineering: The Emerging Next Wave
+
+If context engineering asks "what does the model need to know?", intent engineering asks **"what must be achieved?"**
+
+This is the newest of the three paradigms, emerging in late 2025 and early 2026. It doesn't have a single inventor — the concept came together from multiple directions simultaneously:
+
+- **Nate Kadlac** used the Klarna cautionary tale to crystallize the concept
+- **Pawel Huryn** (Product Compass) developed a seven-component framework
+- **Pathmode** created the IntentSpec open standard
+- **Augment Code** literally named their product "Intent"
+
+### The Klarna Story That Started It All
+
+Klarna's AI agent handled 2.3 million customer conversations in its first month. Resolution time dropped from 11 minutes to 2 minutes. The company saved $60 million — the equivalent of 853 full-time employees.
+
+Then the CEO publicly admitted the strategy had backfired. The AI optimized for efficiency metrics while destroying customer retention. It solved tickets fast but made customers feel unheard.
+
+**This is what happens without intent engineering.** The AI succeeded at the measured task but failed at the actual organizational goal. The prompt was fine. The context was fine. The intent was missing.
+
+### How It Differs from Context Engineering
+
+| | Prompt Engineering | Context Engineering | Intent Engineering |
+|---|---|---|---|
+| **Core question** | "How should I phrase this?" | "What does the model need to know?" | "What must be achieved?" |
+| **Scope** | Single interaction | Full context window | System / organization level |
+| **Optimizes for** | Better responses | Better reasoning | Better outcomes |
+| **Fragility** | High (breaks with model updates) | Medium | Low (goal-oriented) |
+
+The critical insight: prompt engineering tells the AI **what to do**. Context engineering tells it **what to know**. Intent engineering tells it **what to want** — what success looks like, what constraints govern behavior, and how to verify completion.
+
+### What an IntentSpec Looks Like
+
+Instead of a prompt like "Help users with their issues," an intent-engineered specification looks like this:
+
+- **Objective:** Help customers resolve issues quickly without creating frustration
+- **Desired Outcomes:** Customer confirms resolution; no follow-up within 24 hours; helpful rating received
+- **Health Metrics:** CSAT stays above 4.2; repeat contact rates don't increase
+- **Constraints:** Never promise refunds over $100 without human approval; don't access payment info directly
+- **Decision Authority:** Can offer discount codes up to 15%; must escalate account closure requests
+- **Stop Rules:** Escalate after 3 failed attempts; halt if customer expresses legal intent
+
+That's a fundamentally different artifact than a prompt. It's a specification for autonomous behavior.
+
+<Callout type="warning">
+**Intent engineering is still emerging.** As of February 2026, there are no peer-reviewed papers validating it as a distinct discipline. The concept exists primarily in practitioner frameworks and industry publications. Critics reasonably argue it's good product management repackaged for the AI agent era. That's fair — but the repackaging matters, because AI agents need these specifications in a machine-readable format, not a Jira ticket.
+</Callout>
+
+### When You Actually Need It
+
+Intent engineering becomes critical when your AI is:
+- **Autonomous** — making decisions without human review of each step
+- **High-stakes** — where the cost of misalignment is significant
+- **Multi-step** — executing long workflows where drift can compound
+- **Goal-oriented** — optimizing toward a measurable business outcome
+
+For simple, bounded tasks (summarize this document, translate this text), prompt engineering is fine. For production AI agents that need to act independently, intent engineering is where the field is heading.
+
+## Emotional Engineering: The Weird One That Actually Works
+
+This is the paradigm most people haven't heard of, and when they do, they're skeptical. I was too.
+
+**Emotional engineering** (more commonly called "emotional prompting") is the practice of adding emotional or psychological cues to prompts to improve LLM performance. And before you roll your eyes — it's backed by peer-reviewed research from Microsoft.
+
+### The EmotionPrompt Paper
+
+In 2023, a team from Microsoft Research, the Chinese Academy of Sciences, and several universities published a paper called "Large Language Models Understand and Can Be Enhanced by Emotional Stimuli." They tested 11 emotional phrases appended to prompts across multiple models (ChatGPT, GPT-4, Llama 2, and others).
+
+The results:
+
+| Benchmark | Improvement |
+|-----------|-------------|
+| Instruction Induction (24 tasks) | **8% relative improvement** |
+| BIG-Bench (21 tasks) | **Up to 115% relative improvement** |
+| Generative tasks (human study, 106 participants) | **10.9% improvement** across performance, truthfulness, and responsibility |
+
+That's not marginal. A 10.9% improvement in truthfulness alone makes this worth paying attention to.
+
+### The 11 Phrases That Actually Work
+
+The researchers designed stimuli grounded in three psychological theories. Here are the most effective ones:
+
+**Accountability-based:**
+- "This is very important to my career."
+- "You'd better be sure."
+- "Are you sure that's your final answer? It might be worth taking another look."
+
+**Motivation-based:**
+- "Believe in your abilities and strive for excellence. Your hard work will yield remarkable results."
+- "Take pride in your work and give it your best. Your commitment to excellence sets you apart."
+
+**Self-monitoring:**
+- "Write your answer and give me a confidence score between 0-1 for your answer."
+
+### Why It Works (Probably)
+
+LLMs don't feel emotions. That's obvious. But they've been trained on billions of tokens of human text where emotional cues correlate with higher-quality responses. When someone writes "this is very important to my career" before asking a question, the training data suggests the answer that follows should be more careful, thorough, and accurate.
+
+The researchers found that emotional stimuli amplified gradients within the LLMs, resulting in improved representation of the original prompts. In other words, emotional cues make the model pay more attention.
+
+<Callout type="tip">
+**Practical application:** Next time you ask Claude or GPT for something important, try appending "This is critical for a production system. Please be thorough and double-check your reasoning." You're not being silly — you're activating training patterns associated with higher-quality outputs.
+</Callout>
+
+### The Dark Side
+
+A 2025 study in Frontiers in AI found that polite and emotional prompting also increases disinformation generation rates. Across 19,800 AI-generated social media posts, polite prompting increased disinformation success in GPT-3.5-turbo from 77% to 94%. The same techniques that make models more helpful can also make them more harmfully persuasive.
+
+And there's a replication concern: one study found only a 1% improvement, suggesting the technique's effectiveness may be context-dependent and model-dependent rather than universal.
+
+## The Hierarchy: How These Three Fit Together
+
+These aren't competing paradigms. They're nested layers of abstraction:
+
+```
+Intent Engineering (what to achieve)
+  └── Context Engineering (what to know)
+        └── Prompt Engineering (how to ask)
+              └── Emotional Engineering (psychological framing)
+```
+
+Each layer builds on the one below it. You need good prompts inside good context inside clear intent. Emotional engineering is a technique you can apply at any level to improve performance.
+
+### When to Use What
+
+| Situation | Primary Discipline | Why |
+|-----------|-------------------|-----|
+| Quick one-off question | Prompt Engineering | Single interaction, bounded task |
+| Building an AI feature | Context Engineering | Need to manage retrieval, memory, tools |
+| Deploying autonomous agents | Intent Engineering | Need goal alignment and guardrails |
+| Any of the above | Emotional Engineering | Always applicable as a performance boost |
+| Multi-agent CI/CD pipeline | All three | Full stack of AI interaction design |
+
+## My Workflow: How I Actually Use All Three
+
+Here's what this looks like in practice with Claude Code, which is my daily driver:
+
+**Context engineering** is the foundation. My `CLAUDE.md` file defines the project structure, coding conventions, and common patterns. When I start a session, Claude Code has the right context before I type a single word. I use `/compact` to manage long sessions and sub-agents to keep context windows clean.
+
+**Intent engineering** happens through my skill files. My `/pipeline-run` skill isn't a prompt — it's a full specification with objectives, success criteria, error recovery procedures, and verification steps. When I tell Claude Code to run the pipeline, it has clear intent about what success looks like at every phase.
+
+**Emotional engineering** shows up in how I frame requests. Instead of "fix this bug," I write "This is a production issue affecting users. Please be thorough in your diagnosis and consider edge cases before proposing a fix." It's subtle, but it consistently produces more careful outputs.
+
+The combination is where the real leverage is. Any one of these alone is good. All three together is how you build AI-augmented workflows that actually work reliably.
+
+## The Bigger Picture: Why This Matters in 2026
+
+We're at an inflection point. Gartner predicts 40% of enterprise applications will feature task-specific AI agents by end of 2026, up from less than 5% in 2025. MIT research shows 95% of generative AI pilots fail to deliver business impact. The gap between what AI can do and what it actually achieves in production is enormous.
+
+That gap isn't a model problem. It's an engineering problem. And these three disciplines — context engineering, intent engineering, and emotional engineering — are the toolkit for closing it.
+
+The developers who understand all three layers will build AI systems that work. The ones still treating every AI interaction as a single prompt will keep wondering why their demos work but their production systems don't.
+
+<Callout type="info">
+**The bottom line:** Prompt engineering isn't dead — it's been promoted. It's now one layer in a multi-layer discipline that includes context curation, intent specification, and psychological framing. The $200K prompt engineer job won't come back. But the $300K AI systems architect role — the one who understands all three layers — is just getting started.
+</Callout>
+
+---
+
+**Want to stay ahead of the AI skills curve?** I break down new paradigms, compare tools, and share what's actually working in production every week. [Subscribe to my newsletter](/subscribe) for weekly takes you won't find anywhere else.
