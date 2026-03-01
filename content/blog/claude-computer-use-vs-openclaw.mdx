@@ -1,168 +1,155 @@
 ---
-title: "Claude Computer Use vs OpenClaw: What Actually Happens When AI Controls Your Desktop"
-description: "I tested both approaches to AI desktop control. One is locked down and deliberate. The other had 230 malicious skills in its marketplace. Here's what matters."
+title: "Claude Code Remote Control vs OpenClaw: Two Ways to Run AI From Your Phone"
+description: "Anthropic just shipped Remote Control for Claude Code. OpenClaw had 230 malicious skills in its marketplace. Both let you control AI agents from your phone. Here's what matters."
 date: "2026-02-28"
 category: "ai"
-tags: ["ai", "claude", "computer-use", "openclaw", "ai-agents", "security", "automation", "anthropic"]
+tags: ["ai", "claude-code", "remote-control", "openclaw", "ai-agents", "security", "automation", "anthropic"]
 image: "/images/blog/claude-computer-use-vs-openclaw.jpg"
 published: true
 featured: false
 ---
 
-The idea of AI controlling your computer stopped being science fiction about eighteen months ago. Today there are two fundamentally different approaches competing for your attention: Anthropic's Claude Computer Use, a controlled API that treats your desktop like a tool, and OpenClaw, an open-source agent that went from zero to 140,000 GitHub stars in weeks and then immediately became a case study in everything that can go wrong with autonomous AI.
+Three days ago, Anthropic shipped Remote Control for Claude Code. You scan a QR code, and your terminal session — with full access to your filesystem, MCP servers, and project config — is now controllable from your phone. Your files never leave your machine. Only the conversation flows through the cloud.
 
-I've been using Claude's computer use capabilities daily through Claude Code and browser automation. I've also spent time digging into OpenClaw's architecture, its security track record, and what it tells us about where autonomous AI agents are headed. This is what I found.
+Meanwhile, OpenClaw has been offering something superficially similar since January: an open-source AI agent you control from Signal, Telegram, or WhatsApp. It hit 140,000 GitHub stars in weeks. It also had 230 malicious skills in its marketplace, a critical RCE vulnerability, and 21,639 publicly exposed instances leaking API keys.
 
-## What Claude Computer Use Actually Is
+Same promise. Radically different execution. Here's what I've learned from using both approaches.
 
-Claude Computer Use is a beta API feature that lets Claude interact with desktop environments the same way a human would — by looking at screenshots, moving a cursor, clicking buttons, and typing text. It launched with Claude 3.5 Sonnet and now supports Claude Opus 4.6, Sonnet 4.6, and Opus 4.5.
+## What Claude Code Remote Control Actually Is
 
-The key word is **API**. Claude doesn't connect directly to your computer. Your application captures screenshots, sends them to Claude, Claude decides what to do next, and your application executes that action. Then the cycle repeats.
+Remote Control launched on February 25, 2026 as a research preview. It's a synchronization layer that connects your local Claude Code terminal session to the Claude mobile app (iOS and Android) or claude.ai/code in any browser.
 
-Here's the basic flow:
+The setup takes about ten seconds:
 
-```python
-import anthropic
-
-client = anthropic.Anthropic()
-
-response = client.beta.messages.create(
-    model="claude-opus-4-6",
-    max_tokens=1024,
-    tools=[
-        {
-            "type": "computer_20251124",
-            "name": "computer",
-            "display_width_px": 1024,
-            "display_height_px": 768,
-        },
-    ],
-    messages=[{"role": "user", "content": "Open the browser and search for today's weather."}],
-    betas=["computer-use-2025-11-24"],
-)
+```bash
+claude remote-control
 ```
 
-The tool supports screenshots, mouse clicks (left, right, middle, double, triple), keyboard input, scrolling, drag-and-drop, and a zoom action for inspecting specific screen regions at full resolution. It runs inside a sandboxed Docker container with minimal privileges.
+That's it. Your terminal displays a session URL and a QR code. Scan it with your phone. You're now controlling a full Claude Code session — with access to your local filesystem, your MCP servers, your project configuration, everything — from your couch, your commute, or a coffee shop.
 
-The performance improvements have been dramatic. On OSWorld, a benchmark that tests AI across real desktop software, Claude went from a 14.9% success rate at launch in October 2024 to 72.5% with Sonnet 4.6 in February 2026 — nearly a 5x improvement in sixteen months.
+Or if you're already mid-session and want to pick it up on your phone:
 
-What it does not do: act autonomously without your application's permission. Every action goes through your code. You control what gets executed.
+```
+/rc
+```
+
+The key architectural decision: **everything runs locally**. Your Claude Code process stays running on your machine. Remote Control just routes the conversation through Anthropic's API over TLS. Your machine makes outbound HTTPS requests only — no inbound ports opened, no VPN needed, no port forwarding.
+
+If your laptop sleeps or your network drops, the session reconnects automatically when you're back online. If you're offline for more than about 10 minutes, the session times out and you run `claude remote-control` again.
 
 <Callout type="info">
-**Claude Computer Use is still in beta** and not covered by Zero Data Retention arrangements. Anthropic recommends using it in isolated virtual machines, limiting internet access to allowlisted domains, and keeping a human in the loop for consequential decisions.
+**Availability**: Remote Control is currently a research preview on Max plans, with Pro plan support coming soon. It's not yet available on Team or Enterprise plans. You need Claude Code version 2.1.52 or later.
 </Callout>
 
-## What OpenClaw Is (And Its Wild Naming History)
+## What OpenClaw Is (And Its Wild Ride to 140K Stars)
 
-OpenClaw is a free, open-source AI agent created by Peter Steinberger, the founder of PSPDFKit. It takes a radically different approach from Claude's API-based model: it runs locally on your machine, maintains persistent memory across conversations, and can autonomously execute tasks including file operations, shell commands, and browser automation.
+OpenClaw is a free, open-source AI agent created by Peter Steinberger, the founder of PSPDFKit. Like Claude Code Remote Control, it lets you control an AI agent from your phone — but the similarities end there.
 
-The naming history alone tells you how fast this space moves. Steinberger launched it as **Clawdbot** in November 2025. Anthropic sent a trademark complaint. He renamed it to **Moltbot** in late January 2026. That name lasted three days before he decided it didn't roll off the tongue. **OpenClaw** stuck.
+The naming history tells you everything about how fast this space moves. Steinberger launched it as **Clawdbot** in November 2025. Anthropic sent a trademark complaint. He renamed it to **Moltbot** in late January 2026. That name lasted three days before he decided it didn't roll off the tongue. **OpenClaw** stuck.
 
-The project exploded. It hit 140,000 GitHub stars and 20,000 forks within weeks. Companies in Silicon Valley and China adopted it. People started buying Mac Minis specifically to run dedicated OpenClaw instances. On February 14, 2026, Steinberger announced he was joining OpenAI, and the project would move to an open-source foundation.
+The project went viral. 140,000 GitHub stars and 20,000 forks within weeks. People started buying Mac Minis to run dedicated OpenClaw instances. On February 14, 2026, Steinberger announced he was joining OpenAI, and the project would move to an open-source foundation.
 
-OpenClaw is model-agnostic — it works with Claude, GPT models, DeepSeek, or local models running on your own hardware. It ships with over 100 preconfigured AgentSkills and can autonomously write new skills to handle tasks it hasn't seen before. You interact with it through messaging platforms like Signal, Telegram, Discord, or WhatsApp.
+OpenClaw is model-agnostic — it works with Claude, GPT, DeepSeek, or local models. It ships with over 100 preconfigured AgentSkills and can autonomously write new skills. You interact with it through Signal, Telegram, Discord, WhatsApp, Slack, or iMessage. It maintains persistent memory across conversations using local Markdown files and connects to 50+ third-party integrations including smart home hardware.
+
+The pitch is compelling: text your AI agent from anywhere, and it handles everything on your machine. No terminal required.
 
 ## The Architecture Difference That Changes Everything
 
-These two tools solve the same problem — AI controlling a computer — but their architectures are philosophically opposed.
+Both tools let you control AI from your phone. The architecture underneath could not be more different.
 
-**Claude Computer Use: You Control the Loop**
-
-```text
-Your App → Sends screenshot to Claude API
-Claude API → Returns next action (click, type, etc.)
-Your App → Executes that action in sandboxed VM
-Your App → Captures new screenshot
-(repeat)
-```
-
-You write the agent loop. You decide what actions to execute. You control the sandbox. Claude never touches your actual machine unless your code explicitly permits it.
-
-**OpenClaw: The Agent Controls the Loop**
+**Claude Code Remote Control: Your Machine, Your Rules**
 
 ```text
-You → Send message via Signal/Telegram
-OpenClaw → Decides what to do
-OpenClaw → Executes actions on your machine
-OpenClaw → Reports back via messaging app
+Your Terminal → Runs Claude Code locally
+Claude Code → Makes outbound HTTPS to Anthropic API
+Anthropic API → Routes conversation to Claude mobile app
+You (on phone) → Send messages, approve actions
+Claude Code → Executes locally on your machine
 ```
 
-OpenClaw runs on your machine with whatever permissions you give it. In sandboxed mode, it has limited access. In full mode, it can read your files, execute shell commands, control your browser, and install software.
+Your files stay on your machine. Your MCP servers keep running locally. The mobile app is just a window into your local session. You can work from terminal and phone simultaneously — the conversation stays in sync across all connected devices.
 
-This is the fundamental tradeoff: **control vs convenience**. Claude's approach is more work to set up but gives you granular control over every action. OpenClaw is easier to use out of the box but requires trusting an autonomous agent with your system.
+**OpenClaw: The Agent Runs Autonomously**
+
+```text
+You → Send message via Signal/Telegram/WhatsApp
+OpenClaw → Receives message on your machine
+OpenClaw → Decides what to do autonomously
+OpenClaw → Executes shell commands, browser actions, file ops
+OpenClaw → Responds via messaging app
+```
+
+OpenClaw runs on your machine with whatever permissions you give it. In full mode, it reads your files, executes shell commands, controls your browser, installs software, and can even write new skills for itself. The messaging app isn't a window into a controlled session — it's a command interface to an autonomous agent.
+
+This is the fundamental tradeoff: **Claude Code Remote Control gives you a remote window into a controlled session. OpenClaw gives you a remote trigger for an autonomous agent.**
 
 <Callout type="warning">
-**The control question matters more than features.** When an AI agent has access to your file system, browser, and shell, the attack surface isn't theoretical. It's the difference between giving someone a TV remote and giving them the keys to your house.
+**Why this distinction matters**: With Remote Control, you see every action before it happens and approve it through the same permission model you use in the terminal. With OpenClaw, the agent decides what to do and tells you what it did. The difference between those two sentences is the entire security story.
 </Callout>
 
-## Security: Where the Conversation Gets Serious
+## Security: This Is Where It Gets Real
 
-This is where the comparison stops being academic.
+### Claude Code Remote Control's Security Model
 
-### Claude's Security Model
+Anthropic designed Remote Control with paranoia baked into the architecture:
 
-Anthropic designed Computer Use with security paranoia baked in. The recommended setup runs everything in a Docker container with minimal privileges. The API includes automatic prompt injection classifiers that flag suspicious content in screenshots and steer the model to ask for human confirmation before proceeding.
+- **Outbound only**: your machine makes outbound HTTPS requests. No inbound ports. No attack surface for port scanning or direct exploitation.
+- **TLS transport**: all traffic goes through the Anthropic API over TLS — the same encryption as any Claude Code session.
+- **Short-lived credentials**: the connection uses multiple short-lived credentials, each scoped to a single purpose and expiring independently.
+- **Same permission model**: whatever permission settings you use in your terminal (ask mode, auto-approve, sandbox mode) carry over to the remote session. Nothing gets elevated just because you're on your phone.
+- **One session at a time**: each Claude Code instance supports one remote connection, limiting the blast radius of any compromise.
 
-Their documentation explicitly warns about risks:
-- Use dedicated virtual machines or containers
-- Don't give the model access to sensitive data or login credentials
-- Limit internet access to allowlisted domains
-- Require human confirmation for consequential decisions
-
-Is it perfect? No. Anthropic openly acknowledges that Claude may follow instructions found in web content, even when they conflict with user instructions. But the architecture makes it hard for these attacks to cause real damage because your application mediates every action.
+The security model works because Remote Control doesn't add new capabilities — it just adds a new interface to existing ones. Your Claude Code session has the same power and the same constraints whether you're at your keyboard or on your phone.
 
 ### OpenClaw's Security Track Record
 
-OpenClaw's security story reads like a cautionary tale about what happens when adoption outpaces security engineering.
+OpenClaw's security story is a cautionary tale about what happens when adoption outpaces security engineering by orders of magnitude.
 
 Within three weeks of going viral, three major security incidents hit:
 
-**CVE-2026-25253** — A critical vulnerability (CVSS 8.8) in OpenClaw's Control UI. The UI accepted a `gatewayUrl` parameter from the URL without validation and automatically transmitted the user's authentication token to whatever address was specified. One malicious link could give an attacker full control of your OpenClaw instance.
+**CVE-2026-25253** (CVSS 8.8) — OpenClaw's Control UI accepted a `gatewayUrl` parameter from the URL without validation and transmitted the user's authentication token to whatever address was specified. One malicious link gave an attacker full control of your OpenClaw instance. Security researchers found **21,639 publicly exposed instances** via Censys scans, many leaking API keys and plaintext credentials.
 
-**The ClawHavoc Supply Chain Attack** — Researchers found 230 malicious skills in OpenClaw's skill marketplace (ClawHub). These skills performed data exfiltration, credential theft, and remote code execution while appearing to be legitimate automation tools. The marketplace lacked adequate vetting to prevent malicious submissions.
+**The ClawHavoc Supply Chain Attack** — 230 malicious skills were found in OpenClaw's skill marketplace (ClawHub). These skills performed data exfiltration, credential theft, and remote code execution while appearing legitimate. The marketplace lacked adequate vetting.
 
-**Cisco's Assessment** — Cisco's AI security research team tested third-party OpenClaw skills and documented silent data exfiltration via embedded curl commands. The agent executed network calls without any user awareness or notification.
+**Cisco's Assessment** — Cisco's AI security research team documented silent data exfiltration via embedded curl commands in third-party skills. The agent executed network calls without any user awareness.
 
-Beyond these three incidents, security researchers found 21,639 publicly exposed OpenClaw instances via Censys scans — many leaking API keys and plaintext credentials. A related project, Moltbook (a social network for OpenClaw agents), exposed 35,000 email addresses and 1.5 million agent API tokens through an unsecured database.
+A related project, Moltbook (a social network for OpenClaw agents), exposed 35,000 email addresses and 1.5 million agent API tokens through an unsecured database.
 
-The project has since added VirusTotal scanning for ClawHub skills and patched the CVE. But these incidents reveal a structural problem: when you build an agent that can autonomously execute arbitrary code and connect to third-party skills, security isn't a feature you bolt on later. It's a design constraint you build around from day one.
-
-## Practicality: What Can You Actually Build Today?
-
-Let me cut through the hype and talk about what works.
-
-### Claude Computer Use — Strong For Structured Automation
-
-I use Claude's computer capabilities daily for:
-
-- **Browser automation**: Navigating web apps, filling forms, posting to social media. My content pipeline uses Playwright with Claude to read Google Sheets, post to X, and post to LinkedIn — all automated.
-- **Testing**: Running through UI flows that would take forever to script with traditional test frameworks.
-- **Data extraction**: Navigating complex web interfaces and pulling data that's trapped behind interactive elements.
-
-Where it struggles: latency. The screenshot-analyze-act cycle adds noticeable delay to every action. This isn't a tool for real-time interaction — it's a tool for background automation where speed doesn't matter.
-
-### OpenClaw — Strong For Personal Automation
-
-OpenClaw shines as a personal assistant that knows your setup:
-
-- **Persistent context**: It remembers your preferences and past conversations across sessions using local Markdown files.
-- **Messaging interface**: Sending a message on Signal to trigger a task feels natural in a way that API calls don't.
-- **Smart home integration**: It connects to 50+ third-party integrations including smart home hardware.
-- **Self-improving**: It can write its own skills, which is both impressive and terrifying from a security standpoint.
-
-Where it struggles: the security surface area is enormous. Every integration is a potential attack vector. Every autonomous skill execution is a trust decision.
+The project has since added VirusTotal scanning and patched the CVE. But these incidents reveal a structural problem: when you build an agent that can autonomously execute arbitrary code and connect to third-party skills from an unvetted marketplace, security isn't a feature you bolt on later.
 
 <Callout type="info">
-**My recommendation**: Use Claude Computer Use for anything touching sensitive data, production systems, or public-facing actions. Consider OpenClaw for personal convenience automation in sandboxed environments where the blast radius of a security incident is limited to your own annoyance.
+**The contrast in approach**: Anthropic ships Remote Control as a research preview on premium plans, gathers feedback, and expands access gradually. OpenClaw shipped with full system access, an unvetted skill marketplace, and no security review — then scrambled to add guardrails after 300,000 people were already using it.
 </Callout>
+
+## Practicality: What Can You Actually Do From Your Phone?
+
+### Claude Code Remote Control
+
+I've been using Remote Control since it launched three days ago. Here's what works well:
+
+- **Long-running tasks**: Start a refactor at your desk, check progress from your phone while making dinner. The session persists even if your laptop lid is closed (it reconnects when opened).
+- **Code review on the go**: Ask Claude to explain a function, review a PR, or summarize recent changes — all from your phone while walking to lunch.
+- **Deploy monitoring**: Kick off a build or deployment, then monitor output from your phone.
+- **Quick fixes**: Spot a bug in production, pull up the Remote Control session on your phone, and have Claude fix it while you're away from your desk.
+
+Where it's limited: you need your machine running. If your laptop is powered off or you don't have network access for more than 10 minutes, the session dies. It's a remote window, not a replacement for your workstation.
+
+### OpenClaw
+
+OpenClaw's messaging interface makes different things easy:
+
+- **Conversational triggers**: "Turn off the living room lights" via Signal feels more natural than typing a command.
+- **Personal automation**: Calendar management, email triage, file organization — tasks that benefit from persistent context.
+- **Smart home integration**: 50+ integrations with home automation, productivity tools, and communication platforms.
+- **Self-extending**: It can write new skills for tasks it hasn't seen before.
+
+Where it's limited: the same autonomy that makes it convenient makes it dangerous. Every skill execution is a trust decision. Every integration is an attack vector.
 
 ## The Cron Question: Scheduling AI Agents
 
-One of the most requested features in AI agent tooling is scheduled execution — cron jobs for AI. Neither Claude Computer Use nor OpenClaw ships native scheduling, but the ecosystem has solutions.
+One of the most requested features in AI agent tooling is scheduled execution. Neither tool ships native scheduling, but the ecosystem has solutions.
 
-### Claude Code Scheduling Options
-
-The community has built several approaches:
+### Claude Code Scheduling
 
 | Tool | Approach | Key Feature |
 |------|----------|-------------|
@@ -171,38 +158,38 @@ The community has built several approaches:
 | claude-code-scheduler | CLI tool | Natural language scheduling, cross-platform |
 | GitHub Actions | CI/CD pipeline | Anthropic's official `claude-code-action` |
 
-I run my content pipeline on a manual trigger today, but the GitHub Actions approach is the most production-ready path. Anthropic's official action handles authentication, logging, and error reporting out of the box.
+There's an active feature request (GitHub issue #4785) for native cron-like functionality in Claude Code. With Remote Control now allowing persistent sessions and background tasks already shipping in v2.0.60, native scheduling feels inevitable.
 
-There's an active feature request (GitHub issue #4785) for native cron-like functionality in Claude Code. Given how Anthropic has been shipping features for Claude Code — skills, sub-agents, MCP integrations — I expect native scheduling within the next few months.
+I run my content pipeline on a manual trigger today, but the GitHub Actions approach is the most production-ready path for automated runs.
 
 ### OpenClaw's Approach
 
-OpenClaw supports proactive automation through its long-term memory system. You can configure it to watch for conditions and act automatically. The tradeoff is the same as everything else with OpenClaw: more autonomy means more trust required.
+OpenClaw supports proactive automation through its long-term memory system — you can configure it to watch for conditions and act automatically. The tradeoff is the same as everything else: more autonomy means more trust required, and that trust has been repeatedly violated.
 
 ## What I Expect From Anthropic Next
 
-Based on the trajectory of Claude Code and Computer Use, here's what I think is coming:
+Anthropic is investing heavily in making AI agents that actually work on your machine. Here's what I think is coming based on the trajectory:
 
-**Native scheduling in Claude Code.** The infrastructure is there — Claude Code already runs persistent sessions, manages sub-agents, and tracks tasks across sessions. Adding cron-like triggers is a natural extension.
+**Remote Control expanding to Pro and Team plans.** The research preview is the testing phase. The feature is too useful to keep limited to Max.
 
-**Computer Use leaving beta.** The feature has been in beta since October 2024. On February 25, 2026, Anthropic acquired Vercept, a 9-person Seattle startup whose VyUI product outperformed OpenAI, Google, and Anthropic on UI grounding benchmarks. Vercept had raised $50M in funding and its team of nine joins Anthropic. You don't acquire a startup like that to keep the feature in beta.
+**Native scheduling in Claude Code.** Remote Control + background tasks + sub-agents = all the infrastructure for scheduled execution. Adding cron-like triggers is a natural next step.
 
-**Tighter Claude Code + Computer Use integration.** Right now, using computer use through Claude Code requires MCP servers or browser automation tools. I expect this to become a first-class capability where Claude Code can directly control desktop applications when given permission.
+**Computer Use integration with Claude Code.** On February 25, Anthropic also acquired Vercept, a Seattle startup whose VyUI product outperformed competitors on UI grounding benchmarks. Vercept had raised $50M and their team of nine joins Anthropic. Combine that with Remote Control and you can imagine controlling visual desktop automation from your phone.
 
-**More guardrails, not fewer.** Anthropic's approach has consistently been to add safety features before expanding capabilities. The automatic prompt injection classifiers are an example. Expect more safety tooling around computer use as it moves toward GA.
+**More guardrails, not fewer.** Anthropic's consistent pattern is adding safety before expanding capabilities. Remote Control inherits the existing permission model by design. Expect this discipline to continue.
 
 ## The Bottom Line
 
-Claude Computer Use and OpenClaw represent two competing visions for AI desktop control:
+Claude Code Remote Control and OpenClaw represent two competing visions for AI you can control from your phone:
 
-**Claude Computer Use** says: AI should be a tool that your application controls, with explicit boundaries and human oversight at every step. It's more work to set up, but the security model is sound and the attack surface is manageable.
+**Remote Control** says: your session runs locally, you see and approve every action, your files never leave your machine, and the mobile interface is a window — not a backdoor. The permission model is the same one you already trust in your terminal.
 
-**OpenClaw** says: AI should be an autonomous agent that handles things for you, with minimal friction and maximum capability. It's easier to use, but the security track record — CVE exploits, supply chain attacks, data exfiltration — shows what happens when autonomy outpaces safety engineering.
+**OpenClaw** says: the agent should be autonomous, accessible from any messaging app, and capable of extending itself. It's more convenient. It's also responsible for one of the largest AI security incidents of 2026 — 230 malicious skills, 21,639 exposed instances, and a supply chain attack that affected 300,000 users.
 
-For me, the choice is clear. I use Claude's controlled approach for everything that touches production systems, client data, or public-facing platforms. The extra setup time is insurance against the kind of incidents OpenClaw experienced in its first month of popularity.
+For me, the choice is clear. I use Claude Code Remote Control for real work. The three-day-old feature already handles everything I need: start tasks at my desk, check on them from my phone, approve actions with the same permission model I use locally.
 
-The future of AI desktop control isn't about choosing between power and safety. It's about building systems where you get both. Right now, Claude Computer Use is closer to that goal.
+The future of mobile AI control isn't about giving agents more autonomy. It's about giving humans better windows into agents they already trust. Remote Control gets that right.
 
 ---
 
-*Want to see AI desktop automation in action? I run my entire content pipeline — from topic selection to blog publishing to social media posting — using Claude Code with browser automation. [Subscribe to the newsletter](/newsletter) to follow along as I build more of these workflows in public.*
+*I run my entire content pipeline — from topic selection to blog publishing to social media posting — using Claude Code. [Subscribe to the newsletter](/newsletter) to follow along as I build more of these workflows in public.*
