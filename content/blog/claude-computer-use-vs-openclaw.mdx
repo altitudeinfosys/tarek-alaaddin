@@ -1,0 +1,208 @@
+---
+title: "Claude Computer Use vs OpenClaw: What Actually Happens When AI Controls Your Desktop"
+description: "I tested both approaches to AI desktop control. One is locked down and deliberate. The other had 230 malicious skills in its marketplace. Here's what matters."
+date: "2026-02-28"
+category: "ai"
+tags: ["ai", "claude", "computer-use", "openclaw", "ai-agents", "security", "automation", "anthropic"]
+image: "/images/blog/claude-computer-use-vs-openclaw.jpg"
+published: true
+featured: false
+---
+
+The idea of AI controlling your computer stopped being science fiction about eighteen months ago. Today there are two fundamentally different approaches competing for your attention: Anthropic's Claude Computer Use, a controlled API that treats your desktop like a tool, and OpenClaw, an open-source agent that went from zero to 140,000 GitHub stars in weeks and then immediately became a case study in everything that can go wrong with autonomous AI.
+
+I've been using Claude's computer use capabilities daily through Claude Code and browser automation. I've also spent time digging into OpenClaw's architecture, its security track record, and what it tells us about where autonomous AI agents are headed. This is what I found.
+
+## What Claude Computer Use Actually Is
+
+Claude Computer Use is a beta API feature that lets Claude interact with desktop environments the same way a human would — by looking at screenshots, moving a cursor, clicking buttons, and typing text. It launched with Claude 3.5 Sonnet and now supports Claude Opus 4.6, Sonnet 4.6, and Opus 4.5.
+
+The key word is **API**. Claude doesn't connect directly to your computer. Your application captures screenshots, sends them to Claude, Claude decides what to do next, and your application executes that action. Then the cycle repeats.
+
+Here's the basic flow:
+
+```python
+import anthropic
+
+client = anthropic.Anthropic()
+
+response = client.beta.messages.create(
+    model="claude-opus-4-6",
+    max_tokens=1024,
+    tools=[
+        {
+            "type": "computer_20251124",
+            "name": "computer",
+            "display_width_px": 1024,
+            "display_height_px": 768,
+        },
+    ],
+    messages=[{"role": "user", "content": "Open the browser and search for today's weather."}],
+    betas=["computer-use-2025-11-24"],
+)
+```
+
+The tool supports screenshots, mouse clicks (left, right, middle, double, triple), keyboard input, scrolling, drag-and-drop, and a zoom action for inspecting specific screen regions at full resolution. It runs inside a sandboxed Docker container with minimal privileges.
+
+The performance improvements have been dramatic. On OSWorld, a benchmark that tests AI across real desktop software, Claude went from a 14.9% success rate at launch in October 2024 to 72.5% with Sonnet 4.6 in February 2026 — nearly a 5x improvement in sixteen months.
+
+What it does not do: act autonomously without your application's permission. Every action goes through your code. You control what gets executed.
+
+<Callout type="info">
+**Claude Computer Use is still in beta** and not covered by Zero Data Retention arrangements. Anthropic recommends using it in isolated virtual machines, limiting internet access to allowlisted domains, and keeping a human in the loop for consequential decisions.
+</Callout>
+
+## What OpenClaw Is (And Its Wild Naming History)
+
+OpenClaw is a free, open-source AI agent created by Peter Steinberger, the founder of PSPDFKit. It takes a radically different approach from Claude's API-based model: it runs locally on your machine, maintains persistent memory across conversations, and can autonomously execute tasks including file operations, shell commands, and browser automation.
+
+The naming history alone tells you how fast this space moves. Steinberger launched it as **Clawdbot** in November 2025. Anthropic sent a trademark complaint. He renamed it to **Moltbot** in late January 2026. That name lasted three days before he decided it didn't roll off the tongue. **OpenClaw** stuck.
+
+The project exploded. It hit 140,000 GitHub stars and 20,000 forks within weeks. Companies in Silicon Valley and China adopted it. People started buying Mac Minis specifically to run dedicated OpenClaw instances. On February 14, 2026, Steinberger announced he was joining OpenAI, and the project would move to an open-source foundation.
+
+OpenClaw is model-agnostic — it works with Claude, GPT models, DeepSeek, or local models running on your own hardware. It ships with over 100 preconfigured AgentSkills and can autonomously write new skills to handle tasks it hasn't seen before. You interact with it through messaging platforms like Signal, Telegram, Discord, or WhatsApp.
+
+## The Architecture Difference That Changes Everything
+
+These two tools solve the same problem — AI controlling a computer — but their architectures are philosophically opposed.
+
+**Claude Computer Use: You Control the Loop**
+
+```text
+Your App → Sends screenshot to Claude API
+Claude API → Returns next action (click, type, etc.)
+Your App → Executes that action in sandboxed VM
+Your App → Captures new screenshot
+(repeat)
+```
+
+You write the agent loop. You decide what actions to execute. You control the sandbox. Claude never touches your actual machine unless your code explicitly permits it.
+
+**OpenClaw: The Agent Controls the Loop**
+
+```text
+You → Send message via Signal/Telegram
+OpenClaw → Decides what to do
+OpenClaw → Executes actions on your machine
+OpenClaw → Reports back via messaging app
+```
+
+OpenClaw runs on your machine with whatever permissions you give it. In sandboxed mode, it has limited access. In full mode, it can read your files, execute shell commands, control your browser, and install software.
+
+This is the fundamental tradeoff: **control vs convenience**. Claude's approach is more work to set up but gives you granular control over every action. OpenClaw is easier to use out of the box but requires trusting an autonomous agent with your system.
+
+<Callout type="warning">
+**The control question matters more than features.** When an AI agent has access to your file system, browser, and shell, the attack surface isn't theoretical. It's the difference between giving someone a TV remote and giving them the keys to your house.
+</Callout>
+
+## Security: Where the Conversation Gets Serious
+
+This is where the comparison stops being academic.
+
+### Claude's Security Model
+
+Anthropic designed Computer Use with security paranoia baked in. The recommended setup runs everything in a Docker container with minimal privileges. The API includes automatic prompt injection classifiers that flag suspicious content in screenshots and steer the model to ask for human confirmation before proceeding.
+
+Their documentation explicitly warns about risks:
+- Use dedicated virtual machines or containers
+- Don't give the model access to sensitive data or login credentials
+- Limit internet access to allowlisted domains
+- Require human confirmation for consequential decisions
+
+Is it perfect? No. Anthropic openly acknowledges that Claude may follow instructions found in web content, even when they conflict with user instructions. But the architecture makes it hard for these attacks to cause real damage because your application mediates every action.
+
+### OpenClaw's Security Track Record
+
+OpenClaw's security story reads like a cautionary tale about what happens when adoption outpaces security engineering.
+
+Within three weeks of going viral, three major security incidents hit:
+
+**CVE-2026-25253** — A critical vulnerability (CVSS 8.8) in OpenClaw's Control UI. The UI accepted a `gatewayUrl` parameter from the URL without validation and automatically transmitted the user's authentication token to whatever address was specified. One malicious link could give an attacker full control of your OpenClaw instance.
+
+**The ClawHavoc Supply Chain Attack** — Researchers found 230 malicious skills in OpenClaw's skill marketplace (ClawHub). These skills performed data exfiltration, credential theft, and remote code execution while appearing to be legitimate automation tools. The marketplace lacked adequate vetting to prevent malicious submissions.
+
+**Cisco's Assessment** — Cisco's AI security research team tested third-party OpenClaw skills and documented silent data exfiltration via embedded curl commands. The agent executed network calls without any user awareness or notification.
+
+Beyond these three incidents, security researchers found 21,639 publicly exposed OpenClaw instances via Censys scans — many leaking API keys and plaintext credentials. A related project, Moltbook (a social network for OpenClaw agents), exposed 35,000 email addresses and 1.5 million agent API tokens through an unsecured database.
+
+The project has since added VirusTotal scanning for ClawHub skills and patched the CVE. But these incidents reveal a structural problem: when you build an agent that can autonomously execute arbitrary code and connect to third-party skills, security isn't a feature you bolt on later. It's a design constraint you build around from day one.
+
+## Practicality: What Can You Actually Build Today?
+
+Let me cut through the hype and talk about what works.
+
+### Claude Computer Use — Strong For Structured Automation
+
+I use Claude's computer capabilities daily for:
+
+- **Browser automation**: Navigating web apps, filling forms, posting to social media. My content pipeline uses Playwright with Claude to read Google Sheets, post to X, and post to LinkedIn — all automated.
+- **Testing**: Running through UI flows that would take forever to script with traditional test frameworks.
+- **Data extraction**: Navigating complex web interfaces and pulling data that's trapped behind interactive elements.
+
+Where it struggles: latency. The screenshot-analyze-act cycle adds noticeable delay to every action. This isn't a tool for real-time interaction — it's a tool for background automation where speed doesn't matter.
+
+### OpenClaw — Strong For Personal Automation
+
+OpenClaw shines as a personal assistant that knows your setup:
+
+- **Persistent context**: It remembers your preferences and past conversations across sessions using local Markdown files.
+- **Messaging interface**: Sending a message on Signal to trigger a task feels natural in a way that API calls don't.
+- **Smart home integration**: It connects to 50+ third-party integrations including smart home hardware.
+- **Self-improving**: It can write its own skills, which is both impressive and terrifying from a security standpoint.
+
+Where it struggles: the security surface area is enormous. Every integration is a potential attack vector. Every autonomous skill execution is a trust decision.
+
+<Callout type="info">
+**My recommendation**: Use Claude Computer Use for anything touching sensitive data, production systems, or public-facing actions. Consider OpenClaw for personal convenience automation in sandboxed environments where the blast radius of a security incident is limited to your own annoyance.
+</Callout>
+
+## The Cron Question: Scheduling AI Agents
+
+One of the most requested features in AI agent tooling is scheduled execution — cron jobs for AI. Neither Claude Computer Use nor OpenClaw ships native scheduling, but the ecosystem has solutions.
+
+### Claude Code Scheduling Options
+
+The community has built several approaches:
+
+| Tool | Approach | Key Feature |
+|------|----------|-------------|
+| runCLAUDErun | Native macOS app | GUI-based scheduling |
+| claude-tasks | TUI scheduler | 6-field cron expressions, Discord/Slack webhooks |
+| claude-code-scheduler | CLI tool | Natural language scheduling, cross-platform |
+| GitHub Actions | CI/CD pipeline | Anthropic's official `claude-code-action` |
+
+I run my content pipeline on a manual trigger today, but the GitHub Actions approach is the most production-ready path. Anthropic's official action handles authentication, logging, and error reporting out of the box.
+
+There's an active feature request (GitHub issue #4785) for native cron-like functionality in Claude Code. Given how Anthropic has been shipping features for Claude Code — skills, sub-agents, MCP integrations — I expect native scheduling within the next few months.
+
+### OpenClaw's Approach
+
+OpenClaw supports proactive automation through its long-term memory system. You can configure it to watch for conditions and act automatically. The tradeoff is the same as everything else with OpenClaw: more autonomy means more trust required.
+
+## What I Expect From Anthropic Next
+
+Based on the trajectory of Claude Code and Computer Use, here's what I think is coming:
+
+**Native scheduling in Claude Code.** The infrastructure is there — Claude Code already runs persistent sessions, manages sub-agents, and tracks tasks across sessions. Adding cron-like triggers is a natural extension.
+
+**Computer Use leaving beta.** The feature has been in beta since October 2024. On February 25, 2026, Anthropic acquired Vercept, a 9-person Seattle startup whose VyUI product outperformed OpenAI, Google, and Anthropic on UI grounding benchmarks. Vercept had raised $50M in funding and its team of nine joins Anthropic. You don't acquire a startup like that to keep the feature in beta.
+
+**Tighter Claude Code + Computer Use integration.** Right now, using computer use through Claude Code requires MCP servers or browser automation tools. I expect this to become a first-class capability where Claude Code can directly control desktop applications when given permission.
+
+**More guardrails, not fewer.** Anthropic's approach has consistently been to add safety features before expanding capabilities. The automatic prompt injection classifiers are an example. Expect more safety tooling around computer use as it moves toward GA.
+
+## The Bottom Line
+
+Claude Computer Use and OpenClaw represent two competing visions for AI desktop control:
+
+**Claude Computer Use** says: AI should be a tool that your application controls, with explicit boundaries and human oversight at every step. It's more work to set up, but the security model is sound and the attack surface is manageable.
+
+**OpenClaw** says: AI should be an autonomous agent that handles things for you, with minimal friction and maximum capability. It's easier to use, but the security track record — CVE exploits, supply chain attacks, data exfiltration — shows what happens when autonomy outpaces safety engineering.
+
+For me, the choice is clear. I use Claude's controlled approach for everything that touches production systems, client data, or public-facing platforms. The extra setup time is insurance against the kind of incidents OpenClaw experienced in its first month of popularity.
+
+The future of AI desktop control isn't about choosing between power and safety. It's about building systems where you get both. Right now, Claude Computer Use is closer to that goal.
+
+---
+
+*Want to see AI desktop automation in action? I run my entire content pipeline — from topic selection to blog publishing to social media posting — using Claude Code with browser automation. [Subscribe to the newsletter](/newsletter) to follow along as I build more of these workflows in public.*
