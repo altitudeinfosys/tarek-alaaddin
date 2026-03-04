@@ -7,12 +7,14 @@ arguments: "<time> [recurrence] [/command]  |  list  |  cancel <id>  |  cancel r
 
 # /schedule-task — One-Off & Recurring Task Scheduling
 
-Schedule Claude Code commands to run at specific times (one-off) or on recurring schedules. Default command is `/pipeline-run`.
+Schedule Claude Code commands to run at specific times (one-off) or on recurring schedules. Default command is `Run /pipeline-run`.
 
 ## Configuration
 
-```
-REPO_DIR="/Users/tarekalaaddin/Projects/code/tarek-alaaddin"
+Derive paths dynamically — never hardcode absolute paths:
+
+```bash
+REPO_DIR="$(git rev-parse --show-toplevel)"
 SCRIPT="${REPO_DIR}/scripts/schedule-claude-task.sh"
 ```
 
@@ -30,10 +32,10 @@ Parse the user's arguments to determine the action:
 
 ## Prerequisite Check
 
-Before any scheduling action, verify `atrun` is enabled:
+Before any **one-off** scheduling action, verify `atrun` is enabled (not needed for recurring):
 
 ```bash
-sudo launchctl list 2>/dev/null | grep -q atrun
+launchctl list 2>/dev/null | grep -q atrun
 ```
 
 If not found, warn the user:
@@ -42,6 +44,8 @@ If not found, warn the user:
 > sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.atrun.plist
 > ```
 > Then retry. Recurring schedules (crontab) will still work without atrun.
+
+**Note:** Use `launchctl list` (without sudo) first. If that doesn't find atrun, the user needs to run the sudo command interactively.
 
 ## Action: Schedule One-Off Task (via `at`)
 
@@ -53,16 +57,13 @@ If not found, warn the user:
    - Extract the time portion (everything before any `/command`)
    - Extract the command (starts with `/`). Default: `Run /pipeline-run`
    - Generate a description from the command for logging (e.g., `pipeline-run`, `post-to-x`)
+   - **Validate the command**: Ensure it only contains alphanumeric characters, spaces, slashes, and hyphens. Reject commands containing shell metacharacters (`;`, `|`, `&`, `` ` ``, `$`, `(`, `)`)
 
-2. **Validate time** with a dry-run:
-   ```bash
-   echo "echo test" | at <time> 2>&1
-   ```
-   If it fails, show the error and the supported time formats table below.
+2. **Validate time format** by checking against the supported formats table below. Do NOT run `echo "echo test" | at <time>` as a dry-run — this actually schedules a job as a side effect. Instead, validate the format visually against the table.
 
-3. **Schedule the job**:
+3. **Schedule the job** (use full absolute path to SCRIPT):
    ```bash
-   echo "${SCRIPT} \"Run <command>\" \"<description>\"" | at <time> 2>&1
+   echo "'${SCRIPT}' 'Run <command>' '<description>'" | at <time> 2>&1
    ```
    Capture the output — `at` prints the job number and scheduled time.
 
@@ -97,6 +98,8 @@ If not found, warn the user:
    - Extract the recurrence keyword.
    - Extract the command (starts with `/`). Default: `Run /pipeline-run`
    - Generate a description/tag name (e.g., `pipeline-daily`, `post-to-linkedin-weekdays`)
+   - **Tag names must be alphanumeric + hyphens only** (no spaces, no special chars). This prevents grep matching issues.
+   - **Validate the command**: Same as one-off — reject shell metacharacters.
 
 2. **Map recurrence to cron expression**:
 
@@ -115,20 +118,20 @@ If not found, warn the user:
 
    Replace `M` with the minute and `H` with the hour from the parsed time.
 
-3. **Check for duplicate**: Search existing crontab for a matching `# claude-schedule:` tag.
+3. **Check for duplicate**: Search existing crontab for an **exact** tag match (anchor with `$`):
    ```bash
-   crontab -l 2>/dev/null | grep "# claude-schedule: <tag>"
+   crontab -l 2>/dev/null | grep "# claude-schedule: <tag>$"
    ```
    If found, ask user if they want to replace it.
 
-4. **Add to crontab**:
+4. **Add to crontab** (use single-quoted SCRIPT path for safety):
    ```bash
-   (crontab -l 2>/dev/null; echo "<cron_expr> ${SCRIPT} \"Run <command>\" \"<description>\" # claude-schedule: <tag>") | crontab -
+   (crontab -l 2>/dev/null; echo "<cron_expr> '${SCRIPT}' 'Run <command>' '<description>' # claude-schedule: <tag>") | crontab -
    ```
 
 5. **Verify**:
    ```bash
-   crontab -l | grep "# claude-schedule: <tag>"
+   crontab -l | grep "# claude-schedule: <tag>$"
    ```
 
 6. **Confirm to user**:
@@ -180,21 +183,34 @@ If not found, warn the user:
 
 **Trigger**: `cancel recurring <name>` or `cancel recurring all`.
 
-### Steps
+### Steps — Safe Crontab Modification
 
-1. **If `all`**: Remove ALL `# claude-schedule:` entries from crontab:
+**IMPORTANT:** Always back up the crontab before modifying and validate the result before applying.
+
+1. **Capture current crontab**:
    ```bash
-   crontab -l 2>/dev/null | grep -v "# claude-schedule:" | crontab -
+   CURRENT_CRONTAB=$(crontab -l 2>/dev/null)
+   ```
+   If empty/error, report "No crontab entries found" and stop.
+
+2. **Count claude-schedule entries** (for confirmation):
+   ```bash
+   echo "${CURRENT_CRONTAB}" | grep -c "# claude-schedule:" || true
+   ```
+
+3. **If `all`**: Remove ALL `# claude-schedule:` entries:
+   ```bash
+   echo "${CURRENT_CRONTAB}" | grep -v "# claude-schedule:" | crontab -
    ```
    Confirm how many were removed.
 
-2. **If specific name**: Remove matching entry:
+4. **If specific name**: Remove matching entry using **exact** match (anchored with `$`):
    ```bash
-   crontab -l 2>/dev/null | grep -v "# claude-schedule: <name>" | crontab -
+   echo "${CURRENT_CRONTAB}" | grep -v "# claude-schedule: <name>$" | crontab -
    ```
    Confirm removal. If not found, say so.
 
-3. **Verify** with `crontab -l`.
+5. **Verify** with `crontab -l` and confirm non-claude entries are intact.
 
 ## Error Handling
 
@@ -206,6 +222,7 @@ If not found, warn the user:
 | Recurring tag not found | Show current recurring schedules |
 | `at` command not available | Suggest `brew install at` or check macOS version |
 | Empty crontab | Note that no schedules exist yet |
+| Command contains shell metacharacters | Reject and ask user to simplify |
 
 ## Output Format
 
@@ -231,7 +248,7 @@ Logs: logs/scheduled/ (timestamped per run)
 ## Usage Examples
 
 ```
-# One-off (default command is /pipeline-run)
+# One-off (default command is Run /pipeline-run)
 /schedule-task 3pm
 /schedule-task tomorrow 9am
 /schedule-task now + 30 minutes /post-to-x

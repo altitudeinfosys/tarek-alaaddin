@@ -33,9 +33,15 @@ User: /schedule-task 3pm
     ▼           ▼
 ┌─────────────────────────────────┐
 │ scripts/schedule-claude-task.sh │ ← Shared wrapper
+│  - Derives REPO_DIR from       │
+│    script location              │
 │  - Sets PATH + env             │
 │  - Ensures Chrome running      │
 │  - Runs: claude -p "<command>" │
+│    with 1-hour timeout         │
+│  - flock prevents concurrent   │
+│    runs of same task           │
+│  - Auto-cleans logs > 30 days  │
 │  - Logs to logs/scheduled/     │
 └─────────────────────────────────┘
          │
@@ -55,6 +61,13 @@ User: /schedule-task 3pm
 - Claude Code CLI installed at `~/.local/bin/claude`
 - `at` command available (built into macOS)
 - `crontab` available (built into macOS)
+
+### Required Permissions
+
+For scheduled tasks to run correctly in a non-interactive context (cron/at), the following may be needed:
+
+- **Full Disk Access**: Grant to `/usr/sbin/cron` and Terminal/iTerm in System Settings > Privacy & Security > Full Disk Access
+- **Automation permissions**: macOS may prompt for permission to control Chrome the first time
 
 ### Enable `atrun` (required for one-off scheduling)
 
@@ -86,7 +99,7 @@ You should see a line containing `com.apple.atrun`. If not, the load command may
 /schedule-task 3pm Mar 5                    → pipeline on March 5 at 3 PM
 ```
 
-Default command is `/pipeline-run`. Specify a different command by adding it after the time.
+Default command is `Run /pipeline-run`. Specify a different command by adding it after the time (e.g., `/post-to-x`).
 
 ### Schedule a Recurring Task
 
@@ -216,6 +229,8 @@ logs/scheduled/<YYYYMMDD>-<HHMMSS>-<description>.log
 
 Example: `logs/scheduled/20260304-150000-pipeline-run.log`
 
+Timestamps use UTC to avoid issues with DST transitions.
+
 ### Log contents
 
 Each log file includes:
@@ -225,6 +240,10 @@ Each log file includes:
 - Full Claude CLI output
 - Success/failure status
 
+### Log rotation
+
+Logs older than 30 days are automatically deleted at the start of each scheduled task run. This is handled by the helper script.
+
 ### Viewing logs
 
 ```bash
@@ -232,7 +251,7 @@ Each log file includes:
 ls -t logs/scheduled/*.log | head -1 | xargs cat
 
 # All logs from today
-ls logs/scheduled/$(date +%Y%m%d)*.log
+ls logs/scheduled/$(date -u +%Y%m%d)*.log
 
 # Search for errors
 grep -l "failed" logs/scheduled/*.log
@@ -255,6 +274,7 @@ sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.atrun.plist
 - `atrun` polls every 30 seconds, so jobs may be up to 30s late
 - The `claude` CLI must be in PATH — check `which claude` in a non-interactive shell
 - Chrome must be able to start (relevant for browser automation tasks)
+- Tasks time out after 1 hour by default (exit code 124 indicates timeout)
 
 **Debug:**
 ```bash
@@ -287,15 +307,19 @@ The helper script creates the log directory automatically. If logs are missing:
 - Check that `scripts/schedule-claude-task.sh` is executable: `ls -la scripts/schedule-claude-task.sh`
 - Run the script manually to test: `scripts/schedule-claude-task.sh "echo test" "manual-test"`
 
+### Concurrent run skipped
+
+If you see "SKIPPED: ... another instance is already running" in logs, a previous run of the same task is still active. The flock mechanism prevents overlapping runs. Check if a previous task is hung or taking longer than expected.
+
 ## How It Works Under the Hood
 
 ### One-Off Tasks (`at`)
 
 1. `/schedule-task 3pm` parses the time and command
-2. The skill runs: `echo "/path/to/schedule-claude-task.sh \"Run /pipeline-run\" \"pipeline-run\"" | at 3pm`
+2. The skill runs: `echo "'<repo>/scripts/schedule-claude-task.sh' 'Run /pipeline-run' 'pipeline-run'" | at 3pm`
 3. `at` queues the job and assigns a job number
 4. `atrun` daemon (polling every 30s) picks up the job at the scheduled time
-5. `schedule-claude-task.sh` sets up the environment and runs `claude -p "Run /pipeline-run"`
+5. `schedule-claude-task.sh` sets up the environment and runs `claude -p "Run /pipeline-run"` with a 1-hour timeout
 6. Output is captured in `logs/scheduled/`
 
 ### Recurring Tasks (`crontab`)
@@ -304,17 +328,21 @@ The helper script creates the log directory automatically. If logs are missing:
 2. The skill maps "noon daily" to cron expression `0 12 * * *`
 3. A tagged entry is added to the user's crontab:
    ```
-   0 12 * * * /path/to/schedule-claude-task.sh "Run /pipeline-run" "pipeline-run-daily" # claude-schedule: pipeline-run-daily
+   0 12 * * * '<repo>/scripts/schedule-claude-task.sh' 'Run /pipeline-run' 'pipeline-run-daily' # claude-schedule: pipeline-run-daily
    ```
 4. `cron` daemon executes the job at the scheduled time
 5. Same `schedule-claude-task.sh` wrapper handles env setup and logging
 
+### Concurrency Control
+
+The helper script uses `flock` to prevent concurrent runs of the same task. Each task description gets its own lock file in `logs/scheduled/.locks/`. If a previous run is still active, the new run is skipped and logged.
+
 ### Tag System
 
-Recurring crontab entries are tagged with `# claude-schedule: <name>` comments. This allows:
+Recurring crontab entries are tagged with `# claude-schedule: <name>` comments. Tag names are restricted to alphanumeric characters and hyphens. Cancellation uses end-of-line anchored matching (`grep -v "# claude-schedule: <name>$"`) to prevent partial tag matches. This allows:
 - **Listing**: `crontab -l | grep "# claude-schedule:"`
-- **Cancelling by name**: `grep -v "# claude-schedule: <name>"` to filter out specific entries
-- **Cancelling all**: `grep -v "# claude-schedule:"` to remove all Claude-managed entries
+- **Cancelling by name**: Exact match on the tag, no false positives
+- **Cancelling all**: Remove all Claude-managed entries
 - **No conflicts**: Unrelated crontab entries are never touched
 
 ### Relationship to pipeline-orchestrator.sh
