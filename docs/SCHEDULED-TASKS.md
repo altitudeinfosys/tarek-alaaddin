@@ -39,8 +39,8 @@ User: /schedule-task 3pm
 │  - Ensures Chrome running      │
 │  - Runs: claude -p "<command>" │
 │    with 1-hour timeout         │
-│  - flock prevents concurrent   │
-│    runs of same task           │
+│  - mkdir-based lock prevents   │
+│    concurrent runs (portable)  │
 │  - Auto-cleans logs > 30 days  │
 │  - Logs to logs/scheduled/     │
 └─────────────────────────────────┘
@@ -309,7 +309,7 @@ The helper script creates the log directory automatically. If logs are missing:
 
 ### Concurrent run skipped
 
-If you see "SKIPPED: ... another instance is already running" in logs, a previous run of the same task is still active. The flock mechanism prevents overlapping runs. Check if a previous task is hung or taking longer than expected.
+If you see "SKIPPED: ... another instance is already running" in logs, a previous run of the same task is still active. The mkdir-based lock mechanism prevents overlapping runs. Check if a previous task is hung or taking longer than expected. Stale locks from crashed processes are automatically detected and reclaimed.
 
 ## How It Works Under the Hood
 
@@ -335,7 +335,11 @@ If you see "SKIPPED: ... another instance is already running" in logs, a previou
 
 ### Concurrency Control
 
-The helper script uses `flock` to prevent concurrent runs of the same task. Each task description gets its own lock file in `logs/scheduled/.locks/`. If a previous run is still active, the new run is skipped and logged.
+The helper script uses `mkdir`-based locking (atomic on all POSIX systems, no GNU utilities needed) to prevent concurrent runs of the same task. Each task description gets its own lock directory in `logs/scheduled/.locks/` containing the PID of the holding process. If a previous run is still active, the new run is skipped and logged. Stale locks from crashed processes are automatically detected (via `kill -0`) and reclaimed. The lock is cleaned up on exit via a `trap`.
+
+### Timeout
+
+The script uses GNU `timeout`/`gtimeout` if available, falling back to a portable background-process + watchdog approach. No Homebrew or GNU coreutils installation is required — the script works on stock macOS.
 
 ### Tag System
 
