@@ -1,33 +1,33 @@
 ---
 name: pipeline-run
-description: "Automated content pipeline - reads a topic from the Google Sheets queue, generates a blog post, creates social media copy, posts to X and LinkedIn, and updates the queue status. Can run fully automated via scheduler or manually."
+description: "Automated content pipeline - reads a topic from the Notion content queue, generates a blog post, creates social media copy, posts to X and LinkedIn, and updates the queue status. Can run fully automated via scheduler or manually."
 user-invocable: true
 arguments: "optional: topic override to bypass queue, or dry-run to test without posting"
 ---
 
 # Content Pipeline Runner
 
-Master orchestrator for the blog-to-social-media pipeline. Reads topics from a Google Sheets queue, generates blog posts, creates social media copy, and posts to X and LinkedIn.
+Master orchestrator for the blog-to-social-media pipeline. Reads topics from a Notion database queue, generates blog posts, creates social media copy, and posts to X and LinkedIn.
 
 ## Usage
 
-- `/pipeline-run` — Process next queued topic from Google Sheet
+- `/pipeline-run` — Process next queued topic from Notion
 - `/pipeline-run dry-run` — Run the pipeline but skip actual posting (for testing)
 - `/pipeline-run "How I use AI for productivity"` — Override queue with a specific topic
 
 ## Prerequisites
 
-- **Browser**: Chrome with Claude in Chrome extension active (preferred), OR Playwright MCP tools available (fallback)
+- **Notion MCP server**: Must be configured with `NOTION_TOKEN` (see Notion Database Setup below)
+- **Browser**: Chrome with Claude in Chrome extension active (preferred), OR Playwright MCP tools available (fallback) — only needed for social posting (Phases 5-6)
 - User must be logged into:
-  - Google Sheets (for the content queue)
   - X (x.com) for Twitter posting
   - LinkedIn (linkedin.com) for LinkedIn posting
 - The project repo must be at `/Users/tarekalaaddin/Projects/code/tarek-alaaddin/`
 - `gh` CLI must be authenticated for GitHub operations
 
-## Browser Backend
+## Browser Backend (Social Posting Only)
 
-The pipeline supports two browser automation backends. It will auto-detect which is available.
+Browser automation is only needed for posting to X and LinkedIn (Phases 5-6). Queue management and status tracking use the Notion API directly — no browser required.
 
 ### Detection Logic
 
@@ -61,49 +61,113 @@ Use this table to pick the correct tool based on the active backend:
 ### Playwright Prerequisites
 
 - Playwright MCP server must be configured with `--user-data-dir` for login persistence
-- **First-time setup**: Run the pipeline once, then log into Google Sheets, X, and LinkedIn manually in the Playwright browser window. Subsequent runs reuse the saved session.
+- **First-time setup**: Run the pipeline once, then log into X and LinkedIn manually in the Playwright browser window. Subsequent runs reuse the saved session.
 - If sessions expire, log in again manually in the Playwright browser
 
-## Google Sheet Setup
+## Notion Database Setup
 
-**Sheet URL**: `https://docs.google.com/spreadsheets/d/1xfPdknbYRaftoy-BndQp6rkT3NTaebfcyr9nXTqunPA/edit?gid=0#gid=0`
+**Database ID**: `319610c68f04811ea752e9d0cee2f0d1`
 
-**Expected columns** (Row 1 = headers):
+**Parent page**: TarekAlaaddinContent (`319610c68f048047a1a1ddd9c7705ddd`)
 
-| A: Topic | B: Status | C: Date Queued | D: Blog Slug | E: Blog URL | F: X Text | G: LinkedIn Text | H: Notes |
+**Database properties**:
+
+| Property | Type | Purpose |
+|----------|------|---------|
+| Topic | title | The content idea to process |
+| Status | select | Pipeline phase tracking |
+| Date Queued | date | When the topic was added |
+| Blog Slug | rich_text | Auto-filled by pipeline |
+| Blog URL | url | Auto-filled by pipeline |
+| X Text | rich_text | Auto-generated tweet text |
+| LinkedIn Text | rich_text | Auto-generated LinkedIn text |
+| Notes | rich_text | Status updates and error messages |
+
+**Page body**: Each topic entry can contain rich context in the note body — paragraphs, links, bullet points, images. This context is read during Phase 1 and passed to the blog generation phase for richer, more informed content.
 
 **Status values flow**: `queued` → `researching` → `generating` → `critiquing` → `generated` → `posted-x` → `posted-linkedin` → `done`
 
-**Writing multiline text to cells**: Google Sheets treats Enter as "move to next row." To insert a newline *within* a cell (needed for X Text and LinkedIn Text columns), use this pattern:
+On failure at any stage: status becomes `failed` and the error is written to the Notes property.
 
-```javascript
-// Split text on newlines, type each line, press Ctrl+Enter between lines
-const lines = text.split('\n');
-for (let i = 0; i < lines.length; i++) {
-  if (lines[i].length > 0) {
-    await page.keyboard.type(lines[i]);
-  }
-  if (i < lines.length - 1) {
-    await page.keyboard.press('Control+Enter'); // newline within cell
-  }
-}
-await page.keyboard.press('Tab'); // confirm cell and move to next column
+### Notion API Helper Patterns
+
+All queue operations use the Notion REST API via curl. The `NOTION_TOKEN` is available as an environment variable.
+
+**Query for next queued topic:**
+```bash
+curl -s 'https://api.notion.com/v1/databases/319610c68f04811ea752e9d0cee2f0d1/query' \
+  -H "Authorization: Bearer $NOTION_TOKEN" \
+  -H 'Notion-Version: 2022-06-28' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "filter": {"property": "Status", "select": {"equals": "queued"}},
+    "sorts": [{"property": "Date Queued", "direction": "ascending"}],
+    "page_size": 1
+  }'
 ```
 
-This applies to both Playwright (`page.keyboard`) and Chrome Extension (`computer` action with key `ctrl+Enter`). **Never use `keyboard.type()` directly with text containing `\n` characters** — it will spill into subsequent rows.
+**Update page status:**
+```bash
+curl -s -X PATCH "https://api.notion.com/v1/pages/PAGE_ID" \
+  -H "Authorization: Bearer $NOTION_TOKEN" \
+  -H 'Notion-Version: 2022-06-28' \
+  -H 'Content-Type: application/json' \
+  -d '{"properties": {"Status": {"select": {"name": "NEW_STATUS"}}}}'
+```
 
-On failure at any stage: status becomes `failed` and the error is written to the Notes column (H).
+**Update multiple properties:**
+```bash
+curl -s -X PATCH "https://api.notion.com/v1/pages/PAGE_ID" \
+  -H "Authorization: Bearer $NOTION_TOKEN" \
+  -H 'Notion-Version: 2022-06-28' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "properties": {
+      "Status": {"select": {"name": "NEW_STATUS"}},
+      "Blog Slug": {"rich_text": [{"text": {"content": "SLUG_VALUE"}}]},
+      "Notes": {"rich_text": [{"text": {"content": "NOTE_TEXT"}}]}
+    }
+  }'
+```
+
+**Read page body (rich context):**
+```bash
+curl -s "https://api.notion.com/v1/blocks/PAGE_ID/children" \
+  -H "Authorization: Bearer $NOTION_TOKEN" \
+  -H 'Notion-Version: 2022-06-28'
+```
+
+> **Note**: If Notion MCP tools are available (`mcp__notion__*`), prefer using them directly (e.g., `mcp__notion__update-a-page`, `mcp__notion__query-data-source`). Fall back to curl commands if MCP tools are not available in the current session.
+
+### Adding Topics to the Queue
+
+To add new content to the pipeline, create a new entry in the Notion database:
+
+1. Open the Content Pipeline database in Notion
+2. Click "New" to add a row
+3. Set the **Topic** (title) — e.g., "How to Build AI Agents with Claude Code"
+4. Set **Status** to `queued`
+5. Set **Date Queued** to today
+6. **Optional**: Open the page and add rich context in the body — links, references, bullet points with specific angles to cover, competitor analysis, etc.
 
 ## Process
 
 ### Phase 0: Pre-Flight Checks
 
-1. **Detect browser backend**:
+1. **Verify Notion API access**:
+   ```bash
+   curl -s 'https://api.notion.com/v1/users/me' \
+     -H "Authorization: Bearer $NOTION_TOKEN" \
+     -H 'Notion-Version: 2022-06-28' | python3 -c "import json,sys; d=json.load(sys.stdin); print(f'Notion connected: {d[\"name\"]}' if 'name' in d else 'ERROR: Notion auth failed')"
+   ```
+   If auth fails, STOP with error.
+
+2. **Detect browser backend** (for social posting in Phases 5-6):
    - Try Chrome Extension: call `tabs_context_mcp`
    - If connected → set backend = Chrome Extension, create a new tab
-   - If not connected → set backend = Playwright, navigate to a test page (e.g. `https://www.google.com`) to verify Playwright is working
-   - Log: "Using [Chrome Extension / Playwright] backend"
-2. Verify the browser is responsive by loading a page
+   - If not connected → set backend = Playwright, navigate to a test page to verify
+   - Log: "Using [Chrome Extension / Playwright] backend for social posting"
+
 3. Check that the project repo is clean:
    ```bash
    cd /Users/tarekalaaddin/Projects/code/tarek-alaaddin && git status
@@ -113,28 +177,55 @@ On failure at any stage: status becomes `failed` and the error is written to the
    git checkout main && git pull
    ```
 
-### Phase 1: Read Queue from Google Sheet
+### Phase 1: Read Queue from Notion
 
-1. Create a new tab (see Tool Mapping table)
-2. Navigate to the Google Sheet URL
-3. Wait for the sheet to load (3 seconds)
-4. Read the sheet contents using page structure reading or text extraction (see Tool Mapping table)
-5. Find the first row where column B (Status) = `queued`
-6. If no queued topics found:
-   - Log: "No queued topics found. Pipeline complete."
-   - STOP
-7. Extract the topic from column A of that row
-8. Note the row number for later updates
-9. Update status to `researching`:
-   - Click on the Status cell for that row
-   - Type `researching`
-   - Press Enter
+1. Query the Notion database for the next queued topic:
+   ```bash
+   curl -s 'https://api.notion.com/v1/databases/319610c68f04811ea752e9d0cee2f0d1/query' \
+     -H "Authorization: Bearer $NOTION_TOKEN" \
+     -H 'Notion-Version: 2022-06-28' \
+     -H 'Content-Type: application/json' \
+     -d '{
+       "filter": {"property": "Status", "select": {"equals": "queued"}},
+       "sorts": [{"property": "Date Queued", "direction": "ascending"}],
+       "page_size": 1
+     }'
+   ```
+
+2. Parse the response:
+   - Extract `results[0].id` → this is the **page_id** (used for all subsequent updates)
+   - Extract `results[0].properties.Topic.title[0].plain_text` → this is the **topic**
+   - If `results` array is empty:
+     - Log: "No queued topics found. Pipeline complete."
+     - STOP
+
+3. **Read the note body** for rich context:
+   ```bash
+   curl -s "https://api.notion.com/v1/blocks/PAGE_ID/children" \
+     -H "Authorization: Bearer $NOTION_TOKEN" \
+     -H 'Notion-Version: 2022-06-28'
+   ```
+   Parse the blocks to extract text content. This may contain:
+   - Paragraphs with additional context about the topic
+   - Bullet points with specific angles to cover
+   - Links to reference material
+   - Any other guidance for content creation
+   Store this as **topic_context** for use in Phase 1.5 and Phase 2.
+
+4. Update status to `researching`:
+   ```bash
+   curl -s -X PATCH "https://api.notion.com/v1/pages/PAGE_ID" \
+     -H "Authorization: Bearer $NOTION_TOKEN" \
+     -H 'Notion-Version: 2022-06-28' \
+     -H 'Content-Type: application/json' \
+     -d '{"properties": {"Status": {"select": {"name": "researching"}}}}'
+   ```
 
 ### Phase 1.5: Research Topic
 
-Before generating content, research every product, tool, and technology mentioned in the topic to ensure factual accuracy.
+Before generating content, research every product, tool, and technology mentioned in the topic to ensure factual accuracy. Use the **topic_context** from the note body as additional guidance.
 
-1. **Parse the topic** for product/tool names — identify every tool, framework, API, or service mentioned or implied by the topic.
+1. **Parse the topic AND topic_context** for product/tool names — identify every tool, framework, API, or service mentioned or implied.
 
 2. **Research each product/tool** using `WebSearch` and `WebFetch`:
    - Search for `"{tool name}" official documentation`
@@ -170,12 +261,15 @@ Before generating content, research every product, tool, and technology mentione
 
 ### Phase 2: Generate Blog Post
 
-Update Sheet status to `generating`, then follow the `/blog-post` skill workflow non-interactively:
+1. **Update Notion status** to `generating`:
+   ```bash
+   curl -s -X PATCH "https://api.notion.com/v1/pages/PAGE_ID" \
+     -H "Authorization: Bearer $NOTION_TOKEN" \
+     -H 'Notion-Version: 2022-06-28' \
+     -H 'Content-Type: application/json' \
+     -d '{"properties": {"Status": {"select": {"name": "generating"}}}}'
+   ```
 
-1. **Update Sheet status** to `generating`:
-   - Click on the Status cell for the current row
-   - Type `generating`
-   - Press Enter
 2. **Generate the slug** from the topic (kebab-case, concise)
 3. **Check for duplicate slug**:
    ```bash
@@ -190,6 +284,7 @@ Update Sheet status to `generating`, then follow the `/blog-post` skill workflow
    Keep max 2-3 featured posts. New pipeline posts are NOT featured by default.
 
 5. **Generate the MDX blog post** following the blog-post skill's writing rules:
+   - Use both the topic AND the topic_context from the note body as input
    - Frontmatter with all required fields (title, description, date, category, tags, image, published: true, featured: false)
    - Match Tarek's voice: conversational, direct, bold opinions, data-driven
    - 1500-3000 words, 8-15 sections
@@ -203,10 +298,14 @@ Evaluate the generated blog post using parallel sub-agents (Sonnet + Gemini) bef
 
 **Critique file path**: `/tmp/pipeline-critique-SLUG.txt` (deterministic path using the blog slug — persists across tool invocations, no shell variable scoping issues).
 
-1. **Update Sheet status** to `critiquing`:
-   - Click on the Status cell for the current row
-   - Type `critiquing`
-   - Press Enter
+1. **Update Notion status** to `critiquing`:
+   ```bash
+   curl -s -X PATCH "https://api.notion.com/v1/pages/PAGE_ID" \
+     -H "Authorization: Bearer $NOTION_TOKEN" \
+     -H 'Notion-Version: 2022-06-28' \
+     -H 'Content-Type: application/json' \
+     -d '{"properties": {"Status": {"select": {"name": "critiquing"}}}}'
+   ```
 
 2. **Load critique context**:
    - Read the generated MDX file from `/Users/tarekalaaddin/Projects/code/tarek-alaaddin/content/blog/SLUG.mdx`
@@ -367,10 +466,15 @@ Evaluate the generated blog post using parallel sub-agents (Sonnet + Gemini) bef
    - Preserve overall section structure
    - Address specific findings, don't rewrite from scratch
 
-7. **Record critique results** in Sheet Notes column (H):
-   - Format: `Critique: PASSED on attempt {cycle_number}, Score: {overall_score}/10`
-   - If warnings remain: append brief summary of unresolved warnings
-   - Store the overall score and cycle number — these are used in the PR body (step 11)
+7. **Record critique results** in Notion Notes property:
+   ```bash
+   curl -s -X PATCH "https://api.notion.com/v1/pages/PAGE_ID" \
+     -H "Authorization: Bearer $NOTION_TOKEN" \
+     -H 'Notion-Version: 2022-06-28' \
+     -H 'Content-Type: application/json' \
+     -d '{"properties": {"Notes": {"rich_text": [{"text": {"content": "Critique: PASSED on attempt CYCLE, Score: SCORE/10. WARNINGS_SUMMARY"}}]}}}'
+   ```
+   Store the overall score and cycle number — these are used in the PR body (step 11).
 
 8. **Cleanup critique file**:
    ```bash
@@ -385,7 +489,7 @@ Evaluate the generated blog post using parallel sub-agents (Sonnet + Gemini) bef
     ```bash
     cd /Users/tarekalaaddin/Projects/code/tarek-alaaddin && npx next build
     ```
-    If build fails, fix the issue and rebuild. If it fails 3 times, mark as `failed` in the Sheet and STOP.
+    If build fails, fix the issue and rebuild. If it fails 3 times, update Notion status to `failed` with error in Notes and STOP.
 
 11. **Create branch, commit, push, and PR**:
     ```bash
@@ -395,9 +499,6 @@ Evaluate the generated blog post using parallel sub-agents (Sonnet + Gemini) bef
     git push -u origin blog/SLUG
     ```
     Create the PR, substituting actual values from the critique report (step 7):
-    - Replace `CRITIQUE_SCORE` with the overall score from step 7 (e.g., `8`)
-    - Replace `CRITIQUE_ATTEMPT` with the cycle number from step 7 (e.g., `1`)
-    - Replace `REMAINING_WARNINGS` with the list of unresolved warnings, or omit the section if none
     ```bash
     gh pr create --title "Add blog post: SHORT_TITLE" --body "$(cat <<'EOF'
     ## Summary
@@ -415,7 +516,14 @@ Evaluate the generated blog post using parallel sub-agents (Sonnet + Gemini) bef
     ```
     If there are no remaining warnings, omit the "Remaining Critique Warnings" section entirely.
 
-12. **Update Sheet**: Write the blog slug to column D for that row.
+12. **Update Notion**: Write the blog slug to the Blog Slug property:
+    ```bash
+    curl -s -X PATCH "https://api.notion.com/v1/pages/PAGE_ID" \
+      -H "Authorization: Bearer $NOTION_TOKEN" \
+      -H 'Notion-Version: 2022-06-28' \
+      -H 'Content-Type: application/json' \
+      -d '{"properties": {"Blog Slug": {"rich_text": [{"text": {"content": "SLUG"}}]}}}'
+    ```
 
 ### Phase 3: Wait for PR Merge (Semi-Auto Gate)
 
@@ -432,10 +540,10 @@ This is the approval gate. The blog PR must be merged before social posting proc
      git checkout main && git pull
      ```
 3. If state is `CLOSED` (rejected):
-   - Mark queue item as `failed` with note "PR was closed/rejected"
+   - Update Notion: status = `failed`, Notes = "PR was closed/rejected"
    - STOP
 4. If state is `OPEN` after 24 hours:
-   - Mark queue item as `failed` with note "PR not merged within 24h"
+   - Update Notion: status = `failed`, Notes = "PR not merged within 24h"
    - STOP
 5. **For automated runs**: Poll using a loop with 5-minute sleep intervals
 6. **For manual runs**: Tell the user "PR is open. Merge it when ready, then run `/pipeline-run` again to continue."
@@ -495,14 +603,26 @@ Rules:
 - End with a question to drive comments
 - Mention "link in comments" if you want to maximize reach (LinkedIn deprioritizes posts with links)
 
-1. **Update Sheet**: Write X text to column F, LinkedIn text to column G.
-   - Click on cell F{row}, then use the **multiline text pattern** from the Google Sheet Setup section (Ctrl+Enter between lines, never raw `\n`). Press Tab to confirm and move to column G.
-   - Click on cell G{row}, then use the same multiline text pattern for LinkedIn copy. Press Tab to confirm.
-2. **Update status** to `generated`
+1. **Update Notion**: Write X text and LinkedIn text to the page properties, and update status:
+   ```bash
+   curl -s -X PATCH "https://api.notion.com/v1/pages/PAGE_ID" \
+     -H "Authorization: Bearer $NOTION_TOKEN" \
+     -H 'Notion-Version: 2022-06-28' \
+     -H 'Content-Type: application/json' \
+     -d '{
+       "properties": {
+         "Status": {"select": {"name": "generated"}},
+         "X Text": {"rich_text": [{"text": {"content": "TWEET_TEXT"}}]},
+         "LinkedIn Text": {"rich_text": [{"text": {"content": "LINKEDIN_TEXT"}}]},
+         "Blog URL": {"url": "https://tarekalaaddin.com/blog/SLUG"}
+       }
+     }'
+   ```
+   > **Note**: Notion rich_text supports up to 2000 characters per text block. LinkedIn posts fit within this limit.
 
 ### Phase 5: Post to X
 
-1. Update Sheet status to `posting-x`
+1. Update Notion status to `posting-x`
 2. Invoke the `/post-to-x` skill logic (which also supports both browser backends):
    - Navigate to x.com/compose/post in a new tab
    - Type the tweet text
@@ -511,13 +631,12 @@ Rules:
    - Wait 3 seconds
    - Take a post-post screenshot (save to `logs/pipeline/screenshots/`)
    - Verify success
-3. If successful: Update Sheet status to `posted-x`
-4. If failed: Update Sheet status to `failed`, write error to Notes column
-5. **Update Sheet**: Write blog URL to column E
+3. If successful: Update Notion status to `posted-x`
+4. If failed: Update Notion status to `failed`, write error to Notes property
 
 ### Phase 6: Post to LinkedIn
 
-1. Update Sheet status to `posting-linkedin`
+1. Update Notion status to `posting-linkedin`
 2. Invoke the `/post-to-linkedin` skill logic (which also supports both browser backends):
    - Navigate to linkedin.com/feed in a new tab
    - Click "Start a post"
@@ -527,21 +646,32 @@ Rules:
    - Wait 3 seconds
    - Take a post-post screenshot
    - Verify success
-3. If successful: Update Sheet status to `posted-linkedin`
-4. If failed: Update Sheet status to `failed`, write error to Notes column
+3. If successful: Update Notion status to `posted-linkedin`
+4. If failed: Update Notion status to `failed`, write error to Notes property
 
 ### Phase 7: Finalize
 
-1. Update Sheet status to `done`
-2. Write completion timestamp to Notes column
-3. Log summary:
+1. Update Notion status to `done` with completion timestamp:
+   ```bash
+   curl -s -X PATCH "https://api.notion.com/v1/pages/PAGE_ID" \
+     -H "Authorization: Bearer $NOTION_TOKEN" \
+     -H 'Notion-Version: 2022-06-28' \
+     -H 'Content-Type: application/json' \
+     -d '{
+       "properties": {
+         "Status": {"select": {"name": "done"}},
+         "Notes": {"rich_text": [{"text": {"content": "Completed at TIMESTAMP. Blog: BLOG_URL"}}]}
+       }
+     }'
+   ```
+2. Log summary:
    - Topic processed
    - Blog URL
    - X post status
    - LinkedIn post status
    - Total time elapsed
-4. Close all pipeline-opened tabs
-5. Return to main branch:
+3. Close all pipeline-opened browser tabs
+4. Return to main branch:
    ```bash
    git checkout main
    ```
@@ -550,6 +680,7 @@ Rules:
 
 | Check | When | Action on Failure |
 |-------|------|-------------------|
+| Notion API is accessible | Phase 0 | STOP with error |
 | Git repo is clean | Phase 0 | Stash changes or STOP |
 | No duplicate slug | Phase 2 | Modify slug |
 | Build passes | Phase 2 | Fix or mark failed |
@@ -557,7 +688,6 @@ Rules:
 | Logged into X | Phase 5 | Skip X, continue to LinkedIn |
 | Logged into LinkedIn | Phase 6 | Skip LinkedIn, update status |
 | Critique score < 8 or has CRITICAL issues | Phase 2.5 | Auto-revise up to 2x, then proceed with warnings |
-| Sheet is accessible | Phase 1 | STOP with error |
 
 ## Rate Limiting
 
@@ -576,7 +706,7 @@ When invoked with `dry-run`:
 ## Error Recovery
 
 If the pipeline fails mid-run:
-1. Check the Sheet for the current status of the failed row
+1. Check the Notion database for the current status of the failed entry
 2. The status indicates which phase failed
 3. Fix the issue and re-run — the pipeline will resume from the failed phase based on status:
    - `researching` → restart from Phase 1.5
