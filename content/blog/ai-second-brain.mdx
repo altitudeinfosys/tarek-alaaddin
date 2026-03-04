@@ -1,0 +1,242 @@
+---
+title: "Your AI Has Amnesia: Build a Second Brain Across Every LLM"
+description: "ChatGPT, Claude, Gemini, and Perplexity each forget you between sessions. Here's how to build one memory layer every AI tool can read."
+date: "2026-03-03"
+category: "ai"
+tags: ["ai", "second-brain", "claude-code", "memory", "productivity", "ai-agents", "obsidian", "automation"]
+image: "/images/blog/ai-second-brain.jpg"
+published: true
+featured: false
+---
+
+Every AI tool I use forgets who I am the moment I close the tab.
+
+Claude Code for building. ChatGPT for thinking. Perplexity for research. Gemini for quick lookups. Four tools, four separate memory silos, zero shared context. I've told Claude my coding standards a hundred times. I've explained my writing style to ChatGPT in fifty different conversations. Perplexity doesn't know I've already researched a topic last week.
+
+This is the fundamental problem with AI in 2026: **every tool has its own memory, and none of them talk to each other.**
+
+I spent the last three months building a system that fixes this. It costs nothing beyond the AI subscriptions I already pay for, and it takes about 10 minutes a day to maintain. Here's how it works.
+
+## Why Four AI Memories Is Worse Than One
+
+Every major AI platform has shipped some form of persistent memory in the last year. ChatGPT added "saved memories" and now references your full chat history. Claude has CLAUDE.md files and auto-memory. Gemini stores "saved info" in a personal context layer. Perplexity is rolling out cross-model memory that persists across every LLM it offers.
+
+On paper, each platform's memory is fine. In practice, you have four separate brains that don't share a single neuron.
+
+Think about how you actually work. You research a topic in Perplexity, find three key insights, then switch to Claude Code to implement what you learned. Claude has no idea what Perplexity just told you. You copy-paste the relevant bits, losing context along the way. Later, you ask ChatGPT to help draft a document about the same topic. More copy-pasting. More lost context.
+
+Multiply this by every project, every day, every week. The cumulative cost isn't just time — it's coherence. Your AI tools can't build on each other's work because they can't see each other's work.
+
+<Callout type="warning">
+**The fragmentation tax is real.** I tracked my AI usage for two weeks and found I spent roughly 40 minutes per day re-explaining context that one AI tool already knew but another didn't. That's over 3 hours a week of pure redundancy.
+</Callout>
+
+## What a Second Brain Actually Means in the AI Era
+
+The "second brain" concept has been around since Tiago Forte popularized it — a personal knowledge management system that captures, organizes, and retrieves information so your biological brain doesn't have to hold everything. Tools like Obsidian, Notion, and Roam Research built massive communities around this idea.
+
+But the original second brain was designed for humans retrieving their own notes. The AI second brain is different: **it's a structured memory layer that AI tools can read from and write to, so every tool you use has access to the same persistent context.**
+
+The shift is from "I organize my notes so I can find them" to "I organize my knowledge so every AI I use already knows what I know."
+
+Here's what that looks like in practice:
+
+```text
+You (working) → Update your second brain with new knowledge
+Claude Code → Reads your second brain before every session
+ChatGPT → Gets your second brain as context in custom instructions
+Perplexity → Carries context from your second brain into research
+Gemini → References your second brain for personalized responses
+```
+
+One source of truth. Four AI tools that all read from it. Zero re-explaining.
+
+## My Setup: Obsidian + Claude Code + Markdown Files
+
+I tried several approaches before settling on this one. The key insight: **your second brain needs to be plain text files that every AI tool can ingest.** Not a database. Not an API. Not a proprietary format. Markdown files in a folder.
+
+Here's why: every AI tool can read markdown. You can paste it into ChatGPT's custom instructions. You can reference it in Claude's CLAUDE.md. You can attach it to a Perplexity query. You can upload it to Gemini. The format is universal.
+
+### Setting Up the File Structure
+
+```text
+second-brain/
+├── me/
+│   ├── identity.md          # Who I am, what I do, how I work
+│   ├── writing-voice.md     # My writing style, tone, preferences
+│   └── preferences.md       # Tool preferences, workflow habits
+├── projects/
+│   ├── tarekalaaddin-com.md  # Current project context
+│   └── client-project-x.md  # Client project context
+├── knowledge/
+│   ├── ai-tools.md          # What I know about AI tools
+│   ├── web-dev.md           # Technical knowledge, patterns
+│   └── research-log.md      # Ongoing research findings
+└── templates/
+    ├── blog-brief.md        # Template for blog post briefs
+    └── project-context.md   # Template for new project context
+```
+
+Each file is a living document. When I learn something new about a tool, I update `knowledge/ai-tools.md`. When I refine my writing style, I update `me/writing-voice.md`. When I start a new project, I create a new file in `projects/`.
+
+### Connecting It to Claude Code
+
+Claude Code has the most sophisticated memory system of any AI tool I've used. It works through a hierarchy of markdown files:
+
+**Project-level CLAUDE.md** — lives in your repo root. Contains coding standards, project architecture, workflow rules. Claude Code reads this automatically at the start of every session.
+
+**User-level CLAUDE.md** — lives at `~/.claude/CLAUDE.md`. Contains your personal preferences that apply across all projects. Things like "always use TypeScript," "prefer Tailwind over CSS modules," "never auto-commit."
+
+**Auto-memory** — Claude Code maintains a memory directory at `~/.claude/projects/<project>/memory/`. The first 200 lines of `MEMORY.md` are loaded into every session automatically. You can tell Claude to "remember this" and it writes to this file. You can also create topic-specific files like `debugging.md` or `patterns.md` that Claude loads on demand.
+
+**Rules files** — `.claude/rules/*.md` files apply conditionally based on file paths. A rule in `.claude/rules/api.md` with a glob `src/api/**` only activates when Claude is working on API files.
+
+I point Claude Code's memory files at my second brain. My `~/.claude/CLAUDE.md` includes:
+
+```markdown
+## My Context
+- Read `~/second-brain/me/identity.md` for who I am
+- Read `~/second-brain/me/writing-voice.md` for my writing style
+- Current active project context is in the project CLAUDE.md
+```
+
+Now every Claude Code session starts with full context about who I am and how I work.
+
+### Connecting It to ChatGPT
+
+ChatGPT's custom instructions accept about 1,500 characters. I distill my `identity.md` and `writing-voice.md` into a compressed version that fits. When I update the source files, I regenerate the ChatGPT version.
+
+ChatGPT also has its own memory — "saved memories" you explicitly tell it to remember, plus implicit learning from your chat history. I use both: the custom instructions provide baseline context, and saved memories handle specifics that evolve over time.
+
+The key discipline: when ChatGPT learns something that should be universal, I add it to my second brain files, not just to ChatGPT's memory. ChatGPT's memory is a cache. My second brain is the source of truth.
+
+### Connecting It to Perplexity and Gemini
+
+Perplexity's memory is still in beta, but it already carries context across every model it offers. I paste relevant sections of my second brain into Perplexity Spaces (organized research workspaces) so it has project context for research sessions.
+
+Gemini's "saved info" feature works similarly to ChatGPT's memory. I maintain a compressed context file specifically for Gemini that mirrors what I give ChatGPT.
+
+The pattern is the same everywhere: **the second brain is the source, each AI tool gets a synced derivative.**
+
+<Callout type="tip">
+**Start with identity.md.** Write 200 words about who you are, what you do, and how you work. This single file, pasted into every AI tool's context, eliminates 80% of the re-explaining problem. You can build everything else incrementally.
+</Callout>
+
+## The Daily Workflow: 10 Minutes, Zero Extra Cost
+
+Here's the part that makes this practical. The entire system runs on tools I already pay for, with about 10 minutes of daily maintenance. The daily workflow is:
+
+1. **Morning sync** (2 minutes): I review my second brain files, update anything that changed yesterday. This is manual and intentional — I want to decide what enters the knowledge base.
+
+2. **Auto-capture during work**: When Claude Code learns something useful during a session, it writes to its auto-memory files. I configured these to mirror my second brain structure.
+
+3. **Evening distill** (3 minutes): I review what Claude captured, move the good stuff into my canonical second brain files, discard the noise.
+
+4. **Weekly sync to other tools** (5 minutes): Update ChatGPT custom instructions and Gemini saved info if anything significant changed.
+
+The total cost: Obsidian is free. The markdown files live on my machine. Claude Code's memory features are included in the $20/month subscription I already pay for. No new tools. No new subscriptions. Just structured files and a daily habit.
+
+The ROI is absurd. Ten minutes of maintenance saves me 40+ minutes of context-switching and re-explaining per day. That's a 4x return on time, every single day.
+
+## What Not to Put in Your Second Brain
+
+This is where most people go wrong. They try to dump everything into their knowledge system and it becomes an unmanageable mess.
+
+**Don't store conversation logs.** Your AI tools already have chat history. Your second brain stores distilled knowledge, not raw transcripts.
+
+**Don't store temporary context.** "I'm currently debugging the auth flow" belongs in a project-specific note that gets deleted when the task is done, not in your permanent knowledge base.
+
+**Don't store information you can easily search for.** API documentation, syntax references, standard library functions — these change frequently and are always a search away. Store your opinions about tools, your patterns for using them, your project-specific configurations.
+
+**Do store decisions and their reasoning.** "We chose Supabase over Firebase because..." is worth remembering. "Supabase supports row-level security" is not — that's in their docs.
+
+**Do store your preferences and patterns.** "I prefer functional components with hooks over class components" saves every AI tool from asking or guessing.
+
+**Do store project context that doesn't live in code.** Why you structured the API this way. What the client's priorities are. What trade-offs you accepted and why.
+
+## The Tools Catching Up: Mem0, Letta, and the Memory Layer Race
+
+The "AI memory" space is heating up. Several startups are building exactly what I've been assembling manually.
+
+**Mem0** raised $24 million to build a universal AI memory layer. They offer graph-based memory that tracks relationships between concepts, claim a 26% accuracy improvement over OpenAI's built-in memory, and report 91% reduction in token usage by loading only relevant memories instead of full histories. Free tier gives you 10,000 memories, paid starts at $19/month. My take: Mem0 is the most polished option if you're building an AI app that needs persistent user memory. If you're a solo knowledge worker managing your own context, it's overkill — you don't need a graph database when a folder of markdown files does the job.
+
+**Letta** (formerly MemGPT) raised $10 million to build stateful AI agents with self-editing memory. Their agents decide what to remember, what to forget, and how to organize what they know. Their recent Context Repositories feature lets agents share memory across sessions and even across different instances. Letta is more interesting for agent developers than end users — if you're building agents that need to maintain state across long-running tasks, this is worth watching.
+
+**BasicMemory** and **Pieces** are building cross-platform memory extensions that sync context between AI tools. These are closer to what most people actually need — a bridge between their existing tools rather than a new platform.
+
+I'm watching all of these, but my markdown-file approach works today, requires no additional subscriptions, and gives me complete control over what gets remembered. The moment one of these tools offers seamless cross-platform sync without vendor lock-in, I'll switch. Until then, I own my files.
+
+<Callout type="info">
+**The memory layer is the next platform war.** Whoever controls the persistent context layer between you and your AI tools controls the most valuable data in the stack — your preferences, your knowledge, your working patterns. Own your memory. Keep it in files you control, not locked in a platform.
+</Callout>
+
+## How to Set Up an AI Second Brain in One Hour
+
+Here's the minimal viable version:
+
+### Step 1: Create the Foundation (15 minutes)
+
+Create a folder called `second-brain` wherever you keep personal files. Add three files:
+
+**identity.md** — 200 words about who you are, what you do, your role, your industry, your key skills. Here's a trimmed version of mine:
+
+```markdown
+# Identity
+
+I'm Tarek, a solopreneur and full-stack developer building tarekalaaddin.com.
+I write about AI tools, developer productivity, and building businesses with AI agents.
+
+## Technical Stack
+- Frontend: Next.js 15, React, TypeScript, Tailwind CSS
+- AI: Claude Code (primary), ChatGPT Plus, Perplexity Pro
+- Infrastructure: Vercel, Supabase, GitHub Actions
+
+## Writing Style
+- Conversational, direct, opinionated
+- Data-driven: back claims with numbers
+- Practical: show the actual config, not just the concept
+- No filler phrases: "it's worth noting," "in today's world," etc.
+
+## Work Preferences
+- Ship fast, iterate in public
+- Prefer simple solutions over clever ones
+- Automate repetitive tasks with AI agents
+```
+
+Every AI tool that reads this file immediately knows my context, my stack, and my communication style. No warm-up conversation needed.
+
+**preferences.md** — How you like to work. Communication style. Tool preferences. Anything you find yourself repeating to AI tools.
+
+**current-projects.md** — One paragraph per active project. What it is, what stage it's at, what matters most right now.
+
+### Step 2: Connect to Your Primary AI Tool (15 minutes)
+
+If you use Claude Code: add references to your second brain files in `~/.claude/CLAUDE.md`.
+
+If you use ChatGPT: distill your identity and preferences into custom instructions (Settings > Personalization > Custom Instructions).
+
+If you use Gemini: add your context to Saved Info in Settings.
+
+### Step 3: Build the Habit (Ongoing)
+
+After any significant AI session, ask yourself: "Did I explain something to this AI that my other tools should also know?" If yes, add it to the relevant second brain file.
+
+That's it. Three files, one connection, one habit. Expand from there as you discover what context you're repeatedly re-explaining.
+
+## The Future: AI Tools That Share a Brain
+
+Here's what I think happens next. The current state — every AI tool maintaining its own isolated memory — is a temporary phase. The market is moving toward interoperable memory layers for three reasons:
+
+**Users demand it.** The friction of re-explaining context across tools is obvious to anyone who uses more than one AI product. The first tool that genuinely solves cross-platform memory gets a massive adoption advantage.
+
+**The technology exists.** Mem0, Letta, and others have proven that external memory layers work. The missing piece is standardization — an equivalent of OAuth but for AI memory. Let me authenticate once and share my context across every AI tool I authorize.
+
+**The economics make sense.** AI providers spend tokens processing context that the user has already provided to a competitor. A shared memory layer reduces inference costs for everyone while improving response quality.
+
+Until that future arrives, your second brain is a set of markdown files and a daily habit. It's not glamorous. It won't go viral on Twitter. But it saves me 3+ hours a week and makes every AI tool I use dramatically more useful from the first message.
+
+Build the system. Own the memory. Stop re-explaining yourself every time you open a new tab.
+
+---
+
+*I ship new AI workflow breakdowns every week — the exact file structures, prompts, and configs behind every system I build. [Subscribe to the newsletter](/newsletter) to get them.*
