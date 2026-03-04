@@ -5,7 +5,7 @@
 ## How It Works (The Big Picture)
 
 ```
-You add a topic to Google Sheets
+You add a topic to the Notion "Content Pipeline" database
          |
   [launchd triggers daily at midnight]
          |
@@ -15,20 +15,21 @@ You add a topic to Google Sheets
          |
   /pipeline-run skill executes 8 phases:
          |
-    1.   Read next "queued" topic from Google Sheet
+    1.   Read next "queued" topic from Notion database (via API)
     1.5. Research the topic — visit official docs for every tool/product mentioned
     2.   Generate a full blog post (MDX), create branch + PR
     3.   Wait for you to merge the PR (safety gate)
     4.   Generate social media copy (tweet + LinkedIn post)
     5.   Post to X via Chrome browser automation
     6.   Post to LinkedIn via Chrome browser automation
-    7.   Update Google Sheet status to "done"
+    7.   Update Notion status to "done"
 ```
 
-**Key insight**: We use Chrome browser automation (Claude in Chrome extension) instead of platform APIs. This means:
+**Key insight**: We use Notion's API for queue management (fast, no browser needed) and Chrome browser automation for social posting. This means:
 - $0/month for X posting (their API costs $200/mo)
 - $0/month for LinkedIn posting (their API prohibits posting)
 - No API keys to manage for social platforms
+- Instant queue reads/updates via Notion API (no browser automation delays)
 
 ---
 
@@ -65,38 +66,38 @@ Open at [excalidraw.com](https://excalidraw.com) or in VS Code with the Excalidr
 
 ## Setup Steps
 
-### Step 1: Create the Google Sheet
+### Step 1: Set Up Notion Database
 
-1. Go to [sheets.google.com](https://sheets.google.com) and create a new spreadsheet
-2. Name it: **Content Pipeline Queue**
-3. Set up Row 1 with these exact headers:
+The content queue lives in a Notion database (already created by the setup script).
 
-| A | B | C | D | E | F | G | H |
-|---|---|---|---|---|---|---|---|
-| Topic | Status | Date Queued | Blog Slug | Blog URL | X Text | LinkedIn Text | Notes |
+**Database URL**: [Content Pipeline](https://www.notion.so/319610c68f04811ea752e9d0cee2f0d1)
 
-4. Format column B (Status) with data validation:
-   - Select column B (below header)
-   - Data → Data validation → Dropdown
-   - Add values: `queued`, `researching`, `generating`, `generated`, `posted-x`, `posted-linkedin`, `done`, `failed`
+**Database ID**: `319610c68f04811ea752e9d0cee2f0d1`
 
-5. **Copy the Sheet URL** — you'll need this. It looks like:
-   ```
-   https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit
-   ```
+**Properties**:
 
-6. **Bookmark it** in Chrome so the pipeline can find it easily.
+| Property | Type | Purpose |
+|----------|------|---------|
+| Topic | title | The content idea to process |
+| Status | select | Pipeline phase tracking (queued/researching/generating/critiquing/generated/posted-x/posted-linkedin/done) |
+| Date Queued | date | When the topic was added |
+| Blog Slug | rich_text | Auto-filled by pipeline |
+| Blog URL | url | Auto-filled by pipeline |
+| X Text | rich_text | Auto-generated tweet text |
+| LinkedIn Text | rich_text | Auto-generated LinkedIn text |
+| Notes | rich_text | Status updates and error messages |
+
+**Notion Integration**: The "Claude Code Pipeline" integration must have access to the database. The integration token (`NOTION_TOKEN`) must be set as an environment variable.
 
 ### Step 2: Verify Chrome Setup
 
-The pipeline uses the **Claude in Chrome** extension for browser automation.
+The pipeline uses the **Claude in Chrome** extension for browser automation (social posting only — queue management uses Notion API directly).
 
 1. **Install the extension** if not already: search "Claude in Chrome" in the Chrome Web Store
 2. **Log into these sites** in Chrome (and stay logged in):
    - [x.com](https://x.com) — your X/Twitter account
    - [linkedin.com](https://linkedin.com) — your LinkedIn account
-   - [sheets.google.com](https://sheets.google.com) — your Google account
-3. **Keep Chrome running** — the pipeline needs it open
+3. **Keep Chrome running** — the pipeline needs it for social posting
 
 ### Step 3: Verify Claude Code CLI
 
@@ -112,9 +113,24 @@ cd /Users/tarekalaaddin/Projects/code/tarek-alaaddin
 git status
 ```
 
-### Step 4: Update the Pipeline Skill with Your Sheet URL
+### Step 4: Verify Notion MCP Server
 
-Edit `.claude/skills/pipeline-run/SKILL.md` and update the Google Sheet URL reference in Phase 1. Currently it says "The content queue Google Sheet should be bookmarked or its URL stored" — replace this with your actual Sheet URL once created.
+The Notion MCP server should be configured in Claude Code:
+
+```bash
+# Check MCP server is configured
+cat ~/.claude.json | python3 -c "import json,sys; d=json.load(sys.stdin); print('Notion MCP:', 'configured' if 'notion' in d.get('mcpServers',{}) else 'NOT FOUND')"
+
+# Test Notion API access
+curl -s 'https://api.notion.com/v1/users/me' \
+  -H "Authorization: Bearer $NOTION_TOKEN" \
+  -H 'Notion-Version: 2022-06-28' | python3 -c "import json,sys; d=json.load(sys.stdin); print(f'Connected as: {d[\"name\"]}')"
+```
+
+If not configured, run:
+```bash
+claude mcp add notion --scope user -e NOTION_TOKEN=ntn_YOUR_TOKEN -- npx -y @notionhq/notion-mcp-server
+```
 
 ### Step 5: Test Each Component (Manual)
 
@@ -135,10 +151,11 @@ claude -p "/post-to-linkedin Testing my automated content pipeline. This is a te
 - Check: screenshot saved in `logs/pipeline/screenshots/`
 
 #### 5c. Test `/pipeline-run` (dry run)
-1. Add a test topic to your Google Sheet:
-   - Column A: `How to automate your content pipeline`
-   - Column B: `queued`
-   - Column C: today's date
+1. Add a test topic to the Notion Content Pipeline database:
+   - Topic: `How to automate your content pipeline`
+   - Status: `queued`
+   - Date Queued: today's date
+   - (Optional) Add context in the page body
 2. Run:
    ```
    claude -p "/pipeline-run dry-run"
@@ -147,17 +164,17 @@ claude -p "/post-to-linkedin Testing my automated content pipeline. This is a te
    - Blog MDX was generated
    - PR was created on GitHub
    - Social copy was generated (but not posted)
-   - Sheet status updated
+   - Notion status updated
 
 #### 5d. Full test
-1. Add another topic to the Sheet with status `queued`
+1. Add another topic to Notion with status `queued`
 2. Run:
    ```
    claude -p "Run /pipeline-run"
    ```
 3. When the PR is created, review and merge it
 4. Verify the pipeline continues and posts to X and LinkedIn
-5. Check the Sheet — status should be `done`
+5. Check Notion — status should be `done`
 
 ### Step 6: Enable the Scheduler
 
@@ -191,12 +208,13 @@ launchctl unload ~/Library/LaunchAgents/com.tarek.content-pipeline.plist
 
 ### Adding Topics to the Queue
 
-1. Open the Google Sheet
-2. Add a new row:
-   - **Column A (Topic)**: Your topic idea (e.g., "Why every developer should learn prompt engineering")
-   - **Column B (Status)**: `queued`
-   - **Column C (Date Queued)**: Today's date
-   - Leave all other columns blank — the pipeline fills them in
+1. Open the [Content Pipeline database in Notion](https://www.notion.so/319610c68f04811ea752e9d0cee2f0d1)
+2. Click "New" to add a row:
+   - **Topic**: Your topic idea (e.g., "Why every developer should learn prompt engineering")
+   - **Status**: `queued`
+   - **Date Queued**: Today's date
+   - Leave all other properties blank — the pipeline fills them in
+3. **(Optional but recommended)**: Open the page and add rich context in the body — links, references, specific angles to cover, competitor analysis, etc. This context is read by the pipeline and used to generate better, more informed content.
 
 ### What Happens Automatically
 
@@ -225,7 +243,7 @@ tail -20 logs/pipeline/schedule.log
 # Latest run output
 ls -lt logs/pipeline/*.log | head -3
 
-# Check for any failures in the Sheet
+# Check for any failures in Notion
 # (look for status = "failed" with error in Notes column)
 ```
 
@@ -250,10 +268,10 @@ failed          → Something went wrong (check Notes column for error)
 
 | Situation | What to Do |
 |-----------|------------|
-| Status stuck on `researching` | The research phase failed. Check the run log. Fix the issue and change status back to `queued` to retry. |
-| Status stuck on `generating` | The blog generation failed. Check the run log. Fix the issue and change status back to `queued` to retry. |
-| Status stuck on `generated` | The PR wasn't merged within 24h. Either merge the PR or change status back to `queued`. |
-| Status is `failed` | Read the Notes column for the error. Fix the issue and change status to `queued` to retry. |
+| Status stuck on `researching` | The research phase failed. Check the run log. Fix the issue and change status back to `queued` in Notion to retry. |
+| Status stuck on `generating` | The blog generation failed. Check the run log. Fix the issue and change status back to `queued` in Notion to retry. |
+| Status stuck on `generated` | The PR wasn't merged within 24h. Either merge the PR or change status back to `queued` in Notion. |
+| Status is `failed` | Read the Notes property for the error. Fix the issue and change status to `queued` in Notion to retry. |
 | Social post failed | Check if you're still logged into X/LinkedIn in Chrome. Log back in and change status appropriately to retry that phase. |
 | Chrome not running | The orchestrator script opens Chrome automatically. If it still fails, open Chrome manually. |
 | Pipeline not running at all | Check `launchctl list | grep content-pipeline`. If not listed, reload the plist. |
@@ -370,17 +388,18 @@ echo $ANTHROPIC_API_KEY
 4. Click **Add to Chrome** and confirm
 5. Pin the extension to the toolbar for easy access
 
-### Step 8: Log Into All Services in Chrome
+### Step 8: Log Into Social Platforms in Chrome
 
 Open each of these in Chrome and log in. **Stay logged in** (don't sign out):
 
-1. **Google Sheets**: Go to [sheets.google.com](https://sheets.google.com) and log in with your Google account
-2. **X (Twitter)**: Go to [x.com](https://x.com) and log in with your account
-3. **LinkedIn**: Go to [linkedin.com](https://linkedin.com) and log in with your account
+1. **X (Twitter)**: Go to [x.com](https://x.com) and log in with your account
+2. **LinkedIn**: Go to [linkedin.com](https://linkedin.com) and log in with your account
 
-Verify the Content Pipeline Queue sheet is accessible:
-```
-https://docs.google.com/spreadsheets/d/1xfPdknbYRaftoy-BndQp6rkT3NTaebfcyr9nXTqunPA/edit
+Set the Notion API token as an environment variable:
+```bash
+# Add to ~/.zshrc:
+export NOTION_TOKEN="ntn_your_token_here"
+source ~/.zshrc
 ```
 
 ### Step 9: Configure Mac Mini for Always-On
@@ -479,7 +498,7 @@ claude -p "Say hello"
 # 4. Test the pipeline in dry-run mode (no actual posting)
 claude -p "Run /pipeline-run dry-run"
 
-# 5. If dry-run succeeds, test a full run with a test topic in the Sheet
+# 5. If dry-run succeeds, test a full run with a test topic in Notion
 # (Add a test topic with status "queued" first)
 claude -p "Run /pipeline-run"
 ```
@@ -512,7 +531,7 @@ cat ~/Projects/code/tarek-alaaddin/logs/pipeline/launchd-stdout.log
 cat ~/Projects/code/tarek-alaaddin/logs/pipeline/launchd-stderr.log
 ```
 
-Monitor the first 2-3 days closely. Check the Google Sheet each morning to confirm topics are progressing through the status flow.
+Monitor the first 2-3 days closely. Check the Notion database each morning to confirm topics are progressing through the status flow.
 
 ### To Stop the Scheduler
 
@@ -550,8 +569,9 @@ You can run the pipeline manually from your MacBook Pro at any time. Manual runs
    export ANTHROPIC_API_KEY="sk-ant-your-key-here"
    ```
 
-5. Open Chrome and log into X, LinkedIn, and Google Sheets
+5. Open Chrome and log into X and LinkedIn
 6. Install the Claude in Chrome extension
+7. Set `NOTION_TOKEN` environment variable in `~/.zshrc`
 
 ### Running a Manual Pipeline
 
@@ -570,7 +590,7 @@ claude
 claude -p "Run /pipeline-run dry-run"
 ```
 
-**Note**: Manual runs from the MacBook Pro don't affect the Mac Mini's scheduled runs. If both run at the same time, each will pick a different queued topic from the Sheet (the status field prevents double-processing).
+**Note**: Manual runs from the MacBook Pro don't affect the Mac Mini's scheduled runs. If both run at the same time, each will pick a different queued topic from Notion (the status field prevents double-processing).
 
 ---
 
@@ -613,7 +633,7 @@ tarek-alaaddin/
 |-----------|------|
 | X/Twitter posting | $0 (browser automation) |
 | LinkedIn posting | $0 (browser automation) |
-| Google Sheets | $0 |
+| Notion | $0 (free plan sufficient) |
 | Infrastructure | $0 (runs on your Mac) |
 | Claude Code CLI | Usage-based (Anthropic API) |
 | **Total** | **~$0/month** + Claude API usage |
