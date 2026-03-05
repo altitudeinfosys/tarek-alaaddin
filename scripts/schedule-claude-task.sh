@@ -35,7 +35,7 @@ LOCK_PATH="${LOCK_DIR}/${SAFE_DESC}.lock"
 # --- Ensure PATH includes claude CLI and common tools ---
 export PATH="${HOME}/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PATH}"
 
-# --- Ensure directories exist ---
+# --- Ensure directories exist (BEFORE lock check so SKIPPED message can write to LOG_FILE) ---
 mkdir -p "${LOG_DIR}" "${LOCK_DIR}"
 
 # --- Portable lock using mkdir (atomic on all POSIX systems) ---
@@ -69,7 +69,7 @@ if ! acquire_lock; then
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] SKIPPED: ${DESCRIPTION} — another instance is already running (lock: ${LOCK_PATH})" >> "${LOG_FILE}"
     exit 0
 fi
-trap release_lock EXIT
+trap release_lock EXIT INT TERM
 
 # --- Logging helper ---
 log() {
