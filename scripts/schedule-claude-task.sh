@@ -152,7 +152,10 @@ else
 fi
 
 # Run the Claude CLI command with timeout
-if run_with_timeout "${TASK_TIMEOUT}" claude -p "${COMMAND}" >> "${LOG_FILE}" 2>&1; then
+# Use --dangerously-skip-permissions to allow non-interactive execution.
+# Scheduled tasks run unattended — there is no user to approve tool permissions.
+# The command itself is validated by the /schedule-task skill before scheduling.
+if run_with_timeout "${TASK_TIMEOUT}" claude -p "${COMMAND}" --dangerously-skip-permissions >> "${LOG_FILE}" 2>&1; then
     log "Task completed successfully."
     EXIT_CODE=0
 else
