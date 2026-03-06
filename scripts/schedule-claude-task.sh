@@ -35,6 +35,12 @@ LOCK_PATH="${LOCK_DIR}/${SAFE_DESC}.lock"
 # --- Ensure PATH includes claude CLI and common tools ---
 export PATH="${HOME}/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PATH}"
 
+# --- Clear Claude Code nesting detection ---
+# When scheduled from within a Claude Code session, the CLAUDECODE env var is inherited
+# by at/cron jobs. Claude CLI refuses to launch inside another session. Unsetting it
+# allows the scheduled task to run as an independent session.
+unset CLAUDECODE
+
 # --- Ensure directories exist (BEFORE lock check so SKIPPED message can write to LOG_FILE) ---
 mkdir -p "${LOG_DIR}" "${LOCK_DIR}"
 
