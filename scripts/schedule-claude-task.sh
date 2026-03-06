@@ -155,7 +155,10 @@ fi
 # Use --dangerously-skip-permissions to allow non-interactive execution.
 # Scheduled tasks run unattended — there is no user to approve tool permissions.
 # The command itself is validated by the /schedule-task skill before scheduling.
-if run_with_timeout "${TASK_TIMEOUT}" claude -p "${COMMAND}" --dangerously-skip-permissions >> "${LOG_FILE}" 2>&1; then
+# Use --verbose so tool calls and intermediate output appear in the log.
+# Without it, -p mode only prints the final text response, hiding all
+# the actual work (tool calls, skill output, etc.).
+if run_with_timeout "${TASK_TIMEOUT}" claude -p "${COMMAND}" --dangerously-skip-permissions --verbose >> "${LOG_FILE}" 2>&1; then
     log "Task completed successfully."
     EXIT_CODE=0
 else
