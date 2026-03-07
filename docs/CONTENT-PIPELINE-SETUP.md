@@ -7,11 +7,7 @@
 ```
 You add a topic to the Notion "Content Pipeline" database
          |
-  [launchd triggers daily at midnight]
-         |
-  [pipeline-orchestrator.sh picks 3 random times between 6am-10pm, 4+ hours apart]
-         |
-  [At each time, invokes: claude -p "Run /pipeline-run"]
+  Run /pipeline-run manually or schedule via Claude Code Desktop
          |
   /pipeline-run skill executes 8 phases:
          |
@@ -52,15 +48,8 @@ Open at [excalidraw.com](https://excalidraw.com) or in VS Code with the Excalidr
 | `.claude/skills/pipeline-run/SKILL.md` | Master orchestrator skill (7-phase pipeline) |
 | `.claude/skills/post-to-x/SKILL.md` | X/Twitter posting via browser automation |
 | `.claude/skills/post-to-linkedin/SKILL.md` | LinkedIn posting via browser automation |
-| `scripts/pipeline-orchestrator.sh` | Shell script: daily scheduling + Claude CLI invocation |
 | `logs/pipeline/` | Pipeline logs directory |
 | `logs/pipeline/screenshots/` | Pre/post screenshots of each social post |
-
-### Files on Your Machine (not in repo)
-
-| File | Purpose |
-|------|---------|
-| `~/Library/LaunchAgents/com.tarek.content-pipeline.plist` | macOS scheduled job (midnight daily) |
 
 ---
 
@@ -176,32 +165,6 @@ claude -p "/post-to-linkedin Testing my automated content pipeline. This is a te
 4. Verify the pipeline continues and posts to X and LinkedIn
 5. Check Notion — status should be `done`
 
-### Step 6: Enable the Scheduler
-
-Once manual testing passes:
-
-```bash
-# Load the launchd job (starts running at next midnight)
-launchctl load ~/Library/LaunchAgents/com.tarek.content-pipeline.plist
-
-# Verify it's loaded
-launchctl list | grep content-pipeline
-```
-
-To check if it's working:
-```bash
-# View schedule log
-cat logs/pipeline/schedule.log
-
-# View the latest run log
-ls -lt logs/pipeline/*.log | head -5
-```
-
-To stop the scheduler:
-```bash
-launchctl unload ~/Library/LaunchAgents/com.tarek.content-pipeline.plist
-```
-
 ---
 
 ## Daily Operations
@@ -216,19 +179,17 @@ launchctl unload ~/Library/LaunchAgents/com.tarek.content-pipeline.plist
    - Leave all other properties blank — the pipeline fills them in
 3. **(Optional but recommended)**: Open the page and add rich context in the body — links, references, specific angles to cover, competitor analysis, etc. This context is read by the pipeline and used to generate better, more informed content.
 
-### What Happens Automatically
+### Running the Pipeline
 
-Each day at midnight, the orchestrator:
-1. Picks 3 random times between 6am and 10pm (at least 4 hours apart)
-2. At each time, runs the pipeline:
-   - Finds the next `queued` topic
-   - **Researches every product/tool** mentioned — visits official docs, verifies specs/pricing/features
-   - Generates a blog post using verified research, creates a PR
-   - Waits for you to merge the PR
-   - Posts to X and LinkedIn
-   - Marks the topic as `done`
+Run `/pipeline-run` manually or schedule via Claude Code Desktop. Each run:
+1. Finds the next `queued` topic
+2. **Researches every product/tool** mentioned — visits official docs, verifies specs/pricing/features
+3. Generates a blog post using verified research, creates a PR
+4. Waits for you to merge the PR
+5. Posts to X and LinkedIn
+6. Marks the topic as `done`
 
-### Your Only Manual Step (v1)
+### Your Only Manual Step
 
 **Merge the PR.** The pipeline creates a blog post PR and waits for you to review and merge it. This is the safety gate — you review the content before it goes live.
 
@@ -237,9 +198,6 @@ The pipeline checks every 5 minutes for up to 24 hours. Once you merge, it autom
 ### Checking on the Pipeline
 
 ```bash
-# Today's schedule
-tail -20 logs/pipeline/schedule.log
-
 # Latest run output
 ls -lt logs/pipeline/*.log | head -3
 
@@ -274,7 +232,7 @@ failed          → Something went wrong (check Notes column for error)
 | Status is `failed` | Read the Notes property for the error. Fix the issue and change status to `queued` in Notion to retry. |
 | Social post failed | Check if you're still logged into X/LinkedIn in Chrome. Log back in and change status appropriately to retry that phase. |
 | Chrome not running | The orchestrator script opens Chrome automatically. If it still fails, open Chrome manually. |
-| Pipeline not running at all | Check `launchctl list | grep content-pipeline`. If not listed, reload the plist. |
+| Pipeline not running at all | Run `/pipeline-run` manually or schedule via Claude Code Desktop. |
 
 ---
 
@@ -284,7 +242,7 @@ failed          → Something went wrong (check Notes column for error)
 2. **PR approval gate** — Blog posts require your manual merge before social posting
 3. **Login verification** — Screenshots taken before posting to verify login state
 4. **Duplicate prevention** — Checks if a blog slug already exists before writing
-5. **Rate limiting** — Max 3 posts per day, at least 4 hours apart
+5. **Rate limiting** — Max 3 posts per day
 6. **Error isolation** — Each phase updates status independently; failures don't corrupt other queue items
 7. **Audit trail** — Screenshots saved before and after every social post in `logs/pipeline/screenshots/`
 
@@ -425,61 +383,7 @@ The pipeline runs at scheduled times throughout the day, so the Mac Mini must ne
    - Add Chrome to Login Items: System Settings → General → Login Items → Add Google Chrome
    - This ensures Chrome launches automatically on boot
 
-### Step 10: Copy and Install the launchd Plist
-
-```bash
-# If the plist doesn't exist yet on the Mac Mini, create it:
-mkdir -p ~/Library/LaunchAgents
-
-# Copy from the MacBook Pro (run this ON the MacBook Pro):
-# scp ~/Library/LaunchAgents/com.tarek.content-pipeline.plist macmini:~/Library/LaunchAgents/
-
-# Or create it directly on the Mac Mini:
-cat > ~/Library/LaunchAgents/com.tarek.content-pipeline.plist << 'PLIST'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.tarek.content-pipeline</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/bin/bash</string>
-        <string>/Users/tarekalaaddin/Projects/code/tarek-alaaddin/scripts/pipeline-orchestrator.sh</string>
-    </array>
-    <key>StartCalendarInterval</key>
-    <dict>
-        <key>Hour</key>
-        <integer>0</integer>
-        <key>Minute</key>
-        <integer>0</integer>
-    </dict>
-    <key>StandardOutPath</key>
-    <string>/Users/tarekalaaddin/Projects/code/tarek-alaaddin/logs/pipeline/launchd-stdout.log</string>
-    <key>StandardErrorPath</key>
-    <string>/Users/tarekalaaddin/Projects/code/tarek-alaaddin/logs/pipeline/launchd-stderr.log</string>
-    <key>EnvironmentVariables</key>
-    <dict>
-        <key>PATH</key>
-        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin</string>
-        <key>HOME</key>
-        <string>/Users/tarekalaaddin</string>
-    </dict>
-    <key>WorkingDirectory</key>
-    <string>/Users/tarekalaaddin/Projects/code/tarek-alaaddin</string>
-    <key>RunAtLoad</key>
-    <false/>
-    <key>KeepAlive</key>
-    <false/>
-</dict>
-</plist>
-PLIST
-
-# If the Mac Mini username is different from "tarekalaaddin",
-# update ALL paths in the plist AND in scripts/pipeline-orchestrator.sh (REPO_DIR variable)
-```
-
-### Step 11: Test Each Component Manually
+### Step 10: Test Each Component Manually
 
 Run these in order to verify everything works:
 
@@ -503,47 +407,11 @@ claude -p "Run /pipeline-run dry-run"
 claude -p "Run /pipeline-run"
 ```
 
-### Step 12: Enable the Scheduler
-
-```bash
-# Load the launchd job
-launchctl load ~/Library/LaunchAgents/com.tarek.content-pipeline.plist
-
-# Verify it's loaded
-launchctl list | grep content-pipeline
-# Should show: -  0  com.tarek.content-pipeline
-```
-
-### Step 13: Verify It's Working
-
-```bash
-# Check if the schedule was generated (after midnight)
-cat ~/Projects/code/tarek-alaaddin/logs/pipeline/schedule.log
-
-# Watch the schedule log in real-time
-tail -f ~/Projects/code/tarek-alaaddin/logs/pipeline/schedule.log
-
-# List recent run logs
-ls -lt ~/Projects/code/tarek-alaaddin/logs/pipeline/*.log | head -5
-
-# Check launchd stdout/stderr for errors
-cat ~/Projects/code/tarek-alaaddin/logs/pipeline/launchd-stdout.log
-cat ~/Projects/code/tarek-alaaddin/logs/pipeline/launchd-stderr.log
-```
-
-Monitor the first 2-3 days closely. Check the Notion database each morning to confirm topics are progressing through the status flow.
-
-### To Stop the Scheduler
-
-```bash
-launchctl unload ~/Library/LaunchAgents/com.tarek.content-pipeline.plist
-```
-
 ---
 
 ## Running Manually from MacBook Pro
 
-You can run the pipeline manually from your MacBook Pro at any time. Manual runs are independent of the Mac Mini's scheduled runs.
+You can run the pipeline manually from your MacBook Pro at any time.
 
 ### One-Time Setup on MacBook Pro
 
@@ -590,7 +458,7 @@ claude
 claude -p "Run /pipeline-run dry-run"
 ```
 
-**Note**: Manual runs from the MacBook Pro don't affect the Mac Mini's scheduled runs. If both run at the same time, each will pick a different queued topic from Notion (the status field prevents double-processing).
+**Note**: If runs from multiple machines overlap, each will pick a different queued topic from Notion (the status field prevents double-processing).
 
 ---
 
@@ -604,11 +472,8 @@ tarek-alaaddin/
 │   ├── pipeline-run/SKILL.md     # Master orchestrator (7 phases)
 │   ├── post-to-x/SKILL.md       # X posting via browser automation
 │   └── post-to-linkedin/SKILL.md # LinkedIn posting via browser automation
-├── scripts/
-│   └── pipeline-orchestrator.sh  # Daily scheduler (random times)
 ├── logs/pipeline/
 │   ├── .gitkeep
-│   ├── schedule.log              # Daily schedule records
 │   ├── YYYYMMDD-HHMMSS-run-N.log # Per-run Claude output
 │   └── screenshots/
 │       ├── .gitkeep
@@ -616,13 +481,6 @@ tarek-alaaddin/
 └── docs/
     ├── content-pipeline-flow.excalidraw  # Architecture diagram
     └── CONTENT-PIPELINE-SETUP.md         # This document
-```
-
-### Machine-Local Files
-
-```
-~/Library/LaunchAgents/
-└── com.tarek.content-pipeline.plist  # macOS scheduled job
 ```
 
 ---
@@ -644,9 +502,7 @@ tarek-alaaddin/
 
 - **Mandatory research phase**: Phase 1.5 visits official documentation for every tool/product mentioned before writing, building a verified facts sheet. Prevents factual errors from relying on stale internal knowledge.
 - **Known docs URL table**: Common tools have pre-configured documentation URLs for faster lookup.
-- **3 daily runs**: Increased from 2 to 3 posts per day, with at least 4 hours between runs, spread across 6am-10pm.
 - **X hashtags**: X/Twitter posts now include 2-3 relevant, specific hashtags (e.g., #ClaudeCode) to improve discoverability.
-- **Midnight scheduling**: The orchestrator now triggers at midnight and sleeps until the first run, allowing the full 6am-10pm window.
 
 ## Future Improvements (v3)
 
