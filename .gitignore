@@ -37,3 +37,9 @@ next-env.d.ts
 logs/pipeline/**
 !logs/pipeline/.gitkeep
 !logs/pipeline/screenshots/.gitkeep
+
+# Playwright MCP temp files
+.playwright-mcp/
+
+# Screenshots (use logs/pipeline/screenshots/ for pipeline screenshots)
+/*.png
