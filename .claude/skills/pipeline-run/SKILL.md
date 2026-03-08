@@ -67,13 +67,31 @@ Read `references/notion-api.md` for query patterns.
 
 ### Phase 1.5: Research Topic
 
-Before generating content, research every product, tool, and technology mentioned in the topic to ensure factual accuracy. Use the **topic_context** from the note body as additional guidance.
+Before generating content, thoroughly research every product, tool, and technology mentioned in the topic. The Notion topic + context from the note body tells you *what* to research — this phase ensures every fact in the article is **current and verified from live sources**.
 
-1. **Parse the topic AND topic_context** for product/tool names
-2. **Research each product/tool** using `WebSearch` and `WebFetch`:
-   - Search for official documentation, features, pricing
-   - Priority: official docs > release announcements > technical blogs > community posts
-3. **Known documentation URLs** — check these first for common tools:
+> **CRITICAL**: Do NOT rely on internal knowledge for specific facts (pricing, features, model names, API details, version numbers, benchmarks). Your training data has a cutoff and WILL be outdated. Every specific claim must come from a web page you actually visited during this phase.
+
+**Step 0 — Get the current date**: Determine today's month and year. Include this in ALL search queries to surface the most recent information. Example: search for `"Claude Code features March 2026"` not just `"Claude Code features"`.
+
+1. **Parse the topic AND topic_context** for every product, tool, framework, API, or service mentioned or implied.
+
+2. **For each product/tool**, perform this research sequence:
+
+   a. **Search with current date** using `WebSearch`:
+      - `"{tool name}" {current month} {current year}` (general recency check)
+      - `"{tool name}" features pricing {current year}`
+      - `"{tool name}" changelog OR "what's new" OR release notes {current year}`
+      - If comparison topic: `"{tool A}" vs "{tool B}" {current year}`
+
+   b. **Actually visit and READ pages** using `WebFetch` — this is NOT optional:
+      - Fetch the official docs page (use Known URLs table below if available)
+      - Fetch at least 2-3 search results per tool — read them fully
+      - Fetch any changelog / "what's new" / release notes page
+      - Extract specific facts: exact names, numbers, dates, pricing tiers, API limits
+
+   c. **Minimum research depth per tool**: 2 official doc pages read + 1 recent article or changelog. If a tool is central to the article topic, go deeper — 4-5 pages.
+
+3. **Known documentation URLs** — fetch these FIRST for common tools:
 
    | Tool | Documentation URL |
    |------|------------------|
@@ -87,9 +105,16 @@ Before generating content, research every product, tool, and technology mentione
    | OpenAI | https://platform.openai.com/docs |
    | Gemini | https://ai.google.dev/docs |
 
-4. **Compile research notes** — exact features, current pricing, API details, benchmarks from official sources only
-5. **Cross-reference claims** — no stats or comparisons from internal knowledge alone
-6. **Pass research notes** to Phase 2
+4. **Compile a research log** with verified facts only:
+   - For each source: URL, key facts extracted, date of source content
+   - Flag any source older than 6 months — search again to check if info has changed
+   - Prioritize sources from the last 3 months
+
+5. **Staleness rule** — if you cannot find a current source (< 6 months old) for a specific claim, either:
+   - Drop the claim from the article, OR
+   - Include it with a caveat like "as of [date]" and note it may have changed
+
+6. **Pass the research log** (with source URLs) to Phase 2 as context for blog generation. The blog must cite only facts from this log.
 
 ### Phase 2: Generate Blog Post
 
