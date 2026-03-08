@@ -24,27 +24,7 @@ Posts content to LinkedIn using browser automation. Supports two backends: Chrom
 
 This skill auto-detects the available browser backend. If called from `/pipeline-run`, the backend is already detected — reuse it.
 
-### Detection Logic
-
-1. Try Chrome Extension: call `tabs_context_mcp`
-2. If connected → use **Chrome Extension**
-3. If not → use **Playwright**
-
-### Tool Mapping Reference
-
-| Action | Chrome Extension | Playwright |
-|--------|-----------------|------------|
-| Get tab context | `tabs_context_mcp` | `browser_tabs` (action: list) |
-| Create new tab | `tabs_create_mcp` | `browser_tabs` (action: new) |
-| Navigate to URL | `navigate` | `browser_navigate` |
-| Read page structure | `read_page` | `browser_snapshot` |
-| Find element | `find` (natural language) | `browser_snapshot` → find ref by role/text |
-| Click element | `computer` (left_click) | `browser_click` (ref from snapshot) |
-| Type text | `computer` (type) | `browser_type` (ref from snapshot) |
-| Take screenshot | `computer` (screenshot) | `browser_take_screenshot` |
-| Wait | `computer` (wait) | `browser_wait_for` |
-
-> **Playwright element interaction**: Unlike Chrome Extension's `find()` which accepts natural language queries, Playwright requires taking a `browser_snapshot` first, then using element `ref` IDs from the snapshot to interact. Always snapshot before clicking or typing.
+For detection logic, full tool mapping table, and Playwright prerequisites, read `../pipeline-run/references/browser-automation.md`.
 
 ## Process
 

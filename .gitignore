@@ -37,7 +37,3 @@ next-env.d.ts
 logs/pipeline/**
 !logs/pipeline/.gitkeep
 !logs/pipeline/screenshots/.gitkeep
-
-# Scheduled task logs (keep .gitkeep)
-logs/scheduled/**
-!logs/scheduled/.gitkeep
