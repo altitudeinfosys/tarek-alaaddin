@@ -42,8 +42,8 @@ export default function Footer() {
           {/* Social Links */}
           <div className="flex space-x-6 mb-6">
             {SOCIAL_LINKS.map((link) => {
-              const isExternal = link.url.startsWith('http')
-              return isExternal ? (
+              const isInternal = link.url.startsWith('/')
+              return !isInternal ? (
                 <a
                   key={link.name}
                   href={link.url}

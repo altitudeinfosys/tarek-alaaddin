@@ -2,7 +2,6 @@
 
 ## Contact
 - Contact: [Get in Touch](/contact)
-- Phone: 713-269-9988
 - Location: Round Rock, Texas
 - Citizenship: US Citizen
 
