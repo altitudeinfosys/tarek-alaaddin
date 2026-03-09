@@ -1,0 +1,233 @@
+---
+title: "Claude Code /loop, Remote Control & Scheduled Tasks Review"
+description: "I tested Claude Code's /loop, Remote Control, and Scheduled Tasks daily. Here's what works, what breaks, and whether you can trust a 72-hour autonomous loop."
+date: "2026-03-08"
+category: "ai"
+tags: ["claude-code", "automation", "ai-agents", "developer-tools", "productivity", "scheduled-tasks", "remote-control", "claude-cowork", "anthropic"]
+image: "/images/blog/claude-code-loop-remote-control-scheduled-tasks.jpg"
+published: true
+featured: false
+---
+
+Last Tuesday I typed `/loop 5m check if the Vercel deployment finished`, closed my laptop, drove home, and approved the final build from my phone while making dinner. Claude Code ran 14 checks over 70 minutes without me touching a keyboard.
+
+That's the promise of the three features Anthropic shipped in February and March 2026 — `/loop`, Remote Control, and Scheduled Tasks. They collectively shift Claude Code from a tool you talk *to* into an agent that works *for* you. But can you actually trust an AI agent to run unsupervised for 72 hours? I've been testing all three daily, and the answer is complicated.
+
+## The Shift: You're Managing Agents Now
+
+Every AI coding tool used to work the same way — prompt, respond, review, repeat. You were the bottleneck.
+
+Now you define the objective, set it loose, and check back later. That's the difference between writing scripts in a REPL and writing batch jobs that run overnight. It fundamentally changes how you think about delegating work to AI.
+
+<Callout type="info">
+**The paradigm shift in one sentence:** Claude Code is no longer a tool you use — it's becoming an agent you manage.
+</Callout>
+
+## /loop: Set It and (Mostly) Forget It
+
+The `/loop` command, released on March 7, 2026, is the simplest of the three features — and the one I use most often.
+
+### How It Works
+
+Type `/loop` followed by an interval and a prompt:
+
+```text
+/loop 5m check if the deployment finished and tell me what happened
+```
+
+Claude converts your interval to a cron expression, schedules the job, and fires it in the background while your session stays open. The syntax is forgiving — you can put the interval first, last, or skip it entirely (defaults to every 10 minutes).
+
+You can even loop other slash commands:
+
+```text
+/loop 20m /review-pr 1234
+```
+
+Every 20 minutes, Claude re-runs your PR review. That alone has saved me from stale reviews sitting unnoticed.
+
+### One-Time Reminders
+
+You don't need `/loop` for one-shot tasks. Just describe what you want in plain English:
+
+```text
+remind me at 3pm to push the release branch
+```
+
+Claude schedules a single-fire task that runs once and auto-disables. Simple, effective.
+
+### The Pros
+
+**Low friction.** No config files, no YAML, no separate scheduling system. You type one line and it works.
+
+**Composable.** Any slash command or skill can become a recurring job. I've chained `/loop` with custom review skills, deployment monitors, and even content pipeline checks.
+
+**Local timezone.** All cron expressions run in your local time, not UTC. A `0 9 * * *` means 9am wherever you are.
+
+**Up to 50 tasks per session.** More than enough for any reasonable workflow.
+
+### The Cons
+
+**Session-scoped.** Close your terminal and everything is gone. No persistence across restarts. This is the biggest limitation, full stop.
+
+**Three-day expiry.** Recurring tasks auto-delete after 72 hours. Anthropic did this to prevent forgotten loops from running forever, which makes sense — but it means you have to recreate long-running monitors regularly.
+
+**No catch-up for missed fires.** If Claude is busy with a long-running task when your loop is scheduled, it fires once when idle — not once per missed interval. If you need guaranteed execution, this is a problem.
+
+**Usage adds up fast.** A 5-minute loop running for 3 hours is 36 prompt executions. On a subscription plan, that accelerates your usage. On API billing, that's real money.
+
+**Failure modes scale with duration.** The gap between "agent that works for days" and "agent you can trust for days" is still substantial. A 3-day divergence could require serious unwinding if something goes wrong.
+
+<Callout type="warning">
+**My rule of thumb:** Use `/loop` for monitoring and status checks, not for autonomous code changes. Let it watch, not write.
+</Callout>
+
+## Remote Control: Your Terminal, From Your Phone
+
+Remote Control dropped on February 25, 2026, and it solved a problem I didn't know I had until I experienced it: being chained to my desk waiting for a build to finish.
+
+### How It Works
+
+Start a Remote Control session from your terminal:
+
+```bash
+claude remote-control --name "My Project"
+```
+
+Or from an existing session:
+
+```text
+/remote-control
+```
+
+A URL and QR code appear. Scan the QR code with your phone, and you're connected to your local Claude Code session through the Claude iOS or Android app, or through claude.ai/code in any browser.
+
+Your files, MCP servers, tools, and project configuration all stay local. Only chat messages and tool results flow through an encrypted connection. Your code never leaves your machine.
+
+### The Pros
+
+**True local execution.** This is not cloud computing. Your filesystem, environment variables, MCP servers — everything stays on your machine. The phone is just a window into your local session.
+
+**Seamless context preservation.** Start a session at your desk, pick it up from your phone. Full conversation history, file context, and tool state carry over with zero re-indexing.
+
+**Automatic reconnection.** Laptop sleeps? Network drops? The session reconnects automatically when your machine comes back online. I've closed my laptop, driven home, and picked up the exact same session from my couch.
+
+**Multi-device sync.** Messages stay in sync across terminal, browser, and phone. You can send messages from any surface interchangeably.
+
+### The Cons
+
+**One session at a time.** Each Claude Code instance supports exactly one remote connection. If you run multiple instances, each gets its own session, but you can't multiplex.
+
+**Terminal must stay open.** Remote Control runs as a local process. Close the terminal or stop the `claude` process, and the session ends. Not a deal-breaker, but you need to remember.
+
+**10-minute timeout on network outage.** If your machine is awake but can't reach the network for more than roughly 10 minutes, the session times out and you need to restart.
+
+**Permission approvals.** Remote Control doesn't support the `--dangerously-skip-permissions` flag, meaning you have to approve every new action it takes. This makes sense from a security perspective but can be tedious during long autonomous runs.
+
+**Availability.** Currently available on Pro, Max, Team, and Enterprise plans. It initially rolled out to Max subscribers first.
+
+<Callout type="tip">
+**Power move:** Combine Remote Control with `/loop`. Start a monitoring loop at your desk, then watch it report back from your phone while you're away. This is where the features start compounding.
+</Callout>
+
+## Scheduled Tasks in Cowork: The Desktop-First Approach
+
+While `/loop` is session-scoped and terminal-based, Claude Cowork takes scheduling in a different direction entirely. Cowork scheduled tasks are durable — they persist across sessions and don't require an active terminal.
+
+### What's Cowork?
+
+Cowork is Anthropic's research preview that turns Claude Desktop into a digital coworker. It launched in January 2026 for macOS and expanded to Windows in February. Unlike Claude Code's terminal-based approach, Cowork gives you a visual task interface with direct file system access.
+
+Think of it this way: Claude Code is for developers. Cowork is for everyone else — and the scheduled tasks reflect that difference.
+
+### How Cowork Scheduling Works
+
+Two ways to create a scheduled task:
+
+1. **Using `/schedule`** — type it in Cowork and Claude walks you through setup
+2. **From the Scheduled Tasks page** — click "Scheduled" in the sidebar, fill out name, prompt, frequency, and optional working folder
+
+Frequency options are straightforward: hourly, daily, weekly, weekdays, or manual (on-demand only).
+
+Each scheduled task runs as its own Cowork session. You describe the outcome once, set the cadence, and review the results when they're ready.
+
+### Cowork vs. Claude Code Scheduling
+
+| Feature | Claude Code `/loop` | Cowork Scheduled Tasks |
+|---------|-------------------|----------------------|
+| **Persistence** | Session-scoped, gone on exit | Durable, survives restarts |
+| **Interface** | Terminal commands | Visual desktop UI |
+| **Max duration** | 3-day auto-expiry | No auto-expiry |
+| **Setup** | One-line command | Visual form or `/schedule` |
+| **Use case** | Dev monitoring, CI checks | Reports, research, file organization |
+| **Platform** | Any terminal | macOS and Windows desktop app |
+| **Requires** | Claude Code running | Claude Desktop app open |
+
+### The Pros of Cowork Scheduling
+
+**Durable.** Tasks survive app restarts. No 3-day expiry. Set up a weekly report once and it keeps running.
+
+**Visual management.** View all tasks, review past runs, edit cadence, pause/resume — all from a clean UI.
+
+**Non-developer friendly.** My team members who don't touch the terminal can set up automated research, daily briefings, and file organization workflows.
+
+**Same capabilities as regular Cowork.** Connected tools, skills, plugins, Slack integration, web research — everything available in a normal session is available in a scheduled one.
+
+### The Cons
+
+**Desktop app dependency.** Tasks only run while your computer is awake and the Claude Desktop app is open. No cloud execution.
+
+**Consumes more usage.** Cowork tasks use more allocation than standard chat. Frequent schedules add up.
+
+**No memory between sessions.** Each scheduled run starts fresh. The task doesn't remember what happened in previous runs unless you explicitly save state to files.
+
+**Research preview.** This is still early. Not suitable for regulated workloads or anything requiring audit trails.
+
+## How I Actually Use These Together
+
+Here's my real workflow combining all three:
+
+**Morning automation (Cowork Scheduled Tasks):**
+- Daily standup summary pulls from Slack and GitHub at 8:30am
+- Weekly blog content pipeline check every Monday at 9am
+
+**Development monitoring (Claude Code /loop):**
+- `/loop 5m check if the Vercel deployment finished` after pushing changes
+- `/loop 30m /review-pr 42` to keep tabs on a PR across the day
+- One-time reminders: "at 4pm, remind me to merge the staging branch"
+
+**Mobile oversight (Remote Control):**
+- Start an autonomous coding session at my desk
+- `/remote-control` when I need to step away
+- Monitor and approve actions from my phone during breaks
+
+The key insight: these features aren't competing with each other. They cover different durability levels and interaction modes. Use the right tool for the right timescale.
+
+## The Single-Developer Ceiling Just Got Higher
+
+These three features collectively represent something bigger than any individual capability. They mark the transition from AI as a tool to AI as a worker.
+
+1. **Task architecture becomes a skill.** Success now depends on how well you define objectives, edge cases, and failure boundaries — not how well you prompt in real-time.
+
+2. **Monitoring replaces doing.** Your job shifts from writing code to reviewing AI-generated code. That's a fundamentally different skill set.
+
+3. **Compound automation.** When you can loop tasks, schedule them durably, and monitor them remotely, you're building automation on top of automation. The ceiling for what a single developer can ship goes up dramatically.
+
+But there's a tension here. The more autonomous these tools become, the more important guardrails become. A 3-day `/loop` that goes off the rails could create a mess that takes longer to fix than doing the work manually would have taken. Right now, the safety mechanisms — session scoping, auto-expiry, permission approvals — are reasonable but imperfect.
+
+The session-scoped limitations of `/loop` are almost certainly temporary. The direction is clear: persistent, cloud-hosted sessions with durable scheduling and automatic rollback on failure. We're not there yet, but the foundation is being laid right now.
+
+## The Bottom Line: Start With /loop
+
+**Yes, with caveats.**
+
+If you're already using Claude Code, `/loop` is a no-brainer. The friction is zero and the monitoring use cases pay for themselves immediately.
+
+Remote Control is worth setting up if you regularly run long tasks. The first time you approve a build from your phone while walking the dog, you'll wonder how you lived without it.
+
+Cowork scheduled tasks are the best choice if you want durable automation for non-coding workflows — reports, research, file management. The visual interface makes it accessible to your whole team.
+
+The features that Anthropic shipped in early 2026 aren't incremental improvements. They're the foundation for a fundamentally different way of working with AI. Start experimenting now, because this is where everything is heading.
+
+---
+
+*What's your experience with Claude Code's new automation features? I'd love to hear how you're using them — [reach out on X](https://x.com/taaborek) or [connect on LinkedIn](https://linkedin.com/in/tarekalaaddin).*
