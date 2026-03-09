@@ -38,6 +38,9 @@ logs/pipeline/**
 !logs/pipeline/.gitkeep
 !logs/pipeline/screenshots/.gitkeep
 
+# MCP config (contains API tokens)
+.mcp.json
+
 # Playwright MCP temp files
 .playwright-mcp/
 
