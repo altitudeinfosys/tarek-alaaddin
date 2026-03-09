@@ -36,7 +36,14 @@ Load these as needed during the relevant phase:
 
 ### Phase 0: Pre-Flight Checks
 
-1. **Verify Notion API access** — read `references/notion-api.md` for curl patterns:
+1. **Load environment variables** — ensure `NOTION_TOKEN` is available:
+   ```bash
+   source /Users/tarekalaaddin/projects/code/tarek-alaaddin/.env.local
+   export NOTION_TOKEN
+   ```
+   This also exports `ANTHROPIC_API_KEY` and other keys needed by sub-agents.
+
+2. **Verify Notion API access** — read `references/notion-api.md` for curl patterns:
    ```bash
    curl -s 'https://api.notion.com/v1/users/me' \
      -H "Authorization: Bearer $NOTION_TOKEN" \
@@ -44,17 +51,23 @@ Load these as needed during the relevant phase:
    ```
    If auth fails, STOP with error.
 
-2. **Detect browser backend** — read `references/browser-automation.md` for detection logic and tool mapping.
+3. **Detect browser backend** — read `references/browser-automation.md` for detection logic and tool mapping.
    Log: "Using [Chrome Extension / Playwright] backend for social posting"
 
-3. Check that the project repo is clean:
+4. Check that the project repo is clean:
    ```bash
-   cd /Users/tarekalaaddin/Projects/code/tarek-alaaddin && git status
+   cd /Users/tarekalaaddin/projects/code/tarek-alaaddin && git status
    ```
-4. Ensure we're on the `main` branch:
+5. Ensure we're on the `main` branch:
    ```bash
    git checkout main && git pull
    ```
+
+6. **Initialize pipeline log file**:
+   ```bash
+   PIPELINE_LOG="logs/pipeline/$(date +%Y%m%d-%H%M%S)-run.log"
+   ```
+   All major actions should be logged with: `echo "[$(date +%H:%M:%S)] MESSAGE" >> "$PIPELINE_LOG"`
 
 ### Phase 1: Read Queue from Notion
 
@@ -154,13 +167,20 @@ Read `references/critique-process.md` and follow the complete critique workflow:
 
 12. **Update Notion**: Write blog slug to Blog Slug property.
 
-### Phase 3: Wait for PR Merge (Semi-Auto Gate)
+### Phase 3: Merge PR
 
-1. Check PR status every 5 minutes: `gh pr view blog/SLUG --json state -q '.state'`
-2. `MERGED` → continue to Phase 4, update local main
-3. `CLOSED` → mark failed, STOP
-4. `OPEN` after 24h → mark failed, STOP
-5. **For manual runs**: Tell user to merge, then re-run `/pipeline-run`
+**Auto-merge is enabled.** After the build passes and the PR is created, merge it automatically without waiting for manual review.
+
+1. Merge the PR:
+   ```bash
+   gh pr merge blog/SLUG --squash --delete-branch
+   ```
+2. Update local main:
+   ```bash
+   git checkout main && git pull origin main
+   ```
+3. If merge fails → mark status `failed` in Notion, STOP
+4. Continue to Phase 4
 
 ### Phase 4: Generate Social Media Copy
 
@@ -188,7 +208,14 @@ Read `references/social-copy-formats.md` for format rules.
 ### Phase 7: Finalize
 
 1. Update Notion status to `done` with completion timestamp
-2. Log summary: topic, blog URL, X/LinkedIn post status, total time
+2. **Write pipeline summary to log file**:
+   ```bash
+   echo "[$(date +%H:%M:%S)] === PIPELINE COMPLETE ===" >> "$PIPELINE_LOG"
+   echo "Topic: $TOPIC" >> "$PIPELINE_LOG"
+   echo "Blog URL: https://tarekalaaddin.com/blog/$SLUG" >> "$PIPELINE_LOG"
+   echo "X Post: [success/failed/skipped]" >> "$PIPELINE_LOG"
+   echo "LinkedIn Post: [success/failed/skipped]" >> "$PIPELINE_LOG"
+   ```
 3. Close all pipeline-opened browser tabs
 4. Return to main branch: `git checkout main`
 
@@ -200,7 +227,7 @@ Read `references/social-copy-formats.md` for format rules.
 | Git repo is clean | Phase 0 | Stash changes or STOP |
 | No duplicate slug | Phase 2 | Modify slug |
 | Build passes | Phase 2 | Fix or mark failed |
-| PR is merged | Phase 3 | Wait or mark failed |
+| PR merge succeeds | Phase 3 | Mark failed, STOP |
 | Logged into X | Phase 5 | Skip X, continue to LinkedIn |
 | Logged into LinkedIn | Phase 6 | Skip LinkedIn, update status |
 | Critique score < 8 or CRITICAL issues | Phase 2.5 | Auto-revise up to 2x, then proceed |
