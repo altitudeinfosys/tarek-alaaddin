@@ -23,7 +23,7 @@ const SOCIAL_LINKS = [
   },
   {
     name: 'Email',
-    url: 'mailto:tareka@gmail.com',
+    url: '/contact',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -41,18 +41,30 @@ export default function Footer() {
         <div className="flex flex-col items-center">
           {/* Social Links */}
           <div className="flex space-x-6 mb-6">
-            {SOCIAL_LINKS.map((link) => (
-              <a
-                key={link.name}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
-                aria-label={link.name}
-              >
-                {link.icon}
-              </a>
-            ))}
+            {SOCIAL_LINKS.map((link) => {
+              const isInternal = link.url.startsWith('/')
+              return !isInternal ? (
+                <a
+                  key={link.name}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
+                  aria-label={link.name}
+                >
+                  {link.icon}
+                </a>
+              ) : (
+                <Link
+                  key={link.name}
+                  href={link.url}
+                  className="text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
+                  aria-label={link.name}
+                >
+                  {link.icon}
+                </Link>
+              )
+            })}
           </div>
 
           {/* Navigation */}

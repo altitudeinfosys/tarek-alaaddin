@@ -1,8 +1,7 @@
 # Tarek Alaaddin
 
 ## Contact
-- Email: tareka@gmail.com
-- Phone: 713-269-9988
+- Contact: [Get in Touch](/contact)
 - Location: Round Rock, Texas
 - Citizenship: US Citizen
 
