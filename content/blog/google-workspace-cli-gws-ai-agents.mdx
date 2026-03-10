@@ -1,0 +1,178 @@
+---
+title: "Google's gws CLI: The AI Agent Interface Workspace Needed"
+description: "Google shipped gws, a Rust CLI giving AI agents access to all of Workspace. How it works and why they killed MCP support in 48 hours."
+date: "2026-03-10"
+category: "ai"
+tags: ["google-workspace", "cli-tools", "ai-agents", "mcp", "developer-tools", "automation", "gemini-cli", "openclaw", "productivity"]
+image: "/images/blog/google-workspace-cli-gws-ai-agents.jpg"
+published: true
+featured: false
+---
+
+Last Thursday I pointed Claude Code at `gws`, typed one command, and had my entire inbox triaged in under a minute. Then I realized I'd just given an AI agent the keys to my whole digital life.
+
+That's the deal with Google's new Workspace CLI. One tool. One syntax. Gmail, Drive, Calendar, Sheets, Docs, Chat, Admin — all of it returns structured JSON that AI agents parse without breaking a sweat. Within three days the repo had nearly 5,000 GitHub stars and hit number one on Hacker News with 571 points. Guillermo Rauch, CEO of Vercel, called it evidence that 2026 is the year of CLIs and Skills.
+
+But here's the part most coverage missed: Google built an MCP server into gws, then ripped it out 48 hours later. That decision — and the reasoning behind it — tells you more about the future of AI agent architecture than the tool itself.
+
+## What gws Actually Is
+
+The Google Workspace CLI — invoked as `gws` — is a Rust binary distributed through npm. Install it with one command:
+
+```bash
+npm install -g @googleworkspace/cli
+```
+
+No Rust toolchain needed. The npm package bundles pre-built native binaries for your OS and architecture. Once installed, the syntax follows a clean pattern:
+
+```bash
+gws <service> <resource> <action>
+```
+
+Want to list your recent emails? `gws gmail messages list`. Create a calendar event? `gws calendar events insert`. Every command returns structured JSON that machines and humans can both read.
+
+<Callout type="info">
+**Key detail:** gws doesn't ship a hardcoded command list. It reads Google's Discovery Service at runtime and builds its entire command surface dynamically. When Google adds a new API endpoint, gws picks it up automatically on the next invocation. Zero maintenance.
+</Callout>
+
+## The Agent Skills System
+
+The CLI ships with over 100 pre-built "agent skills" — basically recipes for common multi-step workflows. Think of them as composable building blocks:
+
+- **Morning briefing**: Pull unread emails, today's calendar, and pending tasks into a single summary
+- **Meeting prep**: Gather all Drive docs linked in a calendar invite
+- **Email triage**: Classify and label incoming messages by priority
+- **Doc creation**: Generate a Google Doc from structured data and share it with specific people
+
+These skills are plain text files that any AI agent can read, chain together, and execute. The `gws` binary handles authentication, API calls, and output formatting. The agent handles reasoning and orchestration.
+
+This is the design philosophy that matters: **gws is a tool that agents use, not an agent itself**.
+
+## Authentication: One OAuth Flow to Rule Them All
+
+Before gws, connecting an AI agent to Google Workspace meant managing separate OAuth flows for each service. Gmail needed one set of scopes. Calendar needed another. Drive had its own. If your agent touched five services, you were juggling five authentication flows.
+
+gws consolidates this into a single OAuth 2.0 browser-based login:
+
+```bash
+gws auth setup
+```
+
+One flow. All scopes. The token persists across sessions. Every subsequent command inherits the authenticated context automatically.
+
+For headless environments (CI/CD, servers, scheduled jobs), you can generate refresh tokens separately and pass them in. Not as smooth as the interactive flow, but it works.
+
+## The MCP Story: Built It, Shipped It, Killed It in 48 Hours
+
+This is the part that makes gws genuinely interesting from an architecture perspective.
+
+When gws first launched, it included a full Model Context Protocol (MCP) server in `src/mcp_server.rs`. MCP is the open standard that lets AI agents discover and call tools through a structured interface — it's how Claude Desktop, Gemini CLI, and VS Code connect to external capabilities.
+
+Google shipped the MCP server. Developers started using it. Bug reports came in. Nineteen GitHub issues were filed in two days. Then Google deleted the entire thing — 1,151 lines of code removed in a commit explicitly marked as a BREAKING CHANGE.
+
+Why?
+
+### The Scale Problem
+
+Google Workspace APIs expose between 200 and 400 potential operations depending on which services you enable. MCP's architecture requires sending all tool definitions upfront to the client. That means the AI agent's context window gets flooded with tool descriptions before it even sees your first message.
+
+The math is brutal: those tool definitions alone would consume an estimated 40,000 to 100,000 tokens. For a model with a 128K context window, you've just burned 30-75% of your capacity on a menu the agent hasn't even ordered from yet.
+
+<Callout type="warning">
+**The core tension:** MCP works brilliantly for small-to-medium tool sets (10-50 tools). But Google Workspace's massive API surface created a fundamentally incompatible pairing. Too many tools, not enough context window.
+</Callout>
+
+### The Failed Fix
+
+Google's team tried a "compact mode" that reduced the tool surface to roughly 26 meta-tools — one per service instead of one per operation. They implemented it, shipped it, and deleted it the next day. Even 26 tools with complex schemas consumed too much context for reliable operation.
+
+### The CLI-First Architecture
+
+What replaced MCP is arguably more elegant for this use case. Instead of loading hundreds of tool definitions into the context window, agents simply invoke `gws` as a shell command:
+
+```bash
+# Agent runs this directly — zero context overhead
+gws gmail messages list --format json --max-results 10
+```
+
+For discovery, agents query the schema on demand:
+
+```bash
+gws schema gmail messages
+```
+
+This is the architectural insight: **when your tool surface is massive, lazy loading beats eager loading**. A CLI call adds zero tokens to the context window. An MCP tool definition of the same operation might add 500-1,000 tokens that sit there consuming space whether or not the agent ever uses it.
+
+Think of it as ordering from the kitchen when you're hungry versus spreading the entire menu across the table before every meal.
+
+## The Ecosystem Forming Around gws
+
+### Gemini CLI Integration
+
+Google's own Gemini CLI has a first-class extension for gws. Install it with:
+
+```bash
+gemini extensions install https://github.com/googleworkspace/cli
+```
+
+The extension inherits your gws authentication automatically. Once installed, your Gemini CLI agent has direct access to all gws commands and agent skills without any additional configuration.
+
+### OpenClaw Support
+
+Google included specific OpenClaw integration instructions directly in the gws README — a notable endorsement of the open-source agent framework. Skills can be symlinked into `~/.openclaw/skills/`, and the gws-shared skill includes an auto-install block so OpenClaw automatically installs the CLI via npm if it's not already on your PATH.
+
+### Claude Code and Other MCP Clients
+
+Here's where it gets nuanced. While Google removed the built-in MCP server from gws itself, a community-built alternative exists: Taylor Wilsdon's Google Workspace MCP server supports 10+ Google services with OAuth 2.1, multi-user authentication, and a three-tier tool organization system (Core, Extended, Complete) that directly addresses the context window problem gws encountered.
+
+For Claude Code users, the community MCP server gives you direct Workspace access through MCP tools. For agents that prefer shell execution, gws itself remains the better integration path.
+
+## Security: The Elephant in the Room
+
+Google's own documentation states explicitly that gws is "not an officially supported Google product." That matters.
+
+There are real security considerations when you give an AI agent access to your email, documents, and calendar:
+
+**Prompt injection risk.** If an agent reads your email and an attacker has planted instructions in a message body, the agent might execute those instructions. Google recommends using their Cloud Model Armor service and implementing folder/label sandboxes to limit blast radius.
+
+**Scope creep.** A single OAuth token grants access to everything. There's no built-in mechanism to say "read my calendar but don't touch my email." You can configure this at the OAuth scope level, but the default setup is all-or-nothing.
+
+**No SLA.** This is a developer sample. It could break, change APIs, or get abandoned. Build production workflows on it at your own risk.
+
+<Callout type="tip">
+**My recommendation:** Start with read-only operations. Let agents summarize your inbox, generate meeting briefs, and search Drive. Earn trust before you let them send emails or modify documents on your behalf.
+</Callout>
+
+## The Bigger Picture: CLI as the Agent Interface Layer
+
+The gws launch reinforces a pattern I've been watching all year. The command line is emerging as a dominant interface between AI agents and cloud services — arguably more than REST APIs, MCP, or custom SDKs. Plain old shell commands that return JSON.
+
+Why? Three reasons:
+
+1. **Zero context overhead.** Shell commands don't pollute the agent's reasoning space with tool definitions.
+2. **Universal compatibility.** Every AI agent framework — Claude Code, Gemini CLI, OpenClaw, custom setups — can execute shell commands. No protocol-specific integration needed.
+3. **Human debuggability.** When an agent runs `gws gmail messages list`, you can copy that exact command into your own terminal and see exactly what the agent saw. Try doing that with an MCP tool call.
+
+This doesn't mean MCP is dead. For focused tool sets with 10-50 operations, MCP remains excellent. But for sprawling API surfaces like Google Workspace, the CLI-first pattern is winning.
+
+## What I'm Building Next
+
+The gws launch sparked an idea I can't shake: a personal dashboard that uses AI agents to manage my entire Google Workspace automatically.
+
+The concept: a single interface showing my emails, calendar, and tasks — with an AI agent running in the background that reviews incoming email, classifies priority, suggests responses, and maybe (eventually) sends routine replies autonomously.
+
+gws makes this feasible in a way that wasn't practical before. Instead of writing custom Google API integrations for each service, I can point an agent at `gws` and let it figure out the API calls. The agent skills system means common patterns are already solved.
+
+I'll be documenting the build process here. If you're interested in agent-powered productivity workflows, stay tuned.
+
+## gws Is the Tool, the MCP Removal Is the Lesson
+
+Google Workspace CLI is the most significant developer tool Google has shipped for Workspace in years. Not because it does anything the APIs couldn't already do — but because it makes those APIs accessible to AI agents without custom integration work.
+
+The MCP removal is the real story. It's a case study in why the most popular approach isn't always the right one, and why understanding your tool's scale characteristics matters more than following the latest protocol trend.
+
+Install it. Try it. Let your agents loose on your Workspace (in read-only mode, please). The CLI-first future is here, and your inbox is never going to be the same.
+
+---
+
+**Want more breakdowns of AI developer tools and agent workflows?** [Subscribe to my newsletter](/subscribe) for weekly deep dives on the tools reshaping how we build software.
