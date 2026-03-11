@@ -1,0 +1,156 @@
+---
+title: "Parkinson's Law Is Eating Your AI Productivity Gains"
+description: "AI promised to make us faster. Parkinson's Law had other plans. Why freed time fills itself — and how to stop it."
+date: "2026-03-11"
+category: "productivity"
+tags: ["productivity", "parkinsons-law", "ai-tools", "software-development", "time-management", "developer-productivity", "scope-creep", "engineering-management"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Last month I saved four hours a week by automating my content pipeline with Claude Code. Research, formatting, scheduling — one command, done.
+
+This month I'm busier than ever.
+
+Within a week, those four hours had been devoured. I was tweaking prompts that didn't need tweaking. Adding retry logic to an endpoint that fails once a quarter. Refactoring a config file into a YAML-driven system for a pipeline that has exactly one user: me. My calendar looked fuller, my commits were up, and my actual output was identical.
+
+I wasn't experiencing an AI productivity miracle. I was living Parkinson's Law in real time.
+
+## What Is Parkinson's Law?
+
+In 1955, Cyril Northcote Parkinson wrote a satirical essay for *The Economist* that contained an observation so sharp it became a law: **"Work expands so as to fill the time available for its completion."**
+
+Parkinson wasn't talking about software or AI. He was roasting British bureaucracy — how departments kept hiring more staff even as the Empire shrank. But the principle transcends bureaucracies. It explains why a weekend painting project takes the whole weekend when it could be done by noon. Why a two-week essay assignment produces roughly the same quality as a three-day one. Why a sprint's worth of work somehow always takes exactly one sprint.
+
+The mechanism is psychological. Research on Temporal Motivation Theory shows that people anchor to the *time available* rather than the *time required*. When you have two weeks, your brain calibrates for two weeks. When you have two days, it calibrates for two days. The task itself hasn't changed — your perception of it has.
+
+## The AI Productivity Paradox Nobody Talks About
+
+Here's where it gets interesting. AI was supposed to break this cycle. If tools like Copilot, Cursor, and Claude can write code, draft emails, and automate workflows in minutes instead of hours, surely we'd reclaim all that time?
+
+The data tells a different story.
+
+A [randomized controlled trial by METR](https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/) in 2025 studied 16 experienced open-source developers (repositories averaging 22,000+ stars) across 246 tasks. The headline result: developers using AI tools were **19% slower** on average than those working without them — though the confidence interval included no effect, so the true impact may be closer to neutral. What's not ambiguous is the perception gap: those same developers predicted AI would make them **24% faster**, a 39-percentage-point disconnect between how productive they felt and how productive they were.
+
+And it's not just speed. The [Faros AI research report](https://www.faros.ai/blog/ai-software-engineering) analyzed data from over 10,000 developers across 1,255 teams and found a paradox at scale:
+
+- Developers on high-AI-adoption teams completed **21% more tasks** and merged **98% more pull requests**
+- But PR review time increased **91%**, bugs increased **9% per developer**, and average PR size ballooned **154%**
+- Net organizational improvement? **Zero measurable change** in DORA delivery metrics
+
+More code. More bugs. More review bottlenecks. Same delivery speed.
+
+<Callout type="warning">
+Here's the number that should haunt every engineering leader: [92.6% of developers](https://philippdubach.com/posts/93-of-developers-use-ai-coding-tools.-productivity-hasnt-moved./) now use AI coding tools monthly (per a DX survey of 121,000 developers), yet six independent research efforts converge on roughly 10% organizational productivity gains at best. The gap between adoption and impact is enormous.
+</Callout>
+
+## Where the Time Actually Goes
+
+If AI saves time on coding, where does the time go? Parkinson's Law gives us the answer: it expands into the space you freed.
+
+### Task Creep
+
+The time you saved writing code gets consumed by new tasks: crafting better prompts, reviewing AI-generated output, debugging code you didn't write, validating suggestions that are "almost right but not quite" (cited by 66% of developers as their biggest AI frustration), and managing the increased volume of PRs flowing through your pipeline.
+
+You're not working less. You're working on different things.
+
+### The Perfectionism Trap
+
+When a task that used to take four hours now takes one, something interesting happens psychologically. You don't ship and move on. You think: *I have three extra hours — let me make this better.* You add edge cases nobody asked for. You refactor adjacent code. You write tests for theoretical scenarios. You over-engineer.
+
+This is Parkinson's Law in its purest form. The work expanded because the time was available.
+
+### Artificial Complexity
+
+AI makes it trivially easy to generate code, which means it's trivially easy to generate *more* code. PR sizes increased 154% with AI adoption. More code means more to review, more to test, more to maintain. The volume increase creates downstream complexity that wouldn't exist if we'd written less, more deliberately.
+
+## The Software Engineering Version
+
+If you've worked in software, you've seen Parkinson's Law before AI entered the picture. Consider these patterns:
+
+**The Four-Month Feature**: An API feature estimated at two to three weeks — straightforward endpoints, some tests, ship it — stretches to nearly four months. The team debates naming conventions, adds edge cases, rewrites for "future-proofing." The complexity didn't change. The available time did.
+
+**The Sprint That Always Fills**: Every two-week sprint somehow consumes exactly two weeks. Finished early? Time for a "quick refactor." Ahead of schedule? Let's add that nice-to-have. The work doesn't complete faster — it inflates to fill the container.
+
+**The Feature Flag Graveyard**: A cleanup task that should take one to two days gets deferred because "we have time." Weeks pass. The flags interweave with new features. What was a morning's work becomes a multi-day refactor.
+
+Now layer AI on top of these patterns. AI doesn't eliminate Parkinson's Law — it supercharges it. When generating code is nearly free, you generate more of it. When tasks complete faster, you create new tasks. When automation removes busywork, you manufacture new busywork.
+
+<Callout type="info">
+Writing and testing code represents only 25-35% of the software development lifecycle. The rest — code review, requirements analysis, debugging, meetings, documentation — remains largely untouched by AI. Accelerating one-third of the process while the other two-thirds stay the same explains why organizations aren't seeing the gains they expected.
+</Callout>
+
+## It's Not Just Software — It's Your Life
+
+Parkinson's Law doesn't clock out when you leave work. It runs your entire life.
+
+**The Laundry Test**: You can take two weeks to put away laundry, or you can do it in ten minutes because someone's coming over in an hour. The task didn't change. The time constraint did.
+
+**The Weekend Trap**: You have a free Saturday — no plans, nowhere to be. So you decide to organize your home office. Eight hours later, you've reorganized one drawer and watched three YouTube videos about desk setups. Give yourself three hours for the same task and you'd have been done by lunch.
+
+**The AI Version**: You install an AI email assistant that drafts replies in seconds. You don't spend less time on email. You spend the same amount of time writing more emails, tweaking drafts, and handling the increased volume of conversations you now have bandwidth for.
+
+The pattern is universal. Time freed up without intentional reallocation isn't freed at all — it's silently consumed by whatever expands to fill it.
+
+## Why Smart People Fall for It
+
+The cruelest part is the disguise. Parkinson's Law doesn't feel like wasted time. It feels like diligence.
+
+**"I'm being thorough."** You spent three hours reviewing AI-generated code that would have taken one hour to write yourself. You caught one minor issue. Was that a good use of your time? It felt productive. It wasn't.
+
+I do this constantly. Last week I asked Claude to generate five different approaches for a database migration that had one obvious correct answer. I spent 40 minutes evaluating all five, comparing tradeoffs that didn't matter, before implementing the one I would have picked in the first place. I called it "being strategic." It was procrastination with extra steps.
+
+**"I'm improving quality."** AI freed up time, so you spent it polishing code that was already good enough. Gold-plating isn't quality improvement — it's Parkinson's Law in a lab coat.
+
+The METR study captured this perfectly: developers believed they were 20% faster while actually being 19% slower. The perception gap is the mechanism. You *feel* more productive, so you don't notice the expansion.
+
+## How to Actually Beat It
+
+Parkinson's Law isn't a bug you can patch. It's a feature of human psychology. But you can architect constraints that work in your favor.
+
+### 1. Set Deadlines on Freed Time, Not Just Tasks
+
+When AI saves you two hours, don't leave those hours open. Immediately assign them to something specific *before* the current task has a chance to expand. Block the time. Name the work. Create a constraint.
+
+This is the opposite of how most people use AI. They think: "Great, I have extra time now." And then Parkinson's Law eats it.
+
+### 2. Measure Outcomes, Not Activity
+
+Stop counting PRs merged, lines of code written, or tasks completed. These are activity metrics — and AI inflates them trivially. Instead, measure what shipped to users. What problem got solved. What revenue moved.
+
+When your metric is "features delivered to production," you stop gold-plating and start shipping.
+
+### 3. Time-Box Ruthlessly
+
+Give yourself half the time you think you need. This isn't about stress — it's about forcing prioritization. A two-hour coding spike prevents a system redesign. A 25-minute meeting prevents a 60-minute ramble. An artificial Wednesday deadline for a Friday deliverable creates a buffer instead of a void.
+
+Hackathons prove this works. Teams build functional prototypes in 48 hours that would take months in a normal sprint cycle. The constraint eliminates overthinking.
+
+### 4. Scope Down Before Speeding Up
+
+Before applying AI to a task, ask: *Should this task exist at all?* AI makes it dangerously easy to do the wrong things faster. The most productive thing you can do with freed time is often to eliminate tasks, not add them.
+
+### 5. Create Accountability Checkpoints
+
+Weekly progress updates — even just to yourself — create natural Parkinson's Law circuit breakers. When you have to document what you accomplished, you notice when four hours of "optimization" produced zero measurable outcomes.
+
+<Callout type="tip">
+The best framework for AI-era productivity is **fixed deadline, fixed resources, flexible scope.** Decide when it ships and who's working on it. Then negotiate what gets built. This prevents scope expansion because the container is locked. AI accelerates what's inside the container — it doesn't stretch the container.
+</Callout>
+
+## The Bigger Picture
+
+We're in the middle of the largest productivity tool adoption in history. Over 90% of developers use AI tools. Roughly [27% of production code is now AI-generated](https://philippdubach.com/posts/93-of-developers-use-ai-coding-tools.-productivity-hasnt-moved./). And yet an [NBER survey](https://laweconcenter.org/resources/ai-productivity-and-labor-markets-a-review-of-the-empirical-evidence/) of nearly 6,000 executives found that over 80% of firms reported no AI productivity impact over three years.
+
+This isn't an AI problem. It's a human problem. AI tools work. They genuinely accelerate specific tasks. But Parkinson's Law ensures that without deliberate constraints, the gains evaporate into expanded work, increased complexity, and new categories of busywork.
+
+The solution isn't better AI. It's better discipline. It's deciding what *not* to do with freed time. It's setting constraints before the work has a chance to expand. It's measuring outcomes instead of activity.
+
+Parkinson observed in 1955 that bureaucracies grow regardless of the work available. Seventy years later, we're proving him right — armed with tools that can generate code, draft documents, and automate workflows in seconds, and still somehow busier than before.
+
+The question isn't whether AI can make you faster. It can. The question is whether you'll let the freed time stay free — or watch it silently fill with work that didn't need to exist.
+
+---
+
+If you found this useful, [subscribe to my newsletter](/newsletter) for weekly deep dives on AI tools, productivity systems, and building in public.
