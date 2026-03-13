@@ -1,0 +1,160 @@
+---
+title: "Karpathy's Autoresearch: 100 AI Experiments While You Sleep"
+description: "Autoresearch lets AI agents run 100+ ML experiments overnight on one GPU. How it works, real results, and why this changes AI research."
+date: "2026-03-13"
+category: "ai"
+tags: ["ai-agents", "machine-learning", "autoresearch", "karpathy", "claude-code", "open-source"]
+image: "/images/blog/karpathy-autoresearch-autonomous-ai-experiments.jpg"
+published: true
+featured: false
+---
+
+I woke up last Saturday to 83 completed experiments I didn't run.
+
+The night before, I'd cloned Karpathy's new [Autoresearch](https://github.com/karpathy/autoresearch) repo, pointed Claude Code at the `program.md` file, and went to bed. Seven hours later, my terminal showed a wall of git commits — each one a complete training run that the agent executed, evaluated, and either kept or discarded. Fifteen of those 83 experiments produced measurable improvements. I didn't touch the keyboard once.
+
+That's the promise of Autoresearch, and after running it myself, I can tell you it delivers. But the implications go far beyond one overnight training session.
+
+## What Is Autoresearch?
+
+On March 7, 2026, Andrej Karpathy — former Tesla AI director and OpenAI co-founder — released Autoresearch as an open-source tool. It's a 630-line Python project that lets AI agents autonomously run machine learning experiments on a single GPU. Within a week, the repo hit [31,000 stars on GitHub](https://github.com/karpathy/autoresearch). That velocity says everything.
+
+The concept is simple. Give an AI agent a small but real LLM training setup. Let it modify the code, train for 5 minutes, check if the result improved, keep or discard the change, and repeat. No human in the loop. Approximately 12 experiments per hour. Around 100 overnight.
+
+<Callout type="info">
+**The paradigm shift:** You stop writing Python. You start writing Markdown instructions that tell an AI agent *how* to experiment. The human programs the program, not the code.
+</Callout>
+
+## Three Files. That's It.
+
+The architecture is deliberately minimal — three files, no complex configs, no distributed training:
+
+**`prepare.py`** handles one-time setup: downloading datasets, training BPE tokenizers, and providing runtime utilities like dataloaders. This file is never modified by the agent.
+
+**`train.py`** is the single file the AI agent edits. It contains a complete GPT model (~630 lines), optimizer selection (Muon + AdamW), and the full training loop. Everything the agent needs to experiment with — architecture depth, vocabulary size, attention patterns, batch sizes, learning rates, warmup steps — lives here.
+
+**`program.md`** is the human's instruction set. A Markdown file describing what the agent should try, what constraints to respect, and what success looks like. Here's a simplified example of what one might contain:
+
+```markdown
+# Research Program
+
+## Objective
+Find the fastest training configuration for this model within 5-minute runs.
+
+## Experiment Ideas
+- Try reducing model depth from 8 to 6 layers
+- Experiment with weight decay on embeddings (start small: 0.001)
+- Test different warmup schedules (0.5 to 4.0 steps)
+
+## Constraints
+- Only modify train.py
+- Keep batch size as a power of 2
+- Always report val_bpb after each run
+```
+
+[Karpathy described the workflow](https://x.com/karpathy/status/2030371219518931079): you're not touching any of the Python files like you normally would. Instead, you're programming the `program.md` Markdown files that provide context. The human iterates on the prompt. The agent iterates on the code.
+
+## The 5-Minute Rule
+
+Every experiment runs for exactly 5 minutes. No exceptions.
+
+This isn't arbitrary — it's a brilliant design constraint. A fixed time budget means every architectural change, every hyperparameter tweak, every optimizer adjustment gets the exact same computational resources. Apples to apples, regardless of hardware.
+
+The evaluation metric is **val_bpb** (validation bits per byte) — lower is better. It measures how efficiently the model compresses validation data and stays consistent even when vocabulary sizes change, making it a reliable north star across wildly different configurations.
+
+This constraint also means the system is approachable. You don't need a cluster. A single NVIDIA GPU is enough. An H100 will churn through experiments faster, but consumer GPUs work too — community forks already support [MacOS with MLX](https://github.com/trevin-creator/autoresearch-mlx) and [Windows with RTX cards](https://github.com/jsegov/autoresearch-win-rtx).
+
+## Real Results: Not Just a Demo
+
+In one [documented overnight session](https://github.com/karpathy/autoresearch/discussions/43), the agent completed 126 experiments and drove val_bpb from 0.9979 down to 0.9697. The key discoveries? Weight decay applied to embeddings and value embeddings — tiny amounts (0.001) that stacked for approximately 0.0028 total improvement.
+
+That might sound small in isolation. But here's where it gets interesting.
+
+After a two-day unattended run, the agent processed around 700 autonomous changes and found roughly 20 additive improvements. These weren't just noise — they transferred perfectly to larger models. The cumulative effect dropped the "Time to GPT-2" leaderboard metric from 2.02 hours to 1.80 hours. That's an 11% efficiency gain discovered entirely by an AI agent with zero human involvement.
+
+<Callout type="warning">
+**Important context:** Autoresearch is a demonstration and research tool, not a production training framework. Karpathy himself noted uncertain future support. The value is in the *pattern*, not just this specific implementation.
+</Callout>
+
+## How to Actually Set It Up
+
+I had it running in under 10 minutes. Here's the setup:
+
+```bash
+# Install uv (fast Python package manager)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Clone and prepare
+git clone https://github.com/karpathy/autoresearch.git
+cd autoresearch
+uv sync
+uv run prepare.py   # ~2 minutes: downloads data, trains tokenizers
+```
+
+Verify everything works with a manual test run:
+
+```bash
+uv run train.py     # ~5 minutes: one complete training cycle
+```
+
+Once that completes, you know your GPU setup is working. Now point your AI agent at it:
+
+```text
+"Have a look at program.md and let's kick off a new experiment!
+Let's do setup first."
+```
+
+The agent reads the instructions, proposes a modification to `train.py`, executes it, checks the val_bpb metric, and either commits the improvement to a git branch or discards it. Then it loops. You wake up to a git log like this:
+
+```text
+a3f2b1c Experiment 83: reduce warmup to 1.0 steps (+0.0003 val_bpb improvement)
+e7d4a9f Experiment 79: add weight decay 0.001 to embeddings (+0.0012 improvement)
+b1c8e3d Experiment 72: DISCARDED - increased depth to 12 (no improvement)
+...
+```
+
+Every successful experiment is a commit. Every failed one is documented and discarded. Full audit trail.
+
+## Why Agentic Coding Tools Make This Work
+
+Autoresearch is agent-agnostic — you can use any AI coding tool. But the pattern demands specific capabilities: file editing, command execution, output parsing, and git operations. That's exactly what tools like Claude Code provide.
+
+Claude Code operates in your terminal. It reads your codebase, edits files, runs shell commands, and manages git workflows. When the agent modifies `train.py`, it can reference `prepare.py` to understand data shapes, check the git history to see what's been tried before, and read `program.md` to stay aligned with the research direction.
+
+This is what "agentic coding" actually looks like in practice — not a chatbot that writes snippets, but an autonomous system that reads, edits, executes, evaluates, and iterates without you in the loop.
+
+## The Bigger Picture: Research as Prompt Engineering
+
+Autoresearch represents something larger than a clever ML tool. It's a concrete example of how hands-on technical work is becoming orchestration work.
+
+The traditional path was clear — researchers write code, run experiments, analyze results, write papers. Autoresearch compresses most of that into a tight autonomous loop. The human's job narrows to three things: designing the experimental arena (the three files), crafting the research strategy (`program.md`), and interpreting the results.
+
+One [analysis from Context Studios](https://www.contextstudios.ai/blog/karpathy-autoresearch-prompt-replaces-paper) put it bluntly: the best labs won't just have the most compute. They'll have the best `program.md`.
+
+This pattern extends far beyond ML research. The same principle — humans design the system, AI agents iterate within it — is showing up everywhere in 2026. Autonomous coding workflows that run for hours. Multi-agent systems moving from experimental to production. The research workflow itself being automated, one `program.md` at a time.
+
+## What This Means for You
+
+You don't need an H100 to try this. You don't need to be an ML researcher. You need a GPU, Python, and an AI agent.
+
+If you're a developer curious about ML, Autoresearch is one of the most accessible entry points available. The entire codebase is 630 lines. The setup takes under 10 minutes. And the concept — let an AI agent explore a problem space while you do something else — applies to far more than training language models.
+
+If you're already doing ML work, the implications are more direct. The 5-minute fixed-budget experiment design, the single-file constraint for agent modifications, the `program.md` abstraction layer — these are design patterns worth studying and adapting to your own research workflows.
+
+And if you're thinking about the future of AI-assisted work more broadly, Autoresearch is a preview. The most productive people in 2026 aren't the ones who can write the most code per hour. They're the ones who can design the best autonomous loops and let agents do the heavy lifting overnight.
+
+<Callout type="tip">
+**Getting started:** Clone the [Autoresearch repo](https://github.com/karpathy/autoresearch), run `prepare.py`, point your AI agent at `program.md`, and go to sleep. Check your git log in the morning.
+</Callout>
+
+## The Bottom Line
+
+Karpathy's Autoresearch is 630 lines of code that might reshape how we think about AI research. Not because it's the most sophisticated framework — it's deliberately the opposite. But because it proves that the loop of hypothesis, experiment, evaluation, and iteration can be automated with today's tools.
+
+The human writes the strategy. The agent executes the science. And the results speak for themselves — 100 experiments overnight, measurable improvements that transfer to larger models, and a git log that shows exactly what happened.
+
+I ran my first session expecting a proof of concept. I got 15 model improvements while I slept. That's the kind of result that changes how you think about what's possible.
+
+---
+
+*Want more insights on AI tools, agents, and automation? [Subscribe to my newsletter](/newsletter) for weekly deep dives into what's actually working in 2026.*
