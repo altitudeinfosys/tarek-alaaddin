@@ -1,0 +1,168 @@
+---
+title: "Carlson's Law: Why Your AI Tools Are Making You Dumber, Not Faster"
+description: "You added Copilot, Claude, Slack AI, and three more tools to your workflow. Carlson's Law explains why you're getting less done than ever."
+date: "2026-03-16"
+category: "productivity"
+tags: ["productivity", "carlsons-law", "context-switching", "ai-tools", "deep-work", "developer-productivity", "focus", "time-management"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+I have Claude Code in my terminal. Copilot in my editor. Slack AI summarizing my channels. A Notion AI assistant organizing my tasks. ChatGPT pinned in a browser tab for "quick questions." And Perplexity open in another tab for research.
+
+Six AI tools. All designed to make me faster.
+
+Last Tuesday I tried to write a single function. It should have taken twenty minutes. Instead, I spent ninety. Not because the function was hard — because I couldn't stay in one place long enough to think.
+
+I started in VS Code. Copilot suggested something wrong. I switched to Claude Code to get a better answer. Claude's output needed a dependency I wasn't sure about, so I opened Perplexity to check. While there, a Slack notification popped up — the AI summary flagged something "urgent." It wasn't. But by the time I got back to my editor, I'd lost the thread. I stared at the half-written function like I'd never seen it before.
+
+Sune Carlson figured this out seventy years ago.
+
+## What Is Carlson's Law?
+
+In the 1950s, Sune Carlson — a Swedish economist and pioneer in management research — conducted one of the first systematic studies of how executives actually spend their time. What he found was striking: managers couldn't work for more than a few minutes without being interrupted. And every interruption didn't just cost the time of the interruption itself — it degraded the entire block of work surrounding it.
+
+His observation became known as Carlson's Law, or the Law of Homogeneous Sequences: **a task completed in a single, uninterrupted block will be done faster and better than the same task broken into fragments by interruptions.**
+
+The mechanism is straightforward. When you're deep in a task — writing code, solving a design problem, crafting an argument — your brain builds a mental model. Variables, dependencies, edge cases, context — all held in working memory. An interruption doesn't just pause this model. It collapses it. And rebuilding it isn't free.
+
+Gloria Mark, a psychologist at the University of California, Irvine, has spent years measuring exactly how expensive that rebuild is. Her research found it takes an average of 23 minutes and 15 seconds to fully regain deep focus after a single interruption. Even more troubling: her data shows the average attention span on any single screen has dropped to just 47 seconds — down from 2.5 minutes two decades ago.
+
+We're not just getting interrupted more. We're losing the ability to focus in between.
+
+## The AI Tool Paradox
+
+Here's the thing nobody in tech wants to admit: AI tools, despite being individually useful, are collectively making context switching worse.
+
+Every new AI tool you add to your workflow is another context to switch between. Another tab. Another interface. Another set of outputs to evaluate. You didn't replace a tool — you added one. And each addition increases the surface area for interruption.
+
+The data backs this up. Microsoft's 2025 Work Trend Index found that during core work hours, employees face a notification every two minutes — adding up to 275 interruptions per day. Separately, research from Harvard Business Review shows that workers toggle between applications roughly 1,200 times daily — not interruptions, but actual app switches, one every 24 seconds. And according to GitLab's 2024 Global DevSecOps report, 42% of developers use six to ten tools in their development stack, with 20% using more than eleven.
+
+Now add AI tools on top of that existing stack.
+
+<Callout type="warning">
+Here's the number that should stop you cold: a joint study by Qatalog and Cornell University found that knowledge workers spend nearly one hour every day just searching for information across applications. AI tools were supposed to fix this. Instead, they added more applications to search across.
+</Callout>
+
+GitLab's research on AI maturity revealed something counterintuitive: developers using AI tools were actually *more likely* to want to consolidate their toolchain than those not using AI. But — and this is the key finding — there was no significant difference in the actual number of tools each group used. AI users *felt* the fragmentation more acutely. They just couldn't escape it.
+
+## The 23-Minute Tax on Every Notification
+
+Let's do the math that nobody does.
+
+Say you're a developer working on a complex feature. You need deep focus — the kind where you hold an entire system architecture in your head. You sit down at 9 AM.
+
+At 9:03, Slack pings. Your AI channel summary flagged a thread. You glance at it — thirty seconds. Irrelevant. Back to code.
+
+But it's not thirty seconds. Gloria Mark's research says your brain needs up to 23 minutes to fully rebuild the mental model you just dropped. You don't *feel* like you lost focus. You feel like you glanced at Slack for a moment. But your code quality for the next twenty minutes is degraded, your problem-solving is shallow, and you're operating on cognitive fumes.
+
+At 9:18, just as you're approaching deep focus again, Copilot suggests an autocomplete that's plausible but wrong. You pause to evaluate it. That's another interruption — self-inflicted this time, but neurologically identical. The 23-minute clock resets.
+
+At 9:25, a PR review notification. At 9:32, a calendar reminder for a standup in thirty minutes. At 9:41, an email summary from your AI assistant.
+
+It's 10 AM. You've written six lines of code. You've been "working" for an hour. But by Carlson's Law, you haven't completed a single uninterrupted block of work. Every fragment was less effective than it would have been if you'd just... stayed put.
+
+<Callout type="info">
+Research from the American Psychological Association shows that only 2.5% of people can multitask effectively — they're called "supertaskers." For the other 97.5% of us, the APA estimates that up to 40% of productive time is consumed by task-switching overhead. Separately, cognitive load research suggests each individual switch costs roughly 20% of your working cognitive capacity. Five switches in an hour and you're running on fumes.
+</Callout>
+
+## The Attention Residue Problem
+
+There's a mechanism that makes this even worse than raw numbers suggest. Psychologists call it "attention residue."
+
+When you switch from Task A to Task B, part of your attention doesn't make the switch. It stays anchored to Task A — wondering if you handled it right, anticipating what comes next, or simply failing to fully disengage. You're physically working on Task B but mentally straddling both.
+
+This is why checking Slack "for just a second" is a lie. Your eyes return to your code. Your attention doesn't. A fragment of your mind is now processing whether that Slack message requires a response, whether the thread will escalate, whether you should have replied. That residue occupies cognitive bandwidth that should be building your mental model of the code.
+
+For developers, this is devastating. Programming is one of the most context-heavy cognitive tasks that exists. You're holding variable states, function signatures, architectural decisions, edge cases, and dependency relationships simultaneously. Attention residue from a "quick" Slack check doesn't just slow you down — it makes you write worse code. It's why bugs cluster around interrupted work sessions, not sustained ones.
+
+## The Real Cost: $450 Billion and Your Best Ideas
+
+The economic impact is staggering. Research estimates that context switching costs the U.S. economy approximately $450 billion annually in lost productivity. For individual developers, Jellyfish's engineering analytics suggest 15 to 30 minutes of productive coding time evaporates with each switch — and with developers switching contexts an average of 13 times per hour, the math is brutal.
+
+But the dollar figure understates the real cost. The most valuable work — architectural insights, elegant solutions, creative breakthroughs — happens exclusively in sustained focus. Nobody has a breakthrough idea while toggling between Jira, Slack, and their IDE. Innovation requires the kind of deep, uninterrupted thinking that Carlson identified as the only productive mode.
+
+Research compiled across multiple productivity studies found that teams with high context switching produce 60% fewer innovative solutions. Not 10%. Not 20%. Sixty percent. You're not just losing time — you're losing your best thinking.
+
+And here's the cruelest irony: AI tools are most useful during exactly the kind of deep work that their notifications destroy. Claude Code is brilliant when you sit with it for an uninterrupted hour, iterating on a complex problem. It's nearly worthless when you use it in 90-second bursts between Slack messages.
+
+## The Software Engineering Version
+
+If you've worked on a development team, you've seen Carlson's Law destroy productivity — often disguised as "collaboration."
+
+**The "Quick Question" Trap**: A teammate taps you on the shoulder (or DMs you) with a "quick question" that takes 30 seconds to answer. The interruption costs you 23 minutes of deep focus. Multiply that by the average of 13 interruptions per hour, and your teammate's innocent questions have consumed your entire morning. The questions were quick. The recovery wasn't.
+
+**The Meeting Sandwich**: You have a 30-minute standup at 10 AM and a sprint review at 11 AM. That "free hour" between them? Carlson's Law says it's worthless for deep work. By the time you rebuild context from the first meeting and start making progress, you're already anticipating the next one. The upcoming meeting acts as a cognitive ceiling — you unconsciously throttle your investment in the current task because you know it's about to be interrupted.
+
+**The AI Review Loop**: You ask Copilot to generate a function. It's 80% right. You switch to documentation to check the API. Back to the editor. The function needs a test — switch to the test file. The test fails — switch to the terminal. Each switch is small. Collectively, they fragment what should be one continuous block of work into a dozen micro-contexts.
+
+**The Notification Doom Spiral**: You silence Slack notifications to focus. Your anxiety rises — what if you're missing something? You check Slack "proactively" every ten minutes. This is worse than notifications because now you're interrupting yourself on a schedule, and self-interruptions are even harder to recover from because they feel voluntary.
+
+## Why We Keep Adding Tools Instead of Subtracting Them
+
+The tech industry has a pathological addiction to addition. When a workflow is broken, the instinct is always to add another tool, never to remove one.
+
+Can't keep up with Slack? Add Slack AI to summarize. Can't manage your tasks? Add Notion AI. Can't write code fast enough? Add Copilot. Can't review code fast enough? Add an AI reviewer. Can't manage all your AI tools? Add an AI orchestrator to manage them.
+
+Each addition makes sense in isolation. In aggregate, they're building a Rube Goldberg machine of context switches.
+
+This is the opposite of what Carlson's Law prescribes. The law doesn't say "get better at switching." It says *stop switching*. The solution to fragmented work isn't faster fragments — it's fewer of them.
+
+Cal Newport's work on deep work suggests that AI can make sustained focus harder, not easier, when poorly implemented. The tools themselves aren't the problem. The fragmentation they introduce is.
+
+<Callout type="tip">
+The GitLab research points to the right answer: consolidation should come *before* AI adoption, not after. If your toolchain is already fragmented, adding AI tools adds contexts. If your toolchain is consolidated, AI tools amplify focus instead of fracturing it.
+</Callout>
+
+## How to Actually Apply Carlson's Law
+
+Carlson's Law isn't complicated. The hard part is following it in an environment designed to violate it.
+
+### 1. Audit Your Context Switches
+
+Before you fix anything, measure it. For one day, note every time you switch tools, check a notification, or move between tasks. Most developers are shocked by the number. You think you switch ten times an hour. It's closer to thirteen — or more.
+
+Once you see the number, you can't unsee it.
+
+### 2. Consolidate Before You Automate
+
+If you're using six AI tools, you don't need a seventh to manage them. You need to pick two and delete the rest. Every tool you remove is dozens of context switches you'll never make.
+
+Ask: can one tool do what three are doing? Can you do without this tool entirely? The answer is almost always yes.
+
+### 3. Create Uninterruptible Blocks
+
+Block two-hour windows where notifications are silenced — Slack, email, calendar, everything. Not thirty minutes. Two hours. Carlson's Law says the value of focused work is nonlinear. The first twenty minutes are just setup. The real productivity happens in the second hour, when your mental model is fully loaded and you're operating at peak capacity.
+
+Protect this time like you protect production uptime. Because for your brain, it is.
+
+### 4. Batch Your AI Usage
+
+Instead of asking AI tools questions as they arise — which means switching to them constantly — accumulate questions and batch them. Spend fifteen minutes in Claude Code getting all your answers at once. Then close it and implement for two hours straight.
+
+This is Carlson's Law applied to AI: use the tool in a homogeneous block, not scattered across your day.
+
+### 5. Turn Off AI Autocomplete During Deep Work
+
+This is controversial, but hear me out. Copilot's inline suggestions are interruptions. Every time a suggestion appears, your brain evaluates it — even if you reject it in half a second. That evaluation is a micro-context-switch. During deep architectural work or complex debugging, turn it off. You can re-enable it during implementation phases when the interruptions are less costly.
+
+### 6. Design Your Environment for Continuity
+
+Your workspace should make switching hard and staying easy. Close tabs you don't need. Use fullscreen mode. Set Slack to "Do Not Disturb" by default, not as an exception. Make the uninterrupted state your default and the interrupted state something you have to actively choose.
+
+## The Bigger Picture
+
+After that ninety-minute disaster last Tuesday, I did something radical. I closed four of my six AI tools. Kept Claude Code and Copilot. Deleted the rest from my dock. Set Slack to Do Not Disturb from 9 AM to noon, every day, no exceptions.
+
+The first morning was uncomfortable. I kept reaching for tabs that weren't there. By the third day, I wrote more production code before lunch than I'd written in full days the previous week. Not because I'm faster. Because I stopped interrupting myself.
+
+Carlson figured this out in the 1950s with nothing but a stopwatch and a notebook. His insight was simple: the value of work isn't just a function of skill and effort. It's a function of continuity. Break the continuity and you break the work — no matter how skilled the worker or how powerful their tools.
+
+AI was supposed to fix our productivity problem. For many of us, it's making it worse — not because the tools are bad, but because each tool is another context, another notification source, another reason to switch. We optimized for capability and forgot about continuity.
+
+The most productive thing you can do in 2026 isn't adopting another AI tool. It's closing three tabs, silencing Slack, and finishing one thing.
+
+---
+
+I write one of these every week. [Subscribe to my newsletter](/newsletter) for deep dives on AI tools, productivity systems, and building in public.
