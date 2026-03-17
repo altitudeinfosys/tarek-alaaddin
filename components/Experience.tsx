@@ -60,12 +60,15 @@ const EXPERIENCES = [
     current: true,
     highlights: [
       'Use AI tools (Claude Code, Copilot/Codex, Gemini) to ship features 3-5x faster as a solo developer',
+      'Built an AI-powered resume-to-job-description analyzer using Claude API and Next.js that scores fit, identifies strengths, and surfaces gaps',
+      'Built custom web scrapers using Python (Scrapy, BeautifulSoup) and Selenium for dynamic pages, automating manual research workflows',
+      'Developed data pipelines using Apify and Python scraping libraries to collect, clean, and structure large datasets',
       'Built Taskitos - task management app with smart, persistent notifications that "nag" tasks to completion',
       'Built ExpandNote - notes with automation hooks, letting notes trigger workflows and integrations',
       'Built PropertyPulse360 - property management for small landlords: rent, expenses, distributions, lease tracking',
     ],
-    technologies: ['Next.js', 'Supabase', 'TypeScript', 'AI Tools', 'Vercel'],
-    aiContext: `This represents my exploration of AI-assisted development. I've built 3 full-stack SaaS apps using what I call "vibe coding" - using AI tools to achieve near team-level speed and quality as a solo developer. It's changed how I think about software development and productivity.`,
+    technologies: ['Next.js', 'Supabase', 'TypeScript', 'Python', 'Scrapy', 'Selenium', 'Claude API', 'Vercel'],
+    aiContext: `This represents my exploration of AI-assisted development and automation. I've built 3 full-stack SaaS apps using what I call "vibe coding" - using AI tools to achieve near team-level speed and quality as a solo developer. I also built an AI-powered resume analyzer (tarekalaaddin.com) that uses Claude to score job fit and auto-selects the right resume version. On the data side, I build web scrapers and ETL pipelines using Python (Scrapy, BeautifulSoup, Selenium) and Apify to automate research and data collection workflows.`,
   },
 ]
 
