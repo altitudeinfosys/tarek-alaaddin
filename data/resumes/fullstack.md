@@ -42,6 +42,9 @@ Claude Code, Cursor, AI-assisted code generation, Prompt engineering, LLM API in
 ### Workflow Automation
 N8n, Make.com (Integromat), Zapier, Custom automation scripts
 
+### Web Scraping & Data Extraction
+Scrapy, BeautifulSoup, Selenium, Apify, Python ETL pipelines
+
 ### Testing
 JUnit, Selenium
 
@@ -57,6 +60,14 @@ Built 3 full-stack SaaS apps with Next.js + Supabase:
 - **Taskitos** – task management app that "nags" tasks to done with smart, persistent notifications
 - **ExpandNote** – simple notes with automation hooks ("notes + Zapier"), letting notes trigger workflows and integrations
 - **PropertyPulse360** – property management app for small landlords/managers: rent, expenses, owner distributions, and lease-expiry tracking
+
+### AI Resume Analyzer & Web Scraping Projects
+
+- Built an AI-powered resume-to-job-description analyzer using Claude API and Next.js — scores job fit, identifies strong matches, and surfaces gaps with honest assessments
+- Built custom web scrapers using Python Scrapy and BeautifulSoup to extract structured lead data from public web sources, automating manual research workflows
+- Developed data pipelines using Apify and Python scraping libraries to collect, clean, and structure large datasets for downstream analysis
+- Designed and deployed Selenium-based browser automation scripts for dynamic, JavaScript-rendered pages where traditional HTTP scraping is insufficient
+- Automated end-to-end ETL workflows combining web crawling, data extraction, transformation, and storage using Python
 
 ## Professional Experience
 

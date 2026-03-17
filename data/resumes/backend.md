@@ -40,6 +40,9 @@ Claude API, OpenAI API, LLM-powered backend services, Prompt engineering
 ### Workflow Automation
 N8n, Make.com, Custom automation scripts, ETL pipelines
 
+### Web Scraping & Data Extraction
+Scrapy, BeautifulSoup, Selenium, Apify, Python ETL pipelines
+
 ### System Design
 Microservices architecture, REST APIs, Distributed systems, High-volume batch processing, Caching strategies
 
@@ -69,6 +72,18 @@ Microservices architecture, REST APIs, Distributed systems, High-volume batch pr
 - Modernized legacy systems to Spring Boot microservices architecture
 - Created automation scripts for system stability and monitoring
 - Optimized Oracle database performance for high-volume applications
+
+## Projects
+
+### AI Resume Analyzer
+- Built an AI-powered resume-to-job-description analyzer using Claude API and Next.js — scores job fit, identifies strong matches, and surfaces gaps with honest assessments
+- Designed resume auto-selection logic that picks the optimal resume version (fullstack/backend/leadership) based on job description keyword analysis
+
+### Web Scraping & Data Pipelines
+- Built custom web scrapers using Python Scrapy and BeautifulSoup to extract structured lead data from public web sources, automating manual research workflows
+- Developed data pipelines using Apify and Python scraping libraries to collect, clean, and structure large datasets for downstream analysis
+- Designed and deployed Selenium-based browser automation scripts for dynamic, JavaScript-rendered pages where traditional HTTP scraping is insufficient
+- Automated end-to-end ETL workflows combining web crawling, data extraction, transformation, and storage using Python
 
 ## Education
 

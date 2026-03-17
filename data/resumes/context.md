@@ -124,6 +124,37 @@ My "vibe coding" approach combines multiple AI tools:
 3. Leverage N8n/Make.com for deployment and integration automation
 4. Result: 3-5x faster feature delivery while maintaining quality
 
+## Web Scraping & Data Extraction Experience
+
+### What web scraping tools do you use?
+I work with multiple scraping and data extraction tools depending on the use case:
+- **Scrapy**: My go-to for large-scale, structured web crawling — fast, configurable, and handles pagination and rate limiting well
+- **BeautifulSoup**: Ideal for smaller scraping tasks and quick data extraction from static HTML pages
+- **Selenium**: Used for dynamic, JavaScript-rendered pages where traditional HTTP scraping can't access the content
+- **Apify**: Cloud-based scraping platform for scalable data extraction pipelines without managing infrastructure
+
+### How do you approach a scraping project?
+1. Assess the target — static HTML vs dynamic JS-rendered content determines the tool
+2. Build the extraction logic — CSS selectors, XPath, or API endpoints
+3. Handle edge cases — rate limiting, pagination, anti-bot measures, data cleaning
+4. Structure the output — transform raw scraped data into clean, structured datasets
+5. Automate the pipeline — schedule runs, store results, and feed downstream processes
+
+### What's your experience with ETL pipelines?
+I build end-to-end ETL workflows combining web crawling, data extraction, transformation, and storage using Python. This includes data cleaning, deduplication, normalization, and loading into databases or structured formats for downstream analysis.
+
+## AI Resume Analyzer Project
+
+### What is the AI Resume Analyzer?
+I built an AI-powered resume-to-job-description matcher into my personal site (tarekalaaddin.com). It uses the Claude API to:
+- Score how well my resume matches a given job description (0-100%)
+- Provide an honest assessment of fit
+- Identify strong matches and gaps
+- Automatically select the best resume version (fullstack, backend, or leadership) based on keywords in the job description
+
+### How does the resume auto-selection work?
+The system analyzes keywords in the pasted job description and automatically picks the most relevant resume version. Backend-heavy roles get the backend resume, full-stack roles get the fullstack version, and leadership/management roles get the leadership resume. This ensures the AI evaluates fit against the most relevant experience.
+
 ## Fun Facts
 - 20+ years in the industry, still excited to learn new things
 - Early adopter of AI coding tools - been using them since they became available
