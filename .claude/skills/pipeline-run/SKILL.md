@@ -31,6 +31,7 @@ Load these as needed during the relevant phase:
 - **`references/notion-api.md`** — Database schema, API curl patterns, status flow, adding topics (needed for all phases)
 - **`references/critique-process.md`** — Full Phase 2.5 critique workflow with sub-agent dispatch (needed for Phase 2.5)
 - **`references/social-copy-formats.md`** — X/Twitter and LinkedIn copy formats and rules (needed for Phase 4)
+- **`references/voice-profile.md`** — Author voice, confirmed facts, humor rules, fabrication guardrails (needed for Phase 2, 2.5, 4)
 
 ## Process
 
@@ -137,7 +138,9 @@ Before generating content, thoroughly research every product, tool, and technolo
 4. **Generate the MDX blog post**:
    - Use topic + topic_context + research notes as input
    - Frontmatter: title, description, date, category, tags, image, published: true, featured: false
-   - Voice: conversational, direct, bold opinions, data-driven
+   - Read `references/voice-profile.md` and follow ALL voice, fact, humor, and anti-pattern guidelines
+   - Voice profile OVERRIDES any default writing patterns — especially Confirmed Personal Facts and Fact Guardrails
+   - NEVER include personal details not listed in the voice profile's Confirmed Personal Facts section
    - 1500-3000 words, 8-15 sections, 2-3 Callout components, newsletter CTA at end
    - Write to `content/blog/SLUG.mdx`
 
@@ -185,6 +188,7 @@ Read `references/critique-process.md` and follow the complete critique workflow:
 ### Phase 4: Generate Social Media Copy
 
 Read `references/social-copy-formats.md` for format rules.
+Also read `references/voice-profile.md` for voice and tone guidance on social copy.
 
 1. Read the blog post content from `content/blog/SLUG.mdx`
 2. Generate blog URL: `https://tarekalaaddin.com/blog/SLUG`

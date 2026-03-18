@@ -1,5 +1,7 @@
 # Social Media Copy Formats
 
+> **Voice**: Read `references/voice-profile.md` before generating social copy. Match the author's operator tone, direct communication style, and confirmed personal facts. Never include fabricated personal details.
+
 ## X/Twitter Copy (280 chars max)
 
 ### Format
