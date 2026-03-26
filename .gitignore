@@ -44,5 +44,8 @@ logs/pipeline/**
 # Playwright MCP temp files
 .playwright-mcp/
 
+# Generated search index
+public/search-index.json
+
 # Screenshots (use logs/pipeline/screenshots/ for pipeline screenshots)
 /*.png
