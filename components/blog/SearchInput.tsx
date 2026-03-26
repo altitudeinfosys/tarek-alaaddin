@@ -31,6 +31,7 @@ export default function SearchInput({ value, onChange, onFocus, isLoading }: Sea
       <input
         type="text"
         placeholder="Search posts..."
+        aria-label="Search posts"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onFocus={onFocus}
@@ -42,6 +43,7 @@ export default function SearchInput({ value, onChange, onFocus, isLoading }: Sea
         <button
           type="button"
           onClick={() => onChange('')}
+          aria-label="Clear search"
           className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
         >
           <svg

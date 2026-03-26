@@ -69,6 +69,7 @@ export function useSearch() {
 
     try {
       const res = await fetch('/search-index.json')
+      if (!res.ok) throw new Error(`Failed to fetch search index: ${res.status}`)
       const docs: SearchDocument[] = await res.json()
       indexRef.current = buildIndex(docs)
 

@@ -42,19 +42,23 @@ function generateSearchIndex() {
   const index = []
 
   for (const file of files) {
-    const raw = fs.readFileSync(path.join(BLOG_DIR, file), 'utf8')
-    const { data, content } = matter(raw)
+    try {
+      const raw = fs.readFileSync(path.join(BLOG_DIR, file), 'utf8')
+      const { data, content } = matter(raw)
 
-    if (data.published === false) continue
+      if (data.published === false) continue
 
-    index.push({
-      slug: file.replace(/\.mdx$/, ''),
-      title: data.title || '',
-      description: data.description || '',
-      tags: (data.tags || []).join(' '),
-      category: data.category || '',
-      body: stripMdx(content),
-    })
+      index.push({
+        slug: file.replace(/\.mdx$/, ''),
+        title: data.title || '',
+        description: data.description || '',
+        tags: (data.tags || []).join(' '),
+        category: data.category || '',
+        body: stripMdx(content),
+      })
+    } catch (err) {
+      console.warn(`Skipping ${file}: ${err.message}`)
+    }
   }
 
   fs.writeFileSync(OUTPUT_PATH, JSON.stringify(index))
