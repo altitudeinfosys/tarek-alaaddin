@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { Document } from 'flexsearch'
 
 interface SearchDocument {
+  [key: string]: string
   slug: string
   title: string
   description: string
