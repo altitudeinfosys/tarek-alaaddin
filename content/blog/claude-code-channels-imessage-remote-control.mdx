@@ -1,0 +1,217 @@
+---
+title: "Claude Code Channels: iMessage, Telegram, and Discord Setup Guide"
+description: "Send commands to Claude Code from your phone via iMessage, Telegram, or Discord. Setup steps, honest comparison with OpenClaw, and which remote method fits your workflow."
+date: "2026-03-26"
+category: "ai-tools"
+tags: ["claude-code", "imessage", "telegram", "discord", "remote-control", "channels", "ai-agents", "anthropic", "remote-development", "developer-tools"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+I texted "fix the failing test in auth-service" from my iPhone while waiting for coffee. By the time I got back to my desk, Claude had committed the fix.
+
+That's Claude Code Channels — Anthropic's new feature (shipped March 20, 2026) that turns iMessage, Telegram, and Discord into remote controls for your local coding agent. You text a command from your phone, Claude executes it against your actual files, and replies in the same chat with the result.
+
+No cloud sandbox. No remote VM. Your machine does the work. The messaging app is just a window into it.
+
+This is the missing piece between "AI that writes code when you're sitting at your desk" and "AI that writes code when you're on the couch, in a cab, or walking your dog." And it's not the only way to control Claude Code remotely — Anthropic now has four different remote access methods, each designed for a different workflow.
+
+Let me break down what actually works, what doesn't, and which approach fits your specific situation.
+
+## What Claude Code Channels Actually Are
+
+A channel is an MCP server that pushes events into your running Claude Code session. When you install a channel plugin — say Telegram — it creates a bridge between that messaging app and your terminal session. Messages flow in, Claude processes them with full access to your local environment, and replies flow back.
+
+The key distinction: this is not a cloud-hosted bot. Your Claude Code session runs locally on your machine the entire time. The channel just routes messages to and from it.
+
+As of March 2026, three channels ship with the research preview:
+
+- **Telegram** — create a bot via BotFather, pair with a code
+- **Discord** — create a bot in the Developer Portal, pair via DM
+- **iMessage** — reads your local Messages database directly, no external service needed
+
+Each requires Claude Code v2.1.80+ and a claude.ai subscription (Pro or Max). API key authentication is not supported.
+
+<Callout type="info">
+Channels require Bun runtime installed on your system. If you haven't installed it yet, run `curl -fsSL https://bun.sh/install | bash` before setting up any channel.
+</Callout>
+
+## The iMessage Channel: The Apple-Native Option
+
+The iMessage channel is the most interesting of the three because it needs zero external infrastructure. No bot tokens, no developer portals, no third-party services. It reads your macOS Messages database (`~/Library/Messages/chat.db`) directly and sends replies through AppleScript.
+
+Here's the setup:
+
+**Step 1: Grant Full Disk Access.** Your terminal app needs permission to read the Messages database. Go to System Settings → Privacy & Security → Full Disk Access → add Terminal (or iTerm, or whatever you use). Without this, the plugin exits immediately with `authorization denied`.
+
+**Step 2: Install the plugin.**
+
+```bash
+/plugin install imessage@claude-plugins-official
+```
+
+**Step 3: Restart Claude Code with the channel flag.**
+
+```bash
+claude --channels plugin:imessage@claude-plugins-official
+```
+
+**Step 4: Text yourself.** Open Messages on your iPhone and send a message to yourself. It reaches Claude immediately — self-chat bypasses access control with no configuration needed.
+
+The first reply Claude sends triggers a macOS Automation prompt asking if your terminal can control Messages. Click OK.
+
+**Step 5: Allow other senders.** By default, only your own messages get through. To let someone else reach your Claude session:
+
+```bash
+/imessage:access allow +15551234567
+```
+
+Handles are phone numbers in `+country` format or Apple ID emails.
+
+That's it. You're now controlling your local AI coding agent from your iPhone's Messages app. No tokens to rotate, no webhooks to configure, no external servers to trust.
+
+<Callout type="warning">
+The iMessage channel is macOS-only. It relies on AppleScript and direct access to the Messages database — neither of which exist on Linux or Windows. If you're not on a Mac, Telegram or Discord are your options.
+</Callout>
+
+## Telegram Setup: The Cross-Platform Workhorse
+
+Telegram is the most popular channel and works on every platform. Setup takes about 5 minutes:
+
+1. **Create a bot** — open BotFather in Telegram, send `/newbot`, give it a name and username
+2. **Install the plugin** — `/plugin install telegram@claude-plugins-official`
+3. **Configure your token** — `/telegram:configure <your-bot-token>`
+4. **Restart with channels** — `claude --channels plugin:telegram@claude-plugins-official`
+5. **Pair your account** — DM your bot, get a pairing code, then run `/telegram:access pair <code>`
+6. **Lock it down** — `/telegram:access policy allowlist`
+
+Telegram supports photo attachments (auto-downloaded to `~/.claude/channels/telegram/inbox/`), file transfers up to 50MB, and shows a typing indicator while Claude is working.
+
+The main limitation: Telegram has no message history API, so Claude only sees messages in real-time. If the session isn't running when you send a message, it's lost.
+
+## Discord Setup: The Team-Friendly Option
+
+Discord is the best choice if you want team collaboration. Multiple people can interact with your Claude session through a shared Discord server channel — useful for team debugging or pair programming.
+
+Setup is slightly more involved (about 10 minutes) because Discord requires explicit permission configuration:
+
+1. Create a bot in the Discord Developer Portal
+2. Enable Message Content Intent in the bot settings
+3. Generate an OAuth2 URL with bot scope and the right permissions (View Channels, Send Messages, Read Message History, Attach Files, Add Reactions)
+4. Install and configure the plugin similar to Telegram
+5. Pair via DM and set allowlist policy
+
+Discord's advantage over Telegram: it can fetch up to 100 recent messages using `fetch_messages`, so you get some context even if you missed earlier messages. It also supports native threading via `reply_to`.
+
+## All Four Claude Code Remote Access Methods, Compared
+
+Channels are just one of four ways to control Claude Code remotely. Here's how they all compare:
+
+| Method | Interface | Where Claude Runs | Best For |
+|--------|-----------|-------------------|----------|
+| **Channels** | Telegram, Discord, iMessage | Your machine (CLI) | Async commands from phone, reacting to external events |
+| **Remote Control** | claude.ai/code, Claude mobile app | Your machine (CLI/VS Code) | Steering an in-progress session from another device |
+| **Dispatch** | Claude mobile app | Your machine (Desktop) | Delegating self-contained tasks while away |
+| **Slack** | @Claude in Slack channels | Anthropic cloud | PR reviews and tasks from team chat |
+
+The key differences:
+
+**Remote Control** (shipped February 2026) connects your existing terminal session to claude.ai/code or the Claude mobile app. You run `claude --remote-control` and scan a QR code with your phone. The conversation syncs across all devices — type in the terminal, on the web, or in the app interchangeably. It's the best option when you want to continue a specific session you already started.
+
+**Channels** are for pushing events *into* a session from external sources. Think: you want to text Claude a quick command from your phone, or you want CI failures to land in Claude's session automatically. The messaging app is the interface, not the Claude app.
+
+**Dispatch** is the simplest — you just text a task to Claude from the mobile app and it spawns a Desktop session. No terminal required.
+
+**Slack** runs in the cloud, not on your machine. Best for team workflows where you don't need local file access.
+
+## Real Use Cases That Actually Work
+
+After testing all these channels, here's where they genuinely shine:
+
+**1. On-Call Troubleshooting.** You get paged at 11pm. Instead of opening your laptop, you text your Claude session from iMessage: "Check the error logs for the payments service, find the root cause, and propose a fix." Claude has access to your local codebase, your monitoring MCP tools, and your git history. You get a diagnosis in your Messages app in minutes.
+
+**2. Long-Running Task Monitoring.** You kick off a refactoring task and leave your desk. From Telegram, you check in: "What's your progress on the migration? Any blockers?" Claude responds with a status update. If it hits a permission prompt, it pauses and waits — or, if you've enabled permission relay, it forwards the prompt to you for approval.
+
+**3. Quick Fixes on the Go.** You realize you forgot to update a config file. From your phone: "Update the API rate limit in config/production.yml from 100 to 250 and commit with message 'Bump API rate limit'." Done without opening a laptop.
+
+**4. Team Debugging via Discord.** Your team shares a Discord server with a Claude-connected channel. Someone posts "Hey Claude, the checkout flow is failing for users with multiple addresses — investigate `src/checkout/address-resolver.ts`." Everyone sees Claude's analysis in real-time and can follow up with questions.
+
+**5. Webhook-Driven Workflows.** You can build custom channels that receive webhooks from CI/CD, error trackers, or deploy pipelines. Claude gets the alert while it already has your files open and remembers what you were debugging. This is channels as infrastructure, not just chat.
+
+## Channels vs. OpenClaw: The Honest Comparison
+
+OpenClaw pioneered phone-to-AI-agent messaging, and with 200K+ GitHub stars, it's the de facto open-source alternative. The comparison is unavoidable because the use case is identical: control your AI coding agent from your phone.
+
+| Aspect | Claude Code Channels | OpenClaw |
+|--------|---------------------|----------|
+| **Platforms** | Telegram, Discord, iMessage | Telegram, Discord, iMessage, WhatsApp, Slack, Signal, Teams |
+| **Cost** | Included with Claude Pro/Max ($20-100/mo) | Free (MIT license), API costs extra |
+| **Security** | Three-layer model: allowlist + per-session opt-in + plugin whitelisting | Community-governed, had CVE-2026-25253 (RCE vulnerability, now patched) |
+| **Setup** | 5-15 minutes, CLI-native | Self-hosted, more complex |
+| **Session model** | Must keep terminal open | Can run 24/7 autonomously |
+| **Maintenance** | Anthropic-maintained | Community-maintained |
+
+The bottom line: Channels is more secure and easier to set up but supports fewer platforms. OpenClaw gives you more platform choices and true always-on operation but requires more setup and carries more security risk.
+
+If you're already using Claude Code and value security, Channels is the obvious choice. If you need WhatsApp or Slack integration, or you want the agent running while your computer sleeps, OpenClaw is still the only game in town.
+
+<Callout type="info">
+Anthropic designed Channels with a plugin architecture specifically so the community can build connectors for platforms like Slack, WhatsApp, and Signal. Expect the platform gap to close as third-party plugins emerge. You can even build your own — check the [Channels reference docs](https://code.claude.com/docs/en/channels-reference).
+</Callout>
+
+## The Limitations You Need to Know
+
+Let me be direct about what doesn't work yet:
+
+**Your computer must stay on.** Channels route messages to a running Claude Code session. If your machine sleeps or the terminal closes, messages are lost (Telegram) or queued until reconnection (Discord). The workaround: run Claude Code inside `tmux` or `screen` for session persistence, or rent a macOS cloud machine (like MacStadium or AWS EC2 Mac instances) for truly always-on operation.
+
+**Permission prompts block execution.** When Claude needs to run a potentially risky command, it pauses and waits for approval at the terminal. If you're not at your terminal, execution hangs. Some channels support permission relay (forwarding prompts to your phone), but the fully unattended option — `--dangerously-skip-permissions` — should only be used in trusted, sandboxed environments.
+
+**Research preview means things will change.** The `--channels` flag syntax, plugin protocol, and available platforms may all change based on feedback. This is explicitly not a stable API yet.
+
+**No persistent background mode.** There's no daemon or service that keeps Claude running in the background. You need an active terminal session. This is the most requested feature on the GitHub issues tracker.
+
+**Enterprise is opt-in.** Team and Enterprise plans have channels disabled by default. An admin must explicitly enable them in the claude.ai admin settings. This is a deliberate security choice.
+
+## How to Set Up the Best Remote Workflow
+
+After testing every combination, here's what I recommend:
+
+**For solo developers on Mac:** Use iMessage as your primary channel. It's zero-infrastructure, fully local, and you already carry the interface in your pocket. Pair it with Remote Control for when you want the full Claude experience on your phone.
+
+**For solo developers on Linux/Windows:** Telegram is your best bet. Quick setup, reliable delivery, works on every phone.
+
+**For teams:** Discord channel on a shared server. Everyone can see Claude's work, follow up on analyses, and collaborate in real-time.
+
+**For always-on operation:** Combine any channel with `tmux`:
+
+```bash
+tmux new -s claude-agent
+claude --channels plugin:imessage@claude-plugins-official
+# Detach with Ctrl+B, then D
+# Session stays running even when you close the terminal
+```
+
+**For maximum coverage:** You can pass multiple channels at once:
+
+```bash
+claude --channels plugin:telegram@claude-plugins-official plugin:imessage@claude-plugins-official
+```
+
+Now you're reachable from both Telegram and iMessage simultaneously.
+
+## The Developer Workflow That's Now Possible
+
+Here's what my Monday looked like this week: I started a refactor from my desk, monitored progress from the gym via Telegram, approved a permission prompt from the parking lot via iMessage, and reviewed the final diff over coffee using Remote Control on my phone. Four locations, zero laptops opened after 9am.
+
+That's the real shift. Not "AI that helps when you're coding" — AI that's reachable from whatever device happens to be in your hand.
+
+The limitation of needing your machine running is real but temporary. Anthropic is shipping these remote access methods at a pace that suggests always-on, daemon-mode operation is on the roadmap. Between Channels, Remote Control, Dispatch, and Slack integration, they're four-fifths of the way to making your AI agent as accessible as any contact in your phone.
+
+Set it up now. The gap between "I should try this" and "I can't work without this" closes fast.
+
+{/* Newsletter CTA */}
+<Callout type="info">
+**Want more hands-on AI breakdowns like this?** I test new AI tools and features weekly and report what actually works for productivity and income. Subscribe to get these guides before they hit social media.
+</Callout>
