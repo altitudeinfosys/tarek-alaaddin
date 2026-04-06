@@ -1,0 +1,207 @@
+---
+title: "Claude Code Source Leak: What 512,000 Lines Reveal"
+description: "Anthropic accidentally shipped Claude Code's entire source code in an npm package. The 512,000-line leak exposes 44 unreleased features, an always-on agent called KAIROS, and stealth open source contributions."
+date: "2026-04-06"
+category: "ai-tools"
+tags: ["claude-code", "anthropic", "ai-agents", "security", "ai-tools", "developer-tools", "open-source", "ai-future"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+On March 31, 2026, someone at Anthropic forgot to add `*.map` to their `.npmignore` file.
+
+That single oversight shipped a 59.8 MB JavaScript source map file inside version 2.1.88 of the `@anthropic-ai/claude-code` npm package. Source maps are debugging tools that translate minified code back to its original, readable form. They're supposed to stay internal. This one didn't.
+
+By 4:23 AM ET, Chaofan Shou — an intern at Solayer Labs — spotted it and posted the discovery on X. Within hours, the entire 512,000-line TypeScript codebase across 1,900 files was mirrored across GitHub and dissected by thousands of developers.
+
+Anthropic pulled the package and issued a statement: "This was a release packaging issue caused by human error, not a security breach. No sensitive customer data or credentials were involved."
+
+True. But what *was* involved is far more interesting than customer data. The leak gave us a raw, unfiltered look at exactly how Anthropic builds AI agents — and where they're going next.
+
+## 44 Feature Flags and the Roadmap They Expose
+
+The most immediately valuable discovery: **44 feature flags** covering features that are fully built but not yet shipped. These aren't concepts or prototypes. They're compiled code sitting behind flags that evaluate to `false` in the public build.
+
+The flags are organized across categories: MAJOR, IN-FLIGHT, INFRASTRUCTURE, and DEV TOOLING. Among the features already implemented but unreleased:
+
+- Background agents running 24/7 with GitHub webhook subscriptions
+- One Claude orchestrating multiple worker Claudes with restricted tool access
+- Cron scheduling for agents with external webhooks
+- Full voice command mode with a dedicated CLI
+- Real browser control via Playwright (not just the limited `web_fetch`)
+- Self-resuming agents that continue without user intervention
+- Persistent cross-session memory without external storage
+
+That's not a feature backlog. That's a finished product waiting for a launch button.
+
+<Callout type="info">
+The gap between what Claude Code *can* do and what Anthropic *lets* it do is enormous. These 44 flags represent months of engineering work that's been deliberately held back — likely for safety testing, competitive timing, or both.
+</Callout>
+
+## KAIROS: The Always-On Agent That Changes Everything
+
+The biggest revelation has an internal codename: **KAIROS** (Greek for "the right moment").
+
+Hidden behind feature flags `PROACTIVE` and `KAIROS`, the codebase contains a fully built autonomous agent mode. Unlike current Claude Code, which only responds when you type something, KAIROS operates proactively:
+
+- It receives **heartbeat prompts every few seconds** asking "anything worth doing right now?"
+- It makes independent decisions to act, stay quiet, or defer tasks
+- It maintains **append-only logs** it cannot erase (a safety constraint)
+- It subscribes to **GitHub webhooks** to monitor pull requests and issues autonomously
+- It runs a **cron-scheduled refresh every 5 minutes**
+- It can send **push notifications** to reach users outside the terminal
+
+The architectural insight here matters: Anthropic separated *initiative* (deciding what's worth doing) from *execution* (performing actions). That's a fundamentally different trust model than reactive systems. A reactive agent only does what you ask. A proactive agent decides what to do on its own.
+
+### autoDream: Memory That Improves While You Sleep
+
+KAIROS includes a companion system called **autoDream** — a nightly memory distillation process that runs while the agent is idle. It:
+
+- Merges duplicate memories across sessions
+- Eliminates contradictions between stored facts
+- Resolves speculative entries
+- Prunes data to keep context lean and actionable
+
+This runs as a forked subagent with limited tools, preventing it from corrupting the main context. Memory becomes hints requiring verification, not ground truth — which is a surprisingly sophisticated approach to the stale-knowledge problem that plagues every AI system.
+
+<Callout type="warning">
+The memory architecture revealed in the leak uses three layers: an always-loaded index (~150 character pointers), demand-loaded topic files, and grep-only transcripts that never enter context directly. Write discipline means facts derivable from the codebase aren't stored. This is far more sophisticated than the "stuff everything into context" approach most AI tools use.
+</Callout>
+
+## UltraPlan: 30-Minute Deep Planning Sessions
+
+Another unreleased feature: **UltraPlan**. Instead of jumping straight into code, Claude would spend up to 30 minutes mapping out an entire project before writing a single line.
+
+This directly addresses the biggest complaint about AI coding tools — they're fast but often wrong because they don't plan. UltraPlan offloads the heavy computation to cloud infrastructure rather than processing locally, suggesting Anthropic envisions planning sessions complex enough to require dedicated compute.
+
+If you've ever had Claude Code confidently rewrite your entire authentication system in a way that breaks three other services, you understand why planning-first matters.
+
+## The Anti-Distillation Arms Race
+
+The leak revealed that Anthropic is actively fighting competitors who try to learn from Claude's outputs — a practice called "distillation." And the defenses are more aggressive than anyone expected.
+
+### Fake Tools Injection
+
+A flag called `ANTI_DISTILLATION_CC` in `claude.ts` sends `anti_distillation: ['fake_tools']` in API requests. This tells the server to silently inject **decoy tool definitions** into system prompts. If a competitor is recording API traffic to train their own model, their training data gets poisoned with tools that don't exist.
+
+The flag is gated behind a GrowthBook feature flag (`tengu_anti_distill_fake_tool_injection`) and only activates for first-party CLI sessions.
+
+### Connector-Text Summarization
+
+A second defense layer, found in `betas.ts`, has the API buffer assistant text between tool calls and summarize it with a cryptographic signature. This prevents competitors from harvesting full reasoning chains through API interception. It only triggers for internal Anthropic users (`USER_TYPE === 'ant'`).
+
+These mechanisms target the data collection phase, not inference time. Anthropic isn't trying to make Claude worse for competitors to use — they're trying to make Claude's behavior harder to copy.
+
+## Undercover Mode: Anthropic's Secret Open Source Contributions
+
+Perhaps the most provocative discovery: **Undercover Mode**.
+
+A 90-line file called `undercover.ts` auto-activates when Anthropic employees use Claude Code on public repositories. It strips every trace of Anthropic's involvement:
+
+> "You are operating UNDERCOVER... Your commit messages... MUST NOT contain ANY Anthropic-internal information. Do not blow your cover."
+
+The system prevents references to internal codenames, Slack channels, repository names, or even the phrase "Claude Code" itself. There is no force-off switch — it's a one-way door.
+
+This means Anthropic has been using Claude Code to make stealth contributions to public open-source projects without disclosure. I'll say it plainly: **this is a problem.** Open source trust depends on knowing who's contributing and why. When a company with a direct commercial interest in AI adoption ghost-writes code in public repositories, the community deserves to know. Dogfooding is fine. Hiding it isn't.
+
+## The Frustration Detector (Yes, Really)
+
+In `userPromptKeywords.ts`, Anthropic built a regex pattern that detects when users are frustrated. It catches words like "wtf," "horrible," "awful," and various expletives.
+
+There's irony in an LLM company using regex for sentiment analysis. But it's actually pragmatic — regex is infinitely faster and cheaper than running sentiment through the model itself. When a user is angry, you want the system to adapt immediately, not after a 2-second inference call.
+
+<Callout type="info">
+This is a useful design pattern for anyone building AI products. Not every intelligence problem needs an LLM. Sometimes a regex that runs in microseconds is the right tool, even if you have a state-of-the-art language model sitting right there.
+</Callout>
+
+## The Buddy Pet System (No, Seriously)
+
+In what might be the most unexpected discovery, the leak contains a complete **Tamagotchi-style companion pet system** called Buddy.
+
+Found in `buddy/companion.ts`, the system includes:
+- 18 species with rarity tiers
+- A 1% chance of hatching a "shiny" variant
+- RPG-style stats including DEBUGGING and SNARK
+- Deterministic generation per user via Mulberry32 PRNG
+- Obfuscated species names using `String.fromCharCode()`
+- A "soul description" written by Claude on first hatch
+
+Is it shipping? Probably. Is it genius product design that turns a developer tool into something people form emotional attachments to? Absolutely. GitHub had Octocat. Anthropic wants you to have a pet that judges your code.
+
+## What the Code Quality Tells Us
+
+Not everything in the leak was impressive. A few discoveries raised eyebrows:
+
+**`print.ts` spans 5,594 lines** with a single function containing 3,167 lines across 12 nesting levels. That's the kind of code that makes senior engineers quietly update their LinkedIn.
+
+**An `autoCompact.ts` comment revealed** that 1,279 sessions had 50+ consecutive failures (up to 3,272 in a single session), wasting approximately 250,000 API calls per day globally. The fix was setting `MAX_CONSECUTIVE_AUTOCOMPACT_FAILURES = 3`.
+
+**The bash security system** (`bashSecurity.ts`) implements 23 numbered security checks including defenses against Zsh equals expansion (`=curl` bypassing permission checks), unicode zero-width space injection, and IFS null-byte injection — several discovered through HackerOne bug bounties.
+
+The takeaway: even the most well-funded AI company in the world ships messy code and discovers critical bugs in production. If their 5,000-line functions make you feel better about your codebase, you're welcome.
+
+## Model Codenames and What They Mean
+
+The source code leaked several internal model codenames:
+
+- **Capybara**: Claude 4.6 variant (version 8, with 1M context and "fast mode")
+- **Fennec**: Mapped to Opus 4.6
+- **Numbat**: An unreleased model still in testing, with a launch window embedded in source comments
+- **Tengu**: Referenced throughout the anti-distillation and undercover systems
+
+One concerning detail, [reported by DeepLearning.AI's The Batch](https://www.deeplearning.ai/the-batch/claude-codes-source-code-leaked-exposing-potential-future-features-kairos-and-autodream/): internal comments suggest Capybara version 8 "makes false or exaggerated claims around 30 percent of the time," compared to 16.7% in earlier versions. If accurate, that suggests Anthropic may be trading accuracy for confidence in newer model iterations — a tradeoff worth watching closely.
+
+## What This Tells You About Using Claude Code Better
+
+The leak isn't just gossip. It contains actionable intelligence for anyone using Claude Code today:
+
+**1. CLAUDE.md is more powerful than you think.** The three-layer memory system treats your project's CLAUDE.md as the always-loaded index layer. Everything you put there shapes every interaction. If you're not using it, you're leaving performance on the table.
+
+**2. Bash is the primary tool.** The system prompt explicitly instructs Claude to prefer bash for multi-step operations. If you've been phrasing requests as high-level abstractions, try framing them as shell operations instead.
+
+**3. Parallel execution is built in.** Claude Code can run independent operations simultaneously. Phrase requests clearly: "Read file A and file B at the same time" triggers parallel execution better than sequential instructions.
+
+**4. The permission system uses AI classifiers.** Hidden behind an "Auto Mode" flag, Claude Code has a system where AI classifiers evaluate command safety. Understanding that the model is already reasoning about permissions helps you frame requests to minimize unnecessary confirmation prompts.
+
+**5. Sub-agents are cheap.** The prompt cache architecture means spawning 5 agents costs barely more than 1. Don't hesitate to use complex multi-agent workflows — the infrastructure is optimized for it.
+
+## The Strategic Fallout
+
+Claude Code generates what multiple reports estimate at **$2.5 billion in annualized recurring revenue** for Anthropic. This leak didn't just expose code — it exposed strategy.
+
+Competitors now have visibility into:
+- The full product roadmap (KAIROS, autoDream, UltraPlan, Buddy)
+- Anti-distillation defense mechanisms (and how to bypass them)
+- Orchestration patterns for multi-agent systems
+- The exact feature flags and internal testing infrastructure
+
+You can refactor code, but you can't un-leak a roadmap. Every competitor in the AI coding space — Cursor, GitHub Copilot, Windsurf — now knows exactly where Anthropic is headed.
+
+The clean-room reimplementation question is also live: developers using AI agents to reconstruct Claude Code's logic from its tests (without copying source) has never been tested in court. The cost and time barrier that made this impractical has collapsed with modern AI agents.
+
+## What to Actually Prepare For
+
+Based on the leak, here's what's coming and what you should be thinking about:
+
+**Always-on agents are inevitable.** KAIROS isn't a prototype — it's production-ready code behind a flag. When it launches, your workflow shifts from "ask Claude to do things" to "Claude does things and tells you about it." Start thinking about what tasks you'd delegate to an agent that runs 24/7.
+
+**Memory systems will become critical infrastructure.** The three-layer architecture suggests Anthropic views memory management as a core engineering challenge, not a feature. Invest time in structuring your CLAUDE.md files and project context now.
+
+**AI-to-AI competition is heating up.** The anti-distillation mechanisms reveal an arms race between AI companies that's invisible to end users. The tools you use are already fighting over who gets to learn from your interactions.
+
+**Planning-first development is coming.** UltraPlan suggests the industry is moving past "fast but wrong" toward "slower but correct." The next generation of AI coding tools will spend more time thinking and less time typing.
+
+**The line between AI and human contributions will blur further.** Undercover Mode means AI-written code is already entering open source repositories without attribution. Whether you think that's fine or alarming, you should know it's happening.
+
+## What a Forgotten `.npmignore` Actually Cost Anthropic
+
+A forgotten `.npmignore` entry gave us the clearest picture we've ever had of how an AI company actually builds its flagship product. Some of what we found is brilliant — the memory architecture, the planning systems, the cache optimization. Some of it is concerning — undercover mode, accuracy tradeoffs, 5,000-line functions.
+
+But the biggest takeaway is this: **the gap between what AI agents can do and what they're allowed to do is much larger than anyone realized.** KAIROS, autoDream, and UltraPlan aren't future concepts. They're finished software waiting for permission to run.
+
+The question isn't whether always-on, proactive AI agents are coming. The question is whether you'll be ready when Anthropic flips the flag from `false` to `true`.
+
+---
+
+*I break down AI tools and trends for developers who build with them every day — not hype, not theory, just what actually works. Subscribe to the newsletter and get weekly deep dives like this one delivered straight to your inbox.*
