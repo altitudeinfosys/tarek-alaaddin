@@ -4,6 +4,9 @@ import NewsletterForm from '@/components/newsletter/NewsletterForm'
 export const metadata: Metadata = {
   title: 'Subscribe | Tarek Alaaddin',
   description: 'Get my free guide on becoming innovative and productive. Learn productivity tips, AI tools, and strategies I use to build products.',
+  alternates: {
+    canonical: 'https://tarekalaaddin.com/subscribe',
+  },
   openGraph: {
     title: 'Subscribe to Newsletter | Tarek Alaaddin',
     description: 'Get my free guide on becoming innovative and productive.',

@@ -1,0 +1,32 @@
+# Tarek Alaaddin
+
+> Software engineer with 20+ years of experience building enterprise-scale applications. Creator of Taskitos and ExpandNote. Writing about AI tools, developer productivity, and the future of software engineering.
+
+## About
+- [Tarek Alaaddin](https://tarekalaaddin.com): Personal site and blog
+- [Resume](https://tarekalaaddin.com/resume): Professional background and experience
+
+## Products
+- [Taskitos](https://taskitos.com): AI-powered task manager with persistent reminders
+- [ExpandNote](https://expandnote.com): AI-powered note-taking app with automation profiles
+
+## Blog
+- [Blog](https://tarekalaaddin.com/blog): Articles on AI development, productivity, and software engineering
+
+## Key Articles
+- [The 3 Types of Developers That Will Survive the AI Era](https://tarekalaaddin.com/blog/three-types-of-developers-ai-era)
+- [Claude Code Source Leak: What 512,000 Lines Reveal](https://tarekalaaddin.com/blog/claude-code-source-leak-what-it-reveals)
+- [Claude Code vs Cowork vs Chat](https://tarekalaaddin.com/blog/claude-code-vs-cowork-vs-chat)
+- [Building Taskitos: From Idea to AI-Powered Task Manager](https://tarekalaaddin.com/blog/building-taskitos-with-ai)
+- [Stop Collecting AI Tools and Start Shipping](https://tarekalaaddin.com/blog/stop-collecting-ai-tools-start-shipping)
+- [Claude Computer Use Guide](https://tarekalaaddin.com/blog/claude-computer-use-guide)
+- [Best Terminal Tools for Mac](https://tarekalaaddin.com/blog/best-terminal-tools-mac)
+- [Claude vs ChatGPT 2026](https://tarekalaaddin.com/blog/claude-vs-chatgpt-2026)
+
+## Social
+- [LinkedIn](https://www.linkedin.com/in/tarekalaaddin)
+- [GitHub](https://github.com/altitudeinfosys)
+
+## Contact
+- [Contact](https://tarekalaaddin.com/contact)
+- [Subscribe](https://tarekalaaddin.com/subscribe)

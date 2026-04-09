@@ -11,6 +11,7 @@ import rehypeSlug from 'rehype-slug'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import Link from 'next/link'
 import Badge from '@/components/ui/Badge'
+import { BlogPostingSchema } from '@/components/JsonLd'
 
 interface BlogPostPageProps {
   params: { slug: string }
@@ -89,6 +90,14 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <div className="bg-white dark:bg-gray-900 min-h-screen">
+      <BlogPostingSchema
+        title={post.title}
+        description={post.description}
+        slug={params.slug}
+        date={post.date}
+        tags={post.tags}
+        category={post.category}
+      />
       <article className="max-w-4xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <header className="mb-12">

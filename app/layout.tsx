@@ -6,6 +6,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import NewsletterPopup from '@/components/NewsletterPopup'
 import { Analytics } from '@vercel/analytics/react'
+import { PersonSchema, WebSiteSchema } from '@/components/JsonLd'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -27,6 +28,9 @@ export const metadata: Metadata = {
     title: 'Tarek Alaaddin | Software Engineer & Product Builder',
     description: 'Software engineer with expertise in backend development, cloud architecture, and full-stack applications.',
   },
+  alternates: {
+    canonical: 'https://tarekalaaddin.com',
+  },
   robots: {
     index: true,
     follow: true,
@@ -40,6 +44,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <PersonSchema />
+        <WebSiteSchema />
+      </head>
       <body className={inter.className}>
         <ThemeProvider>
           <div className="flex flex-col min-h-screen">
