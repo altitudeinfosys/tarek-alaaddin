@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: 'Products | Tarek Alaaddin',
   description: 'Explore my AI-powered SaaS products: Taskitos (task manager with persistent reminders) and ExpandNote (AI-powered note-taking app).',
   keywords: ['Taskitos', 'ExpandNote', 'AI products', 'SaaS', 'productivity', 'note-taking', 'task manager'],
+  alternates: {
+    canonical: 'https://tarekalaaddin.com/products',
+  },
   openGraph: {
     title: 'Products | Tarek Alaaddin',
     description: 'Explore my AI-powered SaaS products: Taskitos and ExpandNote.',
