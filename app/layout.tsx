@@ -27,6 +27,8 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Tarek Alaaddin | Software Engineer & Product Builder',
     description: 'Software engineer with expertise in backend development, cloud architecture, and full-stack applications.',
+    creator: '@tarekalaaddin',
+    site: '@tarekalaaddin',
   },
   alternates: {
     canonical: 'https://tarekalaaddin.com',
