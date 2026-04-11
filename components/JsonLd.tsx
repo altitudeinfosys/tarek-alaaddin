@@ -36,6 +36,7 @@ export function PersonSchema() {
         sameAs: [
           'https://www.linkedin.com/in/tarekalaaddin',
           'https://github.com/altitudeinfosys',
+          'https://x.com/tarekalaaddin',
         ],
       }}
     />
