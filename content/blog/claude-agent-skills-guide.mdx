@@ -1,0 +1,274 @@
+---
+title: "Claude Agent Skills: What They Are and How to Chain Them"
+description: "The 2026 guide to Claude Agent Skills — what they are, when to use them, how to write your first SKILL.md, and how to chain skills together."
+date: "2026-04-14"
+category: "ai-tools"
+tags: ["claude-code", "claude-skills", "agent-skills", "anthropic", "ai-agents", "claude-api", "prompt-engineering", "developer-productivity"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Six months ago, if you wanted Claude to do your job the way *you* do your job — with your conventions, your checklist, your weird deploy script that only makes sense in your head — you had one tool: a steadily growing `CLAUDE.md` file that eventually became a 600-line scroll of pain. Every new rule cost context. Every workflow lived next to every other workflow. Half of it was irrelevant most of the time, but you paid for it on every turn.
+
+Then in October 2025, Anthropic quietly shipped **Agent Skills**, and the whole economics of "teaching Claude how you work" changed overnight. Six months later, I've built about forty of them, I run a content pipeline that's basically six chained skills calling each other, and I'm prepared to say this out loud: **if you're still stuffing everything into `CLAUDE.md`, you're doing it wrong.**
+
+This post is the full guide I wish someone had handed me on day one. What skills actually are. Why they're dramatically more efficient than CLAUDE.md. How to write your first one. When to use them (and when not to). And — the part nobody writes about well — how to chain skills so one skill can call another, turning a pile of single-purpose Markdown files into a real agentic pipeline.
+
+## What a Skill Actually Is (The One-Sentence Version)
+
+A Skill is a folder with a `SKILL.md` file inside it, and that file tells Claude a specific thing it knows how to do — plus *when* to do it.
+
+That's it. That's the whole product.
+
+The folder can also contain scripts, reference docs, templates, examples — anything you want Claude to have access to when the skill runs. But the entrypoint is always `SKILL.md`, and the magic is in the frontmatter.
+
+```yaml
+---
+name: deploy
+description: Deploy the application to production. Use when the user says "ship it", "deploy", "push to prod", or asks to release a new version.
+disable-model-invocation: true
+allowed-tools: Bash(git *) Bash(npm *)
+---
+
+Deploy $ARGUMENTS to production:
+
+1. Run the test suite
+2. Build the application
+3. Tag the release
+4. Push to the deployment target
+5. Verify the deployment succeeded and report the live URL
+```
+
+Drop that at `~/.claude/skills/deploy/SKILL.md` and you've just taught Claude Code a new verb. You type `/deploy`, Claude runs the playbook. Ship it.
+
+## Why Skills Beat the Giant CLAUDE.md File
+
+Here's the number that made me a convert. Reported benchmarks from the broader Claude Code community put a skill at roughly **53 tokens per turn** of context overhead, compared to **944+ tokens** for the equivalent chunk stuffed into `CLAUDE.md`. That's an 18x reduction. Multiply by the number of things you've taught Claude, multiply again by the number of turns in a long conversation, and you're talking about thousands of tokens you're no longer paying for on every message.
+
+The mechanism is called **progressive disclosure**, and it works in three layers:
+
+1. **Metadata layer** — The skill's `name` and `description` are always loaded so Claude knows what's available. This is ~100 words per skill.
+2. **Body layer** — The full `SKILL.md` content only loads when the skill is invoked (by you or by Claude deciding it's relevant).
+3. **Bundled resources** — Scripts, reference docs, and assets inside the skill folder don't load at all until Claude explicitly reads them or runs them.
+
+`CLAUDE.md` doesn't do any of this. Everything in `CLAUDE.md` is loaded on every single turn, whether you need it or not. That 600-line deploy playbook is costing you tokens every time you ask Claude to rename a variable.
+
+<Callout type="tip">
+**The real rule**: Facts belong in `CLAUDE.md`. Procedures belong in Skills. If a section of your `CLAUDE.md` has grown into a "how to do X" guide rather than a "here's what X is" fact, it's time to extract it into a skill. Your tokens will thank you.
+</Callout>
+
+## Why You Should Actually Use Them
+
+Let me skip the generic "extend Claude's capabilities" marketing and tell you the four reasons I reach for skills in real work:
+
+**1. Your weird workflows stop being your problem.** Every team has that one thing — the commit message format, the deploy checklist, the way you write PR descriptions, the specific way you review SQL migrations. Once you encode it as a skill, Claude does it the same way every time. No more "actually, we use conventional commits here" three messages deep into every conversation.
+
+**2. Slash commands feel like superpowers.** `/commit`, `/deploy`, `/review-pr`, `/write-plan` — these aren't just shortcuts. They're named workflows. When a skill is well-written, invoking it replaces ten messages of back-and-forth with a single command. My most-used skill is a commit skill. I save probably twenty minutes a day.
+
+**3. Skills are shareable.** Drop a skill folder into `.claude/skills/` in your repo, commit it, and every developer on the team gets the same playbook. No more tribal knowledge. No more "did you read the README?" The skill *is* the README, and Claude reads it automatically.
+
+**4. You can write skills that only you can invoke.** The `disable-model-invocation: true` frontmatter field prevents Claude from deciding to run a skill on its own. Use this for anything with side effects — deploying, sending emails, making payments, posting to social media. Claude knows the skill exists, but it won't pull the trigger unless you type the command yourself.
+
+## The Frontmatter Fields That Actually Matter
+
+The official docs list about fifteen frontmatter fields. In practice, these seven cover 95% of the skills you'll ever write:
+
+| Field | What it does | When to use it |
+|---|---|---|
+| `name` | The slash command and display name. Defaults to the folder name. | Almost always omit it — just name the folder right. |
+| `description` | The single most important field. Claude uses this to decide whether to load the skill. | **Always.** Front-load the trigger phrases. |
+| `disable-model-invocation` | `true` means only you can run it. | Anything with side effects (deploy, commit, send) |
+| `user-invocable` | `false` hides it from the `/` menu. | Background knowledge skills, not workflows. |
+| `allowed-tools` | Pre-approves specific tools so Claude doesn't ask for permission every time. | Skills that run shell commands or network calls. |
+| `context: fork` | Runs the skill in a forked subagent with a clean context. | Long-running research / analysis that would pollute your main conversation. |
+| `agent` | Which subagent type to use when `context: fork` is on. Options: `Explore`, `Plan`, `general-purpose`, or any custom subagent. | Pair with `context: fork` when you want specific tools available. |
+
+The field that trips everyone up is `description`. This is the only thing Claude uses to decide when to auto-invoke your skill. Keep it under 1,536 characters (that's the hard cap), front-load the trigger phrases, and be slightly "pushy" — the official skill-creator guide literally recommends making descriptions lean toward "use this whenever the user mentions X" because Claude tends to under-trigger skills by default.
+
+## When You Should Use a Skill (and When You Shouldn't)
+
+I've written enough bad skills at this point to have strong opinions about this.
+
+**Good candidates for skills:**
+
+- Any workflow you do more than twice a week that involves remembering syntax or options
+- Anything with a checklist — deploys, releases, code reviews, security audits
+- Multi-step procedures where the steps always run in the same order
+- "Translate this into our team's format" tasks — commit messages, PR descriptions, architecture docs
+- Safety rails you want applied to every piece of generated code (test-first, no secrets committed, accessibility checks)
+
+**Bad candidates for skills:**
+
+- One-off tasks you'll never repeat
+- "Facts about the codebase" — that's what `CLAUDE.md` is for
+- Anything under five lines of instructions (just type them)
+- Vague reference material with no actionable procedure ("context: fork" skills need a task, not just guidelines)
+- Things you're still figuring out how to do yourself — you can't skill-ify a workflow you haven't nailed down
+
+There's a trap I fell into early: writing a skill for every cool idea I had. Most of them never got invoked. The rule I've landed on is **if you can't name three times you've done this task in the last month, don't write a skill for it.** The token savings come from skills that actually get reused.
+
+## How to Create Your First Skill in Five Minutes
+
+Skip the theory for a second. Here's the shortest path from zero to a working skill.
+
+**Step 1**: Create the folder.
+
+```bash
+mkdir -p ~/.claude/skills/my-first-skill
+```
+
+**Step 2**: Write the `SKILL.md` file.
+
+```yaml
+---
+name: explain-code
+description: Explains code using visual diagrams and analogies. Use when the user asks "how does this work?", "explain this file", or needs a walkthrough of unfamiliar code.
+---
+
+When explaining code, always include:
+
+1. **Start with an analogy** — compare it to something from everyday life
+2. **Draw an ASCII diagram** — show the flow, structure, or data relationships
+3. **Walk through step-by-step** — what happens in what order, and why
+4. **Highlight a gotcha** — what's the common misconception or easy mistake?
+
+Keep the tone conversational. For complex concepts, use multiple analogies rather than one strained one.
+```
+
+**Step 3**: Test it both ways.
+
+```text
+/explain-code src/auth/login.ts
+```
+
+Or just ask `How does this file work?` and watch Claude auto-invoke the skill because your description matched the question. That's it. You've shipped a skill.
+
+<Callout type="info">
+**Claude Code watches skill directories for changes in real time.** Edit your `SKILL.md`, save, and the next message already uses the new version — no restart. The one exception is creating a top-level `.claude/skills/` directory that didn't exist when the session started. That requires a restart so Claude Code can start watching it.
+</Callout>
+
+## The Bonus Round: Chaining Skills
+
+This is the part that made me delete half of my old n8n workflows.
+
+A single skill is just a fancy slash command. The real power shows up when you start composing them. Skill A produces output. Skill B consumes it. Skill C reviews Skill B's work. You've just turned a pile of Markdown files into a pipeline — no workflow engine, no visual editor, no separate runtime. Claude orchestrates the whole thing.
+
+Here's the critical mental model: **skills don't call each other directly.** Claude is the coordinator. Skill A runs, Claude reads the output, Claude reasons about what to do next, Claude invokes Skill B. This is actually a feature, not a limitation — each skill stays small and single-purpose, and Claude handles the "what comes next" logic.
+
+There are three ways to chain skills, in increasing order of rigor:
+
+### 1. Natural-language chaining inside SKILL.md
+
+The simplest approach. In your skill, just tell Claude what to do next:
+
+```markdown
+After generating the blog post, invoke the `content-critic` skill
+to review the draft. If the critic returns any CRITICAL issues,
+apply the fixes and re-critique. Only proceed to publishing after
+the critic returns a score of 8+ with no blockers.
+```
+
+That's it. When Claude finishes the first skill, it sees those instructions, loads the second skill, and runs it. Hand-off achieved. No state file, no orchestrator, no ceremony.
+
+This works for 80% of chaining cases. If you're just stringing two or three skills together in a known order, write the hand-off instructions in plain English and move on.
+
+### 2. Forked subagent execution with `context: fork`
+
+When you need a step to run in isolation — clean context, no pollution from the main conversation, dedicated tool permissions — use the `context: fork` frontmatter field:
+
+```yaml
+---
+name: deep-research
+description: Research a topic thoroughly across the codebase and return a structured report. Use when you need comprehensive analysis without polluting the main conversation.
+context: fork
+agent: Explore
+---
+
+Research $ARGUMENTS thoroughly:
+
+1. Find every relevant file using Glob and Grep
+2. Read and analyze the code
+3. Return a structured summary with specific file:line references
+4. Flag any surprising patterns or inconsistencies
+```
+
+When this skill runs, Claude spins up a new subagent context, passes the skill content as the task prompt, gives the subagent the `Explore` agent's read-only tool belt, and returns a summary to your main conversation. The chain part happens naturally: your main agent sees the summary, decides what to do with it, and invokes the next skill.
+
+This is how you build "research → synthesize → write → critique" pipelines without blowing your main context window. Each step forks, does its job, and returns a clean result.
+
+### 3. The orchestrator pattern with a shared state file
+
+For genuinely complex multi-step workflows — the kind where you want resumability, error recovery, and clear stage tracking — write an orchestrator skill that reads and writes a shared state file, and have it call the other skills in sequence.
+
+The pattern looks like this:
+
+```json
+{
+  "stage": "research_complete",
+  "topic": "how vector databases work",
+  "research_log": "...",
+  "draft": null,
+  "critique_score": null
+}
+```
+
+Your orchestrator skill reads the state file, looks at the `stage` field, invokes the right skill for that stage, and updates the state. Rinse, repeat, until the workflow is done. Each individual skill is dumb and single-purpose — it just reads the fields it needs and writes its output back.
+
+I run my entire blog-to-social-media pipeline on this pattern. Six skills, one orchestrator, one Notion queue acting as the state file. From "here's a topic idea" to "blog post published and tweets sent" is one command. Skills are the Lego bricks, the orchestrator is the instruction sheet, and Claude is the kid doing the assembly.
+
+<Callout type="warning">
+**The honest trade-off**: The orchestrator pattern is more powerful, but it's also more ceremony. Don't start here. Build your first skill. Then build a second one. When you find yourself copying and pasting output from one into another more than three times, *then* write the orchestrator. Premature orchestration is the new premature abstraction.
+</Callout>
+
+## The Hidden Feature Nobody Talks About: Dynamic Context Injection
+
+This one took me three months to discover and it's changed how I write skills.
+
+You can put inline shell expressions — the `!` character followed by a backticked command — inside your `SKILL.md` to run those commands **before the skill content is sent to Claude**. The output of each command replaces its placeholder. Claude never sees the command itself, only the result.
+
+```yaml
+---
+name: pr-summary
+description: Summarize the current pull request. Use when reviewing your own work before merging.
+allowed-tools: Bash(gh *)
+---
+
+## Pull request context
+- PR diff: !`gh pr diff`
+- PR comments: !`gh pr view --comments`
+- Changed files: !`gh pr diff --name-only`
+
+## Your task
+Summarize this pull request in three bullet points...
+```
+
+When you run `/pr-summary`, the three shell commands execute first, their output gets injected into the prompt, and Claude receives a fully-baked request with all the PR data already in context. It's preprocessing. It's not something Claude has to decide to run. And it means you can build skills that are essentially "here's live data from the world, now do something with it" without wiring up any tool calls at all.
+
+I use this for everything now: git status in commit skills, test output in debug skills, log tails in incident-response skills. Any time the "useful context" is a shell command away, dynamic injection beats asking Claude to run the command itself.
+
+## What I've Actually Learned After Forty Skills
+
+Five hard-won lessons, because this post would be irresponsible without them:
+
+**Skills undertrigger by default.** Claude is conservative about loading skills. If yours isn't firing when you think it should, the fix is almost never "Claude is broken" — it's "your description doesn't match what users actually type." Rewrite it with the literal trigger phrases, be slightly pushy, and the trigger rate jumps immediately.
+
+**Keep SKILL.md under 500 lines.** Everyone ignores this. When your skill gets big, move reference material into separate files and link to them from SKILL.md — Claude only loads those files when it needs them.
+
+**Write the skill *after* you've done the task once.** The best skills come from a real successful run. Do the task manually, notice the steps, then have Claude write the skill. Skills written from imagination are always slightly wrong.
+
+**Don't use skills to teach facts.** "Our database schema" belongs in `CLAUDE.md`. Skills are for procedures, not reference material.
+
+**Version your skills like code.** If a skill lives in `.claude/skills/` in a repo, it should be reviewed in PRs. I've made more than one breaking change to a skill that silently affected an entire team.
+
+## The Bottom Line
+
+Agent Skills are the first piece of Claude Code infrastructure that genuinely changes how I work day-to-day. They're not a feature — they're a primitive. The same way functions changed how we wrote code compared to copy-pasting blocks of statements, skills change how we teach AI agents what to do compared to rewriting the same instructions into every new conversation.
+
+Start with one skill. Make it a skill for something you do every single day. Then add another. By the time you have five, you'll start seeing the places where one should call another, and you'll have stumbled into building a pipeline without meaning to. That's the moment skills click.
+
+If you're using Claude Code and you haven't written a skill yet, you're leaving the single biggest productivity gain on the table. Go write one. It takes five minutes and it'll pay for itself by tomorrow.
+
+---
+
+*Want posts like this in your inbox? [Subscribe to my newsletter](/newsletter) — I break down new AI tools, compare them honestly, and tell you what's actually worth your time. No hype, no affiliate links, no "AI influencer" fluff.*
