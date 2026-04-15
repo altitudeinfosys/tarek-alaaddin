@@ -1,0 +1,161 @@
+---
+title: "Claude Code /routines: Anthropic Just Killed Your Cron Jobs"
+description: "Anthropic shipped /routines for Claude Code on April 14 2026. Here's what it is, what it replaces, whether it needs the API, and three ways to use it."
+date: "2026-04-14"
+category: "ai-tools"
+tags: ["claude-code", "claude-routines", "anthropic", "automation", "cron-jobs", "github-actions", "ai-agents", "developer-productivity"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+On April 14, 2026 — literally today as I'm writing this — Anthropic quietly dropped a feature into Claude Code that I think is going to delete an entire category of glue code from my life. It's called **routines**, you create them with `/schedule` in the CLI or at [claude.ai/code/routines](https://claude.ai/code/routines), and the pitch is absurdly simple: **save a Claude Code configuration — a prompt, some repos, a few connectors — and let it run on autopilot in Anthropic's cloud, on a schedule or in response to events, while your laptop is closed.**
+
+I have been waiting for this for about six months. Every time I set up a cron job to run a Claude-powered script, I felt like I was building infrastructure Anthropic should be building. Every time I wrote a GitHub Action that shelled out to the Claude API, I thought *"this should just be a button."* Now it is a button. And if Anthropic's own framing is any signal — they literally said "developers already use Claude Code to automate the software development cycle, but until now, they've managed cron jobs, infrastructure, and additional tooling like MCP servers themselves" — they agree this was an embarrassing gap.
+
+Let me walk through what routines actually are, why Anthropic shipped them, what they replace, and — because the thing I keep getting asked — whether you need a separate Claude API key to use them. Spoiler: you don't. If you have a Claude Code subscription with web access, you already have this.
+
+## What a Routine Actually Is
+
+Here's the definition straight from Anthropic's docs: *"A routine is a saved Claude Code configuration: a prompt, one or more repositories, and a set of connectors, packaged once and run automatically."*
+
+That's the whole product. You write a prompt once. You pick which GitHub repos Claude can clone and work in. You pick which MCP connectors it gets access to — Slack, Linear, Google Drive, whatever you've hooked up. You pick an environment (which controls network access, env vars, and a setup script). And then you attach one or more triggers.
+
+When a trigger fires, Anthropic spins up a full Claude Code cloud session on their infrastructure, clones your repos, runs your prompt end-to-end without any approval prompts, and leaves behind a session you can open in a browser to see exactly what it did. If Claude wrote code, it's on a `claude/`-prefixed branch waiting for you to turn into a PR.
+
+The three triggers are the thing that makes this interesting:
+
+1. **Schedule** — "run this hourly / daily / weekdays / weekly." Minimum cadence is one hour. If you need a specific cron expression (e.g. every Monday at 08:00 UTC), you create a scheduled routine in the form and then upgrade the cadence with `/schedule update` in the CLI.
+
+2. **API** — every routine can have a dedicated HTTPS endpoint and a bearer token. You `POST` to it with an optional free-text payload, and a new session kicks off. You can wire this into PagerDuty, your deploy pipeline, Sentry, Datadog — anywhere you can fire an authenticated webhook.
+
+3. **GitHub** — routines can subscribe to basically every event the GitHub webhook ecosystem emits: `pull_request.opened`, pushes, issue comments, releases, check runs, workflow runs, even `repository_dispatch`. You can filter on author, labels, branch, draft state, fork-vs-internal — the usual dimensions.
+
+And here's the part I love: **you can combine them on the same routine.** A PR review routine can react to every new PR *and* run a nightly sweep across all still-open PRs *and* be manually triggered from a deploy script. Same prompt, same repo, three different ways to fire it. That's not a feature I've seen land cleanly in any other automation product.
+
+<Callout type="info">
+**Routines ≠ hooks ≠ skills.** These three Claude Code primitives sound similar but do different jobs. **Hooks** are shell commands the local Claude Code CLI runs on events like `PreToolUse` or `UserPromptSubmit` — they live in `settings.json` and they only fire while a local session is running. **Skills** are packaged Markdown playbooks Claude loads on demand. **Routines** are saved cloud sessions that fire without a human in the loop. If you squint, routines *are* hooks — but hooks for your repo and your calendar instead of hooks for a local process.
+</Callout>
+
+## Why Anthropic Shipped This (And Why Now)
+
+There's an honest answer and a marketing answer. The marketing answer is in the quote I cited above: developers were duct-taping cron jobs and webhook handlers around Claude Code, and Anthropic decided to absorb that complexity. The honest answer is that three things converged:
+
+**1. Claude Code on the Web exists.** Routines ride entirely on top of the cloud sessions infrastructure Anthropic shipped earlier — there's no local daemon, no new runtime, no separate product. Once you have "Claude Code running in a sandbox on Anthropic's servers," making that sandbox *schedulable* is a thin layer of plumbing. This is an example of a platform feature that only becomes possible once another platform feature ships.
+
+**2. MCP connectors got useful.** The reason routines are more interesting than "ChatGPT tasks" is that they can read from Slack, write to Linear, drop files in Google Drive, and touch whatever else you've connected — all from inside the same autonomous run. Before MCP connectors were stable, routines would have been much less valuable.
+
+**3. The "agent babysitter" meme was killing Anthropic's reputation.** Every critique of Claude Code in early 2026 was the same: *it's powerful, but it needs you to watch it.* Shipping routines is a direct response. You can now define a narrow, bounded task, hand it to Claude, and let it run unattended. If the outcome is bad, you review the session afterward the way you'd review a PR.
+
+## What Tools Does It Actually Replace?
+
+This is the fun question, and I'm going to be specific, because otherwise you end up with a list that sounds impressive but tells you nothing.
+
+**Cron jobs** — yes, mostly. If you had a cron job that ran a Claude-powered script on a schedule (I had three), routines replace it entirely. No more cron daemon, no more keeping a machine alive, no more environment variables in a shell script. The only cron jobs that remain in my toolbox are ones that touch resources outside of what MCP can reach (a specific on-prem box, a local filesystem, a raw SSH session).
+
+**GitHub Actions for AI workflows** — a lot of them, yes. If your Action was "on PR opened, run Claude to review the diff and leave comments," a GitHub trigger routine does that with zero YAML, runs on Anthropic's compute instead of GitHub's runner minutes, and doesn't cost you a single line in `.github/workflows/`. Actions that compile, test, deploy, or otherwise *do real CI work* — those stay. Routines are for the AI-reasoning layer of your pipeline, not the build-and-deploy layer.
+
+**Self-hosted MCP servers you wrote for scheduled jobs** — this is the sleeper one. A lot of teams built little MCP servers as glue to fire scheduled tasks into Claude. Those are dead weight now. Delete them, save yourself the maintenance.
+
+**Zapier / n8n / Make.com flows that call the Anthropic API** — partially. If the flow was "webhook → prompt Claude → post result somewhere," and both the input and the output are things MCP can reach, a routine is strictly better (cheaper, no middleman, and you get a real session you can debug). If the flow touches services without MCP connectors, those tools stay relevant.
+
+**Monitoring-to-triage glue code** — this is the one I'm most excited about. The classic "Sentry alert fires, somebody writes a bash script that hits the Claude API with the stack trace and posts to Slack" is now a one-routine job. Your monitoring tool POSTs to the routine's `/fire` endpoint with the alert body as the `text` field, the routine pulls the stack trace, correlates it with recent commits, and opens a draft PR with a proposed fix and a link back to the alert. On-call reviews the PR instead of starting from a blank terminal. This is Anthropic's own headline example, and it's the right one.
+
+<Callout type="tip">
+**The clean heuristic**: if the job you're automating is mostly *"reason about this text, make a small change to a repo, and tell a human"*, a routine replaces whatever you built for it. If the job is *"build, test, sign, and deploy artifacts,"* a routine doesn't replace your CI — it sits next to your CI and reviews its output.
+</Callout>
+
+## Three Use Cases (Not Super Technical)
+
+The docs lean technical on examples (bespoke code reviewers, library ports between SDKs). I want to show you three cases where a non-engineer would immediately understand the value.
+
+### 1. The "Monday Morning Inbox Groomer"
+
+Every Monday at 07:30 in your local time, a schedule trigger runs against your issue tracker. The prompt says something like: *"Read every issue filed since Friday. Label each one with the right area (frontend, backend, infra, docs). Assign owners based on who last touched the related file. Post a one-paragraph summary to the #eng-triage Slack channel so the team starts the week with a groomed queue."*
+
+You don't touch it. Monday morning, your triage channel has a tidy post waiting. The team stops walking in to a chaotic backlog. The routine has zero dependencies on your laptop being awake — you're somewhere on a beach, it still runs.
+
+**Why this is a routine and not a cron job**: because the labeling step requires *reading the issue and deciding what it's about*, and that's exactly the thing Claude is good at and `crontab` is not.
+
+### 2. The "Deploy Go/No-Go Watchdog"
+
+Your CD pipeline finishes a production deploy and makes one HTTP call — a `POST` to the routine's `/fire` endpoint, with the commit SHA in the `text` field. The routine wakes up, runs a smoke check script from your repo against the new build, scans error logs for anything that wasn't there ten minutes ago, and posts either a green checkmark or a red-flag summary to the release channel.
+
+Before the deploy window closes, a human has either a "ship it" signal or a very specific list of things that look off. No more manually grepping logs after every deploy.
+
+**Why this matters for non-engineers**: because "did that release actually work" is a question product managers and founders ask constantly, and now there's an authoritative answer posted automatically in the channel they're already watching.
+
+### 3. The "Docs Drift Watcher"
+
+A schedule trigger runs weekly. The prompt: *"Scan merged PRs since last Sunday. Flag any that changed a public API surface. For each one, check whether the docs repo mentions that API. If the docs reference the old behavior, open a PR against the docs repo with a suggested rewrite, tag @docs-team for review."*
+
+You stop having docs that lie about the product. Your marketing page stops claiming a feature works one way while the actual behavior moved on a month ago. A routine doing this once a week is the cheapest possible solution to a problem every company has and nobody staffs properly.
+
+**The meta-point**: all three of these use cases are jobs a junior engineer would be asked to do manually, and all three are jobs that are boring enough that they rot when assigned to a human. Handing them to a routine is both cheaper and more reliable, because routines don't get tired and don't forget.
+
+## Is It Part of the Subscription? Do You Need the API?
+
+Short answer: **yes to the subscription, no to a separate API key.**
+
+Routines are included on Pro, Max, Team, and Enterprise plans, as long as you have Claude Code on the web enabled in your account. You don't need to sign up for the Claude Platform API separately, you don't need a billing account on platform.claude.com, and you don't need to manage a separate `sk-ant-api03-...` key. The runs draw down the same subscription usage bucket that your interactive Claude Code sessions use.
+
+There *is* one place a token shows up: the API trigger. When you create an API-triggered routine, Anthropic generates a per-routine OAuth token (format looks like `sk-ant-oat01-xxxxx`, not a regular API key) that you include in the `Authorization: Bearer` header when POSTing to the endpoint. That token is scoped to firing that one routine only — it can't read your account, can't run other routines, and you can rotate or revoke it from the same modal. It's closer to a webhook secret than a full API key.
+
+The daily caps, [confirmed by 9to5Mac and SiliconANGLE in their launch coverage](https://9to5mac.com/2026/04/14/anthropic-adds-repeatable-routines-feature-to-claude-code-heres-how-it-works/), are real and worth knowing: **Pro users get 5 routine runs per day, Max gets 15, Team and Enterprise get 25**. If you blow past the cap, organizations with extra usage enabled can keep running on metered overage — otherwise routines refuse to fire until the next day. In practice: routines are for high-leverage automations you care about, not background polling. Don't build a 10-minute heartbeat routine. Build a once-a-day or once-a-deploy routine where every single run earns its keep.
+
+<Callout type="warning">
+**Routines burn tokens faster than you think.** [The Register's launch coverage](https://www.theregister.com/2026/04/14/claude_code_routines/) made this point bluntly and it's worth taking seriously: an autonomous agent running unattended with connectors and full repo access will chew through usage faster than the same Claude assisting a human on a focused task, because there's nobody steering it away from rabbit holes. Tight prompts and narrow scopes are the only defense. Treat every routine as a code review — the prompt is the code.
+</Callout>
+
+## Triggering a Routine From the Outside World (With Hooks-ish Examples)
+
+The question I got asked most when I was showing people this feature on launch day was *"can I wire this up to my existing hooks?"* — and the answer is yes, but not the hooks you're thinking of. Claude Code's local `settings.json` hooks fire on local events inside a CLI session; they can't reach into a cloud routine. But any system that *can* make an authenticated HTTP request can fire a routine. That includes every webhook producer you already own.
+
+Here's the shape of an API trigger call, straight from the docs:
+
+```bash
+curl -X POST https://api.anthropic.com/v1/claude_code/routines/trig_01ABCDEFGHJKLMNOPQRSTUVW/fire \
+  -H "Authorization: Bearer sk-ant-oat01-xxxxx" \
+  -H "anthropic-beta: experimental-cc-routine-2026-04-01" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Sentry alert SEN-4521 fired in prod. Stack trace attached."}'
+```
+
+The response gives you back a session ID and a session URL you can open to watch the run in real time. That's it. That's the whole integration surface.
+
+Places I'm already using this:
+
+- **My deploy script** fires a routine after every production deploy with the commit SHA as the payload. The routine does a 90-second sanity sweep and posts to Slack.
+- **A GitHub Action** I kept around for a non-AI reason ends with a `curl` to a routine's `/fire` endpoint when a release tag is pushed. The routine generates release notes from the diff and drafts a LinkedIn post.
+- **A Zapier zap** I can't kill yet (it's watching a form submission in a service with no MCP connector) pipes the submissions into a routine that triages them into Linear issues.
+
+None of that required me to spin up infrastructure. None of it required me to manage an API key or build a webhook handler. I wrote a prompt, I clicked "Add an API trigger," I copied the URL and the token, and I pasted them into the systems I already had.
+
+For schedule-triggered routines, there's no trigger call to make — you just create the routine via `/schedule` in the CLI or in the web form and Anthropic fires it on cadence. For GitHub triggers, you install the Claude GitHub App on the repo and pick the event(s) you want; Anthropic wires the webhook up on their side.
+
+## The Honest Warnings
+
+I've been glowing about this feature because I genuinely like it, but a pipeline I care about shipped on top of it today, so let me be explicit about the rough edges.
+
+**It's a research preview.** Anthropic is up-front that the behavior, limits, and API surface may change. The beta header (`experimental-cc-routine-2026-04-01`) is how they version the API — when they ship a breaking change, it'll go under a new dated header, and the two most recent versions continue to work so you have time to migrate. Plan to audit your routines every few weeks.
+
+**One-hour minimum cadence.** If you were hoping to run a routine every five minutes, you can't. The docs are explicit that expressions more frequent than one hour get rejected. That's a reasonable safety rail (routines are autonomous agents with credentials, not lightweight lambdas) but it rules out high-frequency monitoring use cases.
+
+**Per-account daily caps and webhook caps.** Routines have both a daily run cap per account and per-routine / per-account hourly caps on incoming GitHub webhook events. Events past the cap are *dropped*, not queued. If you care about every PR triggering a review, you need to verify your cap covers your PR volume — otherwise a busy afternoon can silently skip some routines.
+
+**Everything runs as you.** Commits, PRs, Slack messages, Linear tickets — all of them carry your identity. If a routine goes rogue and spams a channel, your teammates see *your* name on every message. This is why Anthropic defaults to only allowing pushes on `claude/`-prefixed branches unless you explicitly opt in. Leave that default on unless you really know what you're doing.
+
+**Tight prompts are the entire game.** Routines have no human in the loop. Every ambiguity in the prompt becomes a chance for Claude to go off the rails unattended. I've started treating every routine prompt the way I treat a production function: reviewed, explicit about success criteria, explicit about what *not* to do, and tested with a few manual `Run now` invocations before I enable any trigger.
+
+## What I'm Doing With It Next Week
+
+I'm deleting three cron jobs this weekend. I'm replacing two GitHub Actions that shelled out to the Claude API with a single GitHub-triggered routine each. I'm moving my nightly docs-drift script out of a VPS and into a schedule trigger. And I'm adding an API-triggered "post-mortem drafter" routine to the runbook for production incidents — when oncall declares an incident, they'll fire the routine with the Slack channel link, and a first draft of the timeline will be waiting in Linear by the time the incident is resolved.
+
+If you're running Claude Code in any serious capacity and you haven't created a routine yet, pick the single most annoying automation in your life, open [claude.ai/code/routines](https://claude.ai/code/routines), and port it over before Monday. It takes about ten minutes. You will immediately start seeing the other places in your stack that deserve the same treatment.
+
+This is the first feature in a while that genuinely changes what *shape* my Claude Code setup takes. Not a nicer IDE, not a better model — a whole new axis: *things that happen without me.* That's the category shift. Cron jobs that can reason. GitHub Actions that understand your codebase. Webhook handlers that can open a PR. Duct tape is dead; go build something weird.
+
+---
+
+*Want posts like this in your inbox? [Subscribe to my newsletter](/newsletter) — I break down new AI tools, compare them honestly, and tell you what's actually worth your time. No hype, no affiliate links, no "AI influencer" fluff.*
