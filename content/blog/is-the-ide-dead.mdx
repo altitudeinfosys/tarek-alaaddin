@@ -1,0 +1,185 @@
+---
+title: "Is the IDE Dead? I Just Cancelled My JetBrains Subscription"
+description: "I paid for IntelliJ IDEA for years. Today I let it lapse. Between Warp, VS Code, and the new Claude Code desktop app, I'm done with IDEs."
+date: "2026-04-15"
+category: "ai-tools"
+tags: ["ide", "jetbrains", "intellij", "warp", "claude-code", "vs-code", "developer-productivity", "ai-tools"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+I just let my JetBrains subscription lapse. After years of paying for IntelliJ IDEA — through the Java years, through the TypeScript years, through the "I swear I'll learn Kotlin" years — I opened the renewal email this morning and closed it. No drama, no angry tweet, no 2,000-word goodbye. I just... didn't click renew.
+
+And here's the thing that surprised me: **I'm not sure I miss it yet.**
+
+I want to figure out in public whether this is a genuine shift or whether I'm about to come crawling back in six weeks. Because if my workflow is any indication of where things are going, the traditional IDE — the big, integrated, everything-in-one-window text editor I grew up worshipping — might be in real trouble. Not because it's bad. Because the things *around* it finally got good enough that the center of gravity moved.
+
+Let me walk through how I got here.
+
+## The Setup I Used to Swear By
+
+For years my development rig was embarrassingly predictable. Open IntelliJ in the morning. Pay the ~15-second indexing tax on a cold start. Spend the day in the editor — running tests through the gutter icons, debugging through the built-in debugger, using the version control panel, the database tool, the HTTP client, the terminal tab. IntelliJ was my desktop.
+
+I wasn't a casual user either. I knew the keyboard shortcuts. I had my custom code style. I used Structural Search and Replace. I had opinions about which debugger icon meant "evaluate expression" and which meant "step into." I defended the subscription price in Slack arguments.
+
+The JetBrains pricing for a paying individual right now, for reference, is roughly **$169 for IntelliJ IDEA Ultimate** in the first year on a personal license, stepping down on renewal, plus **$10/month for AI Pro or $30/month for AI Ultimate** on top if you want the in-IDE AI — and yes, there are a lot of complaints on their own support forum about the credit-based AI pricing being unpredictable, with heavy users reporting $100+ monthly bills after the Ultimate credits ran out ([JetBrains AI plans](https://www.jetbrains.com/ai-ides/buy/), [The New Stack](https://thenewstack.io/jetbrains-names-the-debt-ai-agents-leave-behind/)).
+
+That's the piece that pushed me to actually do the math.
+
+## The Question I Couldn't Answer
+
+Here's what I realized when I looked at my own git activity for the last 90 days:
+
+**I'm not writing much code by hand anymore.**
+
+I'm orchestrating agents. I'm editing prompts. I'm reviewing diffs. I'm running CLI commands to kick off Claude Code sessions, stream their output in a terminal, check the result in a browser, merge a PR. The act of typing `public class Foo implements Bar` and having the IDE autocomplete `Bar` and add the import for me — that used to be 40% of my day. Now it's maybe 5%.
+
+<Callout type="info">
+If you're still hand-writing most of your code, this entire post is probably not about you. Keep paying for your IDE. You're still in the demographic that made JetBrains billions of dollars, and you should.
+</Callout>
+
+Once I admitted that, the question got uncomfortable: *what am I actually paying IntelliJ to do for me anymore?*
+
+I made a list. The IDE gave me:
+
+- A fast, project-wide symbol index
+- A great debugger
+- A refactoring engine I trusted
+- A unified UI for git, terminal, tests, and HTTP requests
+- Plugin support for every framework I touched
+
+I asked myself, for each one, *is there a free or cheaper tool that covers enough of this need that I don't need the all-in-one*? Here's what I found.
+
+## What Replaced the IDE Panes, One by One
+
+### The editor itself: VS Code (free)
+
+VS Code is still the gorilla, even in April 2026. The 2025 Stack Overflow Developer Survey had it at over 70% market share among developers, and the 2026 follow-ups show it holding that lead even as AI-native editors like Cursor (18% market share within 18 months of launch) chip away at the high end ([Visual Studio Magazine](https://visualstudiomagazine.com/articles/2025/08/01/stack-overflow-dev-survey-visual-studio-vs-code-hold-of-ai-ides-to-remain-on-top.aspx), [is4.ai](https://is4.ai/blog/our-blog-1/cursor-vs-vscode-copilot-comparison-2026-279)).
+
+For the small amount of hand-editing I still do, VS Code is fine. It's free. It has every extension I've ever needed. The Copilot integration works. The language servers work. It's not as good as IntelliJ for deep Java refactoring, and the debugger is not as good as IntelliJ's debugger — I want to be fair about that — but the gap only matters when you're debugging for hours. I'm rarely debugging for hours anymore.
+
+### The terminal: Warp
+
+This is the piece that genuinely changed my mental model.
+
+[Warp](https://www.warp.dev/warp-ai) is a Rust-based terminal that treats every command and its output as a discrete "block" — navigable, shareable, replayable. You type `#` and describe a command in natural language and it writes the command. You right-click an error and get an AI explanation. And — this is the part that matters for my IDE-is-dead argument — Warp now has **first-class support for Claude Code, Codex, Gemini CLI, and Opencode as coding agents**, with an "Agent Mode" where you can run up to 40 concurrent cloud agents on the Max plan and track them centrally.
+
+Warp also happens to be the current leader on the SWE-bench Verified benchmark at **75.6%**, which isn't a metric I usually care about but which tells me it's being taken seriously as a coding surface, not just a terminal with AI bolted on ([Warp AI](https://www.warp.dev/warp-ai)).
+
+Pricing: **free for 100 Warp AI requests per month**, or $18/month for the next tier. That's cheaper than IntelliJ Ultimate and it replaces more of my workflow than the IDE did.
+
+When your "terminal" is where you kick off refactors, where you read errors, where you spawn agents, where you track their progress — it stops being a terminal. It becomes the command center.
+
+### The editor-debugger-diff-viewer replacement: Claude Code Desktop
+
+This is the piece that finally tipped me. On April 14, 2026 — yesterday as I'm writing this — Anthropic shipped a redesigned [Claude Code desktop app](https://claude.com/blog/claude-code-desktop-redesign). I installed it the same day and it's been my main "IDE" for 24 hours. Here's what's in it:
+
+- A **multi-session sidebar** that lists every active and recent coding session, filterable by status, project, or environment
+- A **drag-and-drop pane layout**, so I can arrange the terminal, file editor, diff viewer, preview, and chat in whatever grid I want
+- An **integrated terminal** for running tests and builds without leaving the app
+- An **in-app file editor** for quick spot edits — click a file path in the chat or diff viewer, edit inline, click Save to write it back
+- A **rebuilt diff viewer** specifically engineered to handle large changesets without choking
+- An **expanded preview pane** that renders HTML files, PDFs, and the output of local dev servers
+- A **side chat feature** — `⌘+;` opens a branched conversation that doesn't pollute the main context
+
+The New Stack's hands-on ran the headline "Anthropic's redesigned Claude Code desktop app lets you burn through tokens even faster" ([The New Stack](https://thenewstack.io/claude-code-desktop-redesign/)), which is funny and also accurate. MacRumors described it as "rebuilt around parallel sessions," which is the more generous framing ([MacRumors](https://www.macrumors.com/2026/04/15/anthropic-rebuilds-claude-code-desktop-app/)).
+
+Read that feature list again and tell me what an IDE does that this doesn't, for an agent-first workflow.
+
+I can see the source code. I can see the diff. I can edit inline. I can run the terminal. I can preview the build. I can run multiple sessions against different repos in parallel. The thing it's missing — the refactoring engine, the deep language-aware symbol indexer, the debugger — are the exact three things I stopped using heavily when I stopped hand-writing most of my code.
+
+## The Bill at the Bottom
+
+Let me do the math on what I was actually paying versus what I'm actually paying now.
+
+**Old stack (what I cancelled):**
+
+- IntelliJ IDEA Ultimate, personal — $169/year (first year) → **~$14/month amortized**
+- JetBrains AI Pro — $10/month
+- **Total: ~$24/month**, with ongoing risk of AI credit overages if I ever got heavy
+
+**New stack (what I'm actually running):**
+
+- VS Code — **$0**
+- Warp, free tier — **$0** (I'll upgrade to the $18/mo tier if I start hitting limits on agents)
+- Claude Code — **already part of my existing Max plan**, not a new line item
+- GitHub Copilot — **$10/month** (I still pay for this because the autocomplete is legitimately the best of the inline-suggestion crop)
+
+**Total new: ~$10/month**, going to ~$28/month if I upgrade Warp.
+
+The raw savings aren't life-changing. It's $14–$24/month. The point isn't the dollars. The point is what the dollars are revealing: **I'm not using an IDE to do the things an IDE is best at**, and I've been paying for insurance against a workflow I don't have anymore.
+
+<Callout type="warning">
+I want to be honest about the risk here. If I end up back in a big Java codebase next quarter, or back in a long debugging session where I need to step through native code, I will 100% re-subscribe to IntelliJ. I'm not predicting the end of the IDE for every developer. I'm describing a workflow shift where the IDE's job is increasingly narrow.
+</Callout>
+
+## Is the IDE Actually Dead?
+
+No. Let me say that plainly, because the question in the title deserves a real answer.
+
+The IDE is not dead for:
+
+- Developers who write most of their code by hand. If you're doing detail work in a large monorepo with deep refactors, you still want JetBrains' symbol index and refactoring tools. They are, by a wide margin, the best at what they do.
+- Enterprise Java, Kotlin, C++, and Rust shops where the IDE's deep language support is load-bearing for debugging production issues.
+- Anyone who does heavy interactive debugging. The JetBrains debugger is still the best debugger on the market.
+- Teams where "sharing run configurations via the IDE project files" is part of the onboarding flow.
+
+The IDE **is** in trouble for:
+
+- Developers whose day is increasingly "review what the agent wrote and merge it." That's me.
+- Developers who want to run multiple concurrent coding sessions across multiple repos — a workflow the IDE was never designed for and which the new Claude Code desktop app is built around from the ground up.
+- Anyone whose "IDE time" is actually time spent reading diffs and clicking Merge, which is more and more of us.
+- Cost-conscious solo developers and indie hackers watching a $20–$40/month IDE bill stack next to a $20/month Copilot bill and a $100/month Claude Max bill and a $20/month Cursor bill and a $18/month Warp bill and wondering where their income went.
+
+<Callout type="tip">
+The clearest signal that your IDE is ripe for unbundling: open it tomorrow, and count how many of its panels you actually touch. If the answer is "the editor and the terminal," you already have two specialized tools that do those jobs better than the bundle does.
+</Callout>
+
+## What's Actually Happening
+
+Here's my theory. The 2026 developer toolchain is unbundling the IDE the same way the iPhone unbundled the standalone GPS, camera, and calculator. Not because any of those standalone devices were bad. Because the bundle got good enough that you didn't need specialized hardware for the 80% case. The specialized hardware still exists — professional photographers still carry real cameras — but most people don't.
+
+The IDE used to be the bundle. The bundle was: editor + debugger + symbol index + VCS panel + terminal + test runner + HTTP client + database tool. You paid $200/year to get all of that in one window and it was great.
+
+In April 2026, the components of that bundle look like this for me:
+
+- Editor → VS Code, free, works fine
+- Debugger → honestly, `console.log` and Claude reading the stack trace covers most cases
+- Symbol index → the agent greps the repo, which is slower but less fragile than a stale index
+- VCS panel → `gh` CLI and Warp blocks
+- Terminal → Warp, which is now the command center
+- Test runner → Claude Code's integrated terminal
+- HTTP client → curl, or the agent writes one for me on demand
+- Database tool → the agent queries the DB when it needs to, or I open a dedicated tool
+
+None of the replacements is individually better than the IntelliJ version. But the *bundle* of the replacements, orchestrated by an agent, costs less and handles my actual workflow better.
+
+The IDE isn't dead. It's been unbundled.
+
+## What I'll Re-Subscribe For
+
+If JetBrains wants me back — and for the record, I'd happily come back; I loved that product — here's what would do it:
+
+1. **A first-class "agent session" primitive baked into the IDE**, not a plugin. Show me multiple parallel Claude/Junie/Codex sessions in a sidebar the way Claude Code desktop now does, with proper diffs and branch management.
+2. **Flat AI pricing.** The credit system is scaring away power users ([see the complaints on the JetBrains support forum](https://intellij-support.jetbrains.com/hc/en-us/community/posts/31142845556370-Serious-Concerns-Regarding-JetBrains-AI-Pricing-Credit-Consumption-with-Junie-and-AI-Assistant)). Give me a flat monthly number and let me use it.
+3. **Treat the terminal as a first-class surface**, not a tab. Warp ate the IDE terminal. JetBrains' built-in terminal is functional and forgettable; Warp's is where my workflow actually lives.
+4. **Make the IDE feel lighter than the browser**. I cannot explain how weird it is that the Claude Code desktop app, an Electron app that ships an entire Chromium, feels snappier on my MacBook than IntelliJ's native Swing UI. Fix the cold start and the indexing pauses.
+
+Until something like that ships, I'm going to keep running this cheaper, weirder, more agent-shaped stack and see how it holds up.
+
+## Will You Pay for a More Sophisticated IDE?
+
+This is the question the reader who prompted this post asked me, and I'm going to throw it back at you.
+
+**If you're writing most of your code by hand:** yes, pay for JetBrains, it's the best tool for that job and it's not close.
+
+**If you're orchestrating agents more than you're writing code:** I think you should try going a month without an IDE subscription. Run VS Code, run Warp, run Claude Code desktop. See what you miss. If the answer is "nothing important," you have your answer. If the answer is "the debugger and the refactoring engine," you also have your answer and you should re-subscribe.
+
+**If you're somewhere in the middle:** the honest answer is to watch how your day actually shifts over the next six months. My bet is most of us are going to spend less time in a code window and more time in a chat window with code alongside it. And when that happens, the center of gravity of your toolchain will move — same as mine did.
+
+I'll report back in three months and tell you whether I re-subscribed.
+
+---
+
+**Enjoy this kind of honest, data-backed take on the developer tools I actually use?** [Subscribe to my newsletter](/newsletter) — I write one of these a week, usually after something in my workflow either breaks or changes my mind, and I don't pull punches on the tools I've paid for.
