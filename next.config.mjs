@@ -18,6 +18,11 @@ const nextConfig = {
       },
     ]
   },
+  async redirects() {
+    return [
+      { source: '/newsletter', destination: '/subscribe', permanent: true },
+    ]
+  },
 }
 
 export default nextConfig

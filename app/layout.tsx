@@ -32,6 +32,11 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: 'https://tarekalaaddin.com',
+    types: {
+      'application/rss+xml': [
+        { url: '/feed.xml', title: 'Tarek Alaaddin — Blog' },
+      ],
+    },
   },
   robots: {
     index: true,
