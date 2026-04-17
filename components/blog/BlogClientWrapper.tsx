@@ -40,6 +40,16 @@ export default function BlogClientWrapper({ posts }: BlogClientWrapperProps) {
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Insights on productivity, AI tools, software engineering, and building SaaS products
           </p>
+          <a
+            href="/feed.xml"
+            className="inline-flex items-center gap-1.5 mt-4 text-sm text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
+            aria-label="RSS feed"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6.18 15.64a2.18 2.18 0 012.18 2.18C8.36 19 7.38 20 6.18 20 5 20 4 19 4 17.82a2.18 2.18 0 012.18-2.18M4 4.44A15.56 15.56 0 0119.56 20h-2.83A12.73 12.73 0 004 7.27V4.44m0 5.66a9.9 9.9 0 019.9 9.9h-2.83A7.07 7.07 0 004 12.93V10.1z" />
+            </svg>
+            RSS
+          </a>
         </div>
 
         {/* Search */}
