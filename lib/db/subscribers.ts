@@ -1,7 +1,7 @@
-import { eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { db } from './index'
-import { subscribers, type Subscriber, type NewSubscriber } from './schema'
+import { subscribers, sentTo, type Subscriber, type NewSubscriber } from './schema'
 
 export interface UpsertSubscriberInput {
   email: string
@@ -77,6 +77,22 @@ export async function markUnsubscribed(token: string): Promise<Subscriber | null
 
 export async function listActiveSubscribers(): Promise<Subscriber[]> {
   return db.select().from(subscribers).where(eq(subscribers.status, 'active'))
+}
+
+/**
+ * Active subscribers who have NOT yet received the given send.
+ * Used by the cron so a partial failure can resume without double-sending.
+ */
+export async function listPendingSubscribersForSend(sendId: string): Promise<Subscriber[]> {
+  return db
+    .select()
+    .from(subscribers)
+    .where(
+      and(
+        eq(subscribers.status, 'active'),
+        sql`NOT EXISTS (SELECT 1 FROM ${sentTo} WHERE ${sentTo.subscriberId} = ${subscribers.id} AND ${sentTo.sendId} = ${sendId})`
+      )
+    )
 }
 
 export async function countByStatus(status: Subscriber['status']): Promise<number> {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAllPosts, getPostBySlug } from '@/lib/mdx'
-import { listActiveSubscribers } from '@/lib/db/subscribers'
+import { listActiveSubscribers, listPendingSubscribersForSend } from '@/lib/db/subscribers'
 import { findSendByPostSlug, recordSend, recordSentTo, updateSendRecipientCount } from '@/lib/db/sends'
 import { resend, FROM, REPLY_TO } from '@/lib/email/resend'
 import { renderBlogPostEmail } from '@/lib/email/templates'
@@ -17,7 +17,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const cutoff = parseCutoff(process.env.NEWSLETTER_CUTOFF_DATE)
+  let cutoff: Date
+  try {
+    cutoff = parseCutoff(process.env.NEWSLETTER_CUTOFF_DATE)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Invalid cutoff'
+    console.error('[cron/newsletter]', message)
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+
   const result = await runNewsletterSend({ cutoff, dryRun: false })
   return NextResponse.json(result)
 }
@@ -30,9 +38,21 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => ({}))
-  const cutoff = parseCutoff(body.cutoff || process.env.NEWSLETTER_CUTOFF_DATE)
-  const dryRun = !!body.dryRun
   const slug = typeof body.slug === 'string' ? body.slug : undefined
+  const dryRun = !!body.dryRun
+
+  let cutoff: Date
+  try {
+    cutoff = parseCutoff(body.cutoff || process.env.NEWSLETTER_CUTOFF_DATE)
+  } catch (error) {
+    // When force-sending a single slug, the cutoff doesn't apply — let it through.
+    if (!slug) {
+      const message = error instanceof Error ? error.message : 'Invalid cutoff'
+      console.error('[cron/newsletter]', message)
+      return NextResponse.json({ error: message }, { status: 500 })
+    }
+    cutoff = new Date(0)
+  }
 
   const result = await runNewsletterSend({ cutoff, dryRun, forceSlug: slug })
   return NextResponse.json(result)
@@ -65,21 +85,9 @@ async function runNewsletterSend({ cutoff, dryRun, forceSlug }: RunArgs) {
       continue
     }
 
-    const subscribers = await listActiveSubscribers()
-    if (subscribers.length === 0) {
-      summary.push({ slug: meta.slug, status: 'no-subscribers' })
-      if (!dryRun && !existing) {
-        await recordSend({
-          postSlug: meta.slug,
-          postTitle: meta.title,
-          recipientCount: 0,
-        })
-      }
-      continue
-    }
-
     if (dryRun) {
-      summary.push({ slug: meta.slug, status: 'dry-run', recipients: subscribers.length })
+      const activeSubs = await listActiveSubscribers()
+      summary.push({ slug: meta.slug, status: 'dry-run', recipients: activeSubs.length })
       continue
     }
 
@@ -89,12 +97,20 @@ async function runNewsletterSend({ cutoff, dryRun, forceSlug }: RunArgs) {
       recipientCount: 0,
     }))
 
+    // Idempotency: only email subscribers who have NOT already received THIS send.
+    // If a previous run partially completed, this excludes the ones already emailed.
+    const pending = await listPendingSubscribersForSend(send.id)
+    if (pending.length === 0) {
+      summary.push({ slug: meta.slug, status: 'already-sent-to-all', recipients: send.recipientCount })
+      continue
+    }
+
     const postUrl = `${SITE_URL}/blog/${meta.slug}`
-    let successCount = 0
+    let successCount = send.recipientCount
     const errors: string[] = []
 
-    for (let i = 0; i < subscribers.length; i += 100) {
-      const batch = subscribers.slice(i, i + 100)
+    for (let i = 0; i < pending.length; i += 100) {
+      const batch = pending.slice(i, i + 100)
       const batchPayload = batch.map((sub) => {
         const { subject, html, text } = renderBlogPostEmail({
           postTitle: meta.title,
@@ -149,11 +165,11 @@ async function runNewsletterSend({ cutoff, dryRun, forceSlug }: RunArgs) {
 
 function parseCutoff(raw: string | undefined): Date {
   if (!raw) {
-    return new Date()
+    throw new Error('NEWSLETTER_CUTOFF_DATE is not set — refusing to run. Set it to an ISO date in env (e.g. 2026-04-18) to opt in to sending.')
   }
   const parsed = new Date(raw)
   if (Number.isNaN(parsed.getTime())) {
-    return new Date()
+    throw new Error(`NEWSLETTER_CUTOFF_DATE is not a valid date: "${raw}"`)
   }
   return parsed
 }

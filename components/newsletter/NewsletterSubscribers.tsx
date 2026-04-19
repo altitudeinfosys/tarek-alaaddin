@@ -9,7 +9,7 @@ interface Subscriber {
   first_name?: string
   subscribed_at: string
   confirmed_at?: string
-  state: 'active' | 'inactive' | 'bounced' | 'complained' | 'cancelled'
+  state: 'active' | 'unsubscribed' | 'bounced' | 'complained'
   tags?: string[]
 }
 
@@ -86,14 +86,14 @@ export default function NewsletterSubscribers({ subscribers, isLoading }: Newsle
           Active ({subscribers.filter(s => s.state === 'active').length})
         </button>
         <button
-          onClick={() => setFilter('inactive')}
+          onClick={() => setFilter('unsubscribed')}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            filter === 'inactive'
+            filter === 'unsubscribed'
               ? 'bg-primary-600 text-white'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300'
           }`}
         >
-          Inactive ({subscribers.filter(s => s.state === 'inactive').length})
+          Unsubscribed ({subscribers.filter(s => s.state === 'unsubscribed').length})
         </button>
       </div>
 
@@ -139,7 +139,7 @@ export default function NewsletterSubscribers({ subscribers, isLoading }: Newsle
                     className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                       sub.state === 'active'
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                        : sub.state === 'inactive'
+                        : sub.state === 'unsubscribed'
                         ? 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
                         : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
                     }`}
