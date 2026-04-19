@@ -1,0 +1,209 @@
+---
+title: "Claude Opus 4.7 Review: The Complete Anthropic Model Guide for 2026"
+description: "A practitioner's breakdown of every Claude model in 2026 — benchmarks, pricing, when to use each, and why the community is split on Opus 4.7."
+date: "2026-04-19"
+category: "ai-tools"
+tags: ["anthropic", "claude-opus", "claude-sonnet", "claude-haiku", "claude-models", "opus-4-7", "ai-models", "model-comparison", "llm-benchmark", "claude-code"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Three days ago Anthropic dropped Claude Opus 4.7, and my timeline immediately split into two camps. Half the people I follow are calling it the best coding model they've ever used. The other half are calling it a regression from 4.6 and posting screenshots of it confidently hallucinating nonsense.
+
+Both groups are right. That's the interesting part.
+
+I've been running Opus 4.7 in Claude Code since launch day, and I've also been keeping Sonnet 4.6 and Haiku 4.5 running in production for different workloads. This post is my honest breakdown of every current Claude model — what each one does well, where it falls short, how they compare to each other, and when you should reach for which.
+
+No affiliate links. No sponsor. Just a developer who pays for these models with his own money and has opinions about where that money goes.
+
+## The Current Claude Lineup at a Glance
+
+Before I get into the nuance, here's the snapshot as of April 19, 2026:
+
+| Model | API ID | Input / Output (per MTok) | Context | Max Output | Knowledge Cutoff |
+|-------|--------|---------------------------|---------|------------|------------------|
+| **Opus 4.7** | `claude-opus-4-7` | $5 / $25 | 1M tokens | 128k tokens | Jan 2026 |
+| **Sonnet 4.6** | `claude-sonnet-4-6` | $3 / $15 | 1M tokens | 64k tokens | Aug 2025 |
+| **Haiku 4.5** | `claude-haiku-4-5-20251001` | $1 / $5 | 200k tokens | 64k tokens | Feb 2025 |
+
+All three support text and image input, tool use, and are available on the API, Amazon Bedrock, Google Cloud Vertex AI, and Microsoft Foundry.
+
+One thing jumps out immediately: the price gap between Opus and Sonnet is only 1.67x. That's dramatically narrower than earlier Claude generations where Opus was 5x more expensive. This changes the calculus for a lot of use cases.
+
+## Claude Opus 4.7: The Headline Act
+
+Opus 4.7 launched on April 16, 2026, and Anthropic positioned it as a step-change improvement in agentic coding. The benchmarks back that up — on paper.
+
+### Where Opus 4.7 Genuinely Shines
+
+**Coding benchmarks jumped significantly.** SWE-bench Verified went from 80.8% on Opus 4.6 to 87.6%. SWE-bench Pro — the harder version — jumped from 53.4% to 64.3%. CursorBench went from 58% to 70%. These aren't marginal gains. Anthropic claims Opus 4.7 solves 3x more production-grade tasks without human intervention than its predecessor.
+
+**Vision got a generational upgrade.** Maximum image resolution jumped from 1,568 pixels (1.15 megapixels) to 2,576 pixels (3.75 megapixels) — a 3.3x increase in pixel count. Visual acuity accuracy went from 54.5% to 98.5%. If you're doing computer use, screenshot analysis, or document extraction, this matters enormously. Coordinates are now 1:1 with actual pixels, so there's no scale-factor math required.
+
+**Memory is meaningfully better.** If your agent maintains a scratchpad, notes file, or structured memory store across turns, Opus 4.7 is noticeably better at writing useful notes and actually leveraging them later. This is the kind of improvement that doesn't show up in benchmarks but changes how productive you are with long-running sessions.
+
+**It beats GPT-5.4 and Gemini 3.1 Pro on the benchmarks that matter most for coding.** Per Anthropic's launch benchmarks, Opus 4.7 scores 64.3% on SWE-bench Pro versus GPT-5.4's 57.7% and Gemini 3.1 Pro's 54.2%. On agentic coding, scaled tool use, and financial analysis, Opus 4.7 leads its direct competitors.
+
+### The New Features Worth Knowing About
+
+**Task budgets** are genuinely useful for agentic workflows. You give Claude a token target for a full agentic loop, and the model sees a running countdown and uses it to prioritize work. It'll wrap up gracefully instead of burning through tokens aimlessly. The minimum is 20k tokens and it's advisory, not a hard cap — distinct from `max_tokens`, which is a hard per-request ceiling.
+
+**The `xhigh` effort level** sits between `high` and `max`, giving finer control over reasoning depth versus latency. For coding and agentic use cases, `xhigh` is the sweet spot I've landed on.
+
+<Callout type="warning">
+**Breaking changes you need to know about:** Opus 4.7 removes extended thinking budgets entirely — you must use adaptive thinking instead. Setting `temperature`, `top_p`, or `top_k` to non-default values now returns a 400 error. And thinking content is omitted from responses by default — if your product streams reasoning to users, set `display: "summarized"` or your UI will show a long pause before output begins.
+</Callout>
+
+### Where Opus 4.7 Falls Short
+
+Here's where it gets honest.
+
+**Long-context recall has regressed.** The MRCR (Multi-Round Context Recall) benchmark dropped from 78.3% on Opus 4.6 to 32.2% on Opus 4.7. That's not a marginal decline — it's a cliff. If you're feeding the model large documents and expecting it to reference specific details accurately, you will notice this. Multiple developers have reported that Opus 4.7 claims to have read an 800-line document but produces output completely unrelated to its content.
+
+**The new tokenizer inflates costs.** Opus 4.7's tokenizer can produce up to 1.35x more tokens for the same input text. The per-token price is unchanged, but your actual bill goes up 10-15% for typical workloads. Some Claude Pro subscribers have reported hitting their usage cap after only 3 questions with higher effort levels. Anthropic didn't raise the price — but they changed the ruler.
+
+**It's more literal and less forgiving.** Opus 4.7 follows instructions more literally than 4.6, particularly at lower effort levels. It won't silently generalize an instruction from one item to another. Workflows that previously succeeded with vague prompts now stall. This is technically an improvement in instruction-following, but it means you need to rewrite prompts that worked fine on 4.6.
+
+**BrowseComp dropped.** From 83.7% on Opus 4.6 to 79.3% on Opus 4.7. GPT-5.4 Pro scores 89.3% and Gemini 3.1 Pro scores 85.9% on that benchmark. If your use case is heavy on web search and browsing, the competitors have a clear lead.
+
+### The Community "Claude-lash"
+
+Business Insider coined the term "Claude-lash" to describe the reception, and honestly it fits. The community split along a fault line that says more about how people use models than about the model itself.
+
+**People who saw gains:** Those using Claude Code with `xhigh` or `max` effort, long-horizon agentic workflows, and multi-step tasks with tool use. For these users, Opus 4.7 is genuinely better than 4.6.
+
+**People who saw regression:** Those using lower effort levels, expecting seamless compatibility with existing 4.6 prompts, or relying on long-context recall. The combination of more literal instruction-following, hidden thinking content by default, and the new tokenizer created friction that felt like a downgrade.
+
+The irony is that both experiences are real. Opus 4.7 raised the ceiling and raised the migration cost at the same time.
+
+## Claude Sonnet 4.6: The One Most People Should Actually Use
+
+Here's my take that might surprise you: for 80% of professional developers, **Sonnet 4.6 is the right default model in April 2026.** Not Opus.
+
+Sonnet 4.6 launched on February 17, 2026, and it quietly became the daily driver for anyone who cares about cost efficiency. The numbers tell the story:
+
+- **SWE-bench Verified: 79.6%** — just 1.2 points behind Opus 4.6's 80.8%
+- In Claude Code testing, developers preferred Sonnet 4.6 over Sonnet 4.5 **70% of the time** and over the previous flagship Opus 4.5 **59% of the time**
+- **94% accuracy on insurance benchmarks** — the highest of any model tested
+- Matches Opus 4.6 on OfficeQA enterprise document tasks
+
+And it costs $3/$15 per million tokens. That's 40% cheaper than Opus per token, with prompt caching dropping cache reads to $0.30/MTok — a 90% savings.
+
+<Callout type="info">
+The consensus I keep hearing from production teams: Sonnet 4.6 delivers flagship-tier reasoning at mid-tier pricing. Unless you specifically need the extra edge Opus brings on the hardest adversarial tasks, Sonnet is the right default for most production agent work.
+</Callout>
+
+### When Sonnet 4.6 Beats Opus
+
+- **Medium-complexity coding** — code generation, refactoring, test writing, code review
+- **Document analysis** — contracts, reports, data extraction
+- **Real-time collaboration** — fast enough for interactive use where Opus latency is frustrating
+- **High-volume production workloads** — the cost difference compounds fast at scale
+- **Computer use and vision tasks** — strong performance without the Opus premium
+
+### When to Upgrade to Opus
+
+- Complex architecture decisions spanning large codebases
+- Tasks requiring extreme precision in instruction following (legal, compliance, brand voice)
+- Long-horizon agentic workflows where autonomy and multi-step reliability are critical
+- Hard research problems that benefit from deeper reasoning
+
+## Claude Haiku 4.5: The Unsung Workhorse
+
+Haiku 4.5 is the model nobody writes blog posts about, and it's the model keeping production costs manageable for everyone running AI at scale.
+
+At $1/$5 per million tokens — 5x cheaper than Opus — Haiku handles the high-volume, latency-sensitive work that would bankrupt you on Opus. It scores above 73% on SWE-bench Verified, supports extended thinking (a first for any Haiku model), processes both text and images, and has a 200k token context window.
+
+### What Haiku Is Built For
+
+- **Request routing and classification** — deciding which model should handle each incoming request
+- **Structured data extraction** — pulling fields from documents, emails, forms
+- **Content moderation and filtering** — high-volume classification at low cost
+- **Simple Q&A and summarization** — the kind of work that doesn't need frontier reasoning
+- **Sub-agents in multi-agent systems** — where you need 10 cheap workers, not 1 expensive one
+
+### The Three-Model Production Strategy
+
+The most sophisticated teams I've seen use all three models together:
+
+1. **Haiku 4.5** serves as the router, classifying incoming requests and handling simple ones directly
+2. **Sonnet 4.6** processes 75-80% of medium-complexity tasks
+3. **Opus 4.7** handles the 10-15% of requests that genuinely require deep reasoning
+
+This isn't theoretical — it's how multiple production systems are structured right now. The cost savings compared to running everything on Opus are dramatic, and the quality loss on the tasks Haiku and Sonnet handle is negligible.
+
+## The Mythos Elephant in the Room
+
+You can't write about Claude models in April 2026 without addressing Mythos.
+
+Claude Mythos Preview is the model Anthropic built, decided was too powerful to release, and locked behind Project Glasswing — a $100 million cybersecurity initiative with 40+ organizations including Microsoft, Apple, Google, CrowdStrike, and JPMorgan Chase.
+
+The benchmarks are staggering: SWE-bench Verified at 93.9% (versus Opus 4.7's 87.6%), SWE-bench Pro at 77.8% (versus 64.3%), and cybersecurity capabilities that found thousands of zero-day vulnerabilities including a 27-year-old bug in OpenBSD and a 16-year-old flaw in FFmpeg that survived 5 million automated tests.
+
+Anthropic publicly conceded that Opus 4.7 doesn't match Mythos. Some critics — Gizmodo's headline was particularly pointed — have suggested that the Opus 4.7 launch essentially reminded everyone how much better the model they *can't* have is.
+
+I wrote about [Project Glasswing in detail](/blog/project-glasswing-claude-mythos-explained) when it launched on April 7. The short version: Mythos is real, it's genuinely dangerous, and Anthropic's decision to restrict it is defensible even if you're skeptical about their motives. The relevant question for practitioners is what it means for the models we *can* use.
+
+<Callout type="tip">
+What Mythos means for Opus users: Anthropic says the cybersecurity capabilities in Opus 4.7 were deliberately reduced compared to Mythos. The model includes safeguards detecting and blocking high-risk cybersecurity requests. Security professionals can apply to the Cyber Verification Program for legitimate research.
+</Callout>
+
+## Head-to-Head: Opus 4.7 vs. The Competition
+
+Opus 4.7 doesn't exist in a vacuum. Here's how it stacks up against the direct competitors as of this week:
+
+| Benchmark | Opus 4.7 | GPT-5.4 | Gemini 3.1 Pro |
+|-----------|----------|---------|----------------|
+| SWE-bench Pro | **64.3%** | 57.7% | 54.2% |
+| CursorBench | **70%** | — | — |
+| BrowseComp | 79.3% | **89.3%** (Pro) | 85.9% |
+| Agentic coding | **Leader** | Strong | Strong |
+| Multilingual Q&A | Good | Good | **Leader** |
+
+Opus 4.7 leads on coding and agentic benchmarks. GPT-5.4 and Gemini 3.1 Pro lead on search, browsing, and specific domains. No single model dominates everything.
+
+The competitive landscape in April 2026 is genuinely tight. If your primary use case is coding and agent autonomy, Opus 4.7 has the edge. If it's search-heavy research or multilingual work, look at the alternatives.
+
+## Pricing Reality Check
+
+The sticker price says $5/$25 per million tokens — unchanged from Opus 4.6. But the actual cost story is more nuanced.
+
+**The tokenizer effect:** Opus 4.7's new tokenizer can produce up to 35% more tokens for the same input text. For a typical mixed workload, expect 10-15% higher token consumption.
+
+**The reasoning effect:** At higher effort levels (`xhigh`, `max`), the model generates more output tokens for improved reliability. This is a tradeoff — you're paying for better results, but you are paying more.
+
+**The practical impact:** If you were spending $100/month on Opus 4.6, expect roughly $110-$130/month on Opus 4.7 for the same workload. Not catastrophic, but not "unchanged pricing" either.
+
+**Cost optimization levers:**
+- Use prompt caching (up to 90% savings on cache reads)
+- Use the Batch API (50% discount on both input and output)
+- Route simple tasks to Haiku ($1/$5) or Sonnet ($3/$15) instead of sending everything to Opus
+- Use effort levels strategically — not every request needs `xhigh`
+- Set task budgets to prevent runaway token consumption in agentic loops
+
+## My Honest Model Recommendations
+
+After three days with Opus 4.7 and months with the full lineup, here's what I'd tell a developer asking me which model to use:
+
+**Use Opus 4.7 if:** You're doing complex agentic coding, multi-step workflows, computer use with screenshot analysis, or tasks where instruction-following precision justifies the premium. Recalibrate your prompts — it rewards specificity.
+
+**Use Sonnet 4.6 if:** You want the best balance of intelligence and cost for daily development work. Code generation, document analysis, real-time collaboration, production agent pipelines. This is the model most developers should default to.
+
+**Use Haiku 4.5 if:** You need speed and volume — classification, routing, extraction, moderation, sub-agents. Anywhere you're paying per-call and the volume is high.
+
+**Use all three if:** You're building a production system. Route with Haiku, handle the bulk with Sonnet, escalate the hard problems to Opus. This is the architecture that actually makes economic sense at scale.
+
+## What I'd Actually Tell You
+
+Opus 4.7 is the best coding model I've used when configured correctly — `xhigh` effort, adaptive thinking enabled, prompts retuned for its more literal interpretation style. The vision improvements alone justify the upgrade for computer-use workflows.
+
+But "configured correctly" is doing a lot of work in that sentence. If you drop Opus 4.7 into an existing 4.6 pipeline without touching your prompts, effort levels, or thinking configuration, you might genuinely experience it as a regression. The ceiling is higher, but the bar for using it well is higher too.
+
+And for most daily coding work? Sonnet 4.6 at $3/$15 per million tokens delivers 90-95% of what Opus can do at 40% less per token. That's not a consolation prize — that's an exceptional model that happens to be cheaper.
+
+The Anthropic model lineup in April 2026 is the strongest it's ever been. The question isn't which model is best — it's which model is best *for the specific thing you're doing right now*. And more often than not, the answer is Sonnet.
+
+---
+
+*Want more practical AI tool breakdowns? [Subscribe to the newsletter](/newsletter) for weekly deep dives.*
