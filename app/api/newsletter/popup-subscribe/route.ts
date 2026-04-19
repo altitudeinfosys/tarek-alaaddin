@@ -1,63 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { subscribeToNewsletter, addTagToSubscriber } from '@/lib/kit'
+import { upsertSubscriber } from '@/lib/db/subscribers'
+import { resend, FROM, REPLY_TO } from '@/lib/email/resend'
+import { renderWelcomeEmail } from '@/lib/email/templates'
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { email, firstName, honeypot } = body
 
-    // Honeypot: silently reject bots that fill the hidden field
     if (honeypot) {
       return NextResponse.json({ success: true })
     }
 
-    // Validate email
-    if (!email || typeof email !== 'string') {
-      return NextResponse.json(
-        { error: 'Email is required' },
-        { status: 400 }
-      )
+    if (!email || typeof email !== 'string' || !emailRegex.test(email.trim())) {
+      return NextResponse.json({ error: 'Valid email is required' }, { status: 400 })
     }
 
-    const trimmedEmail = email.trim()
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(trimmedEmail)) {
-      return NextResponse.json(
-        { error: 'Invalid email address' },
-        { status: 400 }
-      )
-    }
-
-    // Subscribe with all topics enabled (popup doesn't offer topic selection)
-    const result = await subscribeToNewsletter({
-      email: trimmedEmail,
-      firstName: firstName?.trim() || undefined,
+    const result = await upsertSubscriber({
+      email,
+      firstName: firstName?.trim() || null,
+      source: 'popup',
     })
 
-    if (!result.success) {
-      console.error('[Popup Subscribe] Kit subscription failed:', result.error)
-      return NextResponse.json(
-        { error: result.error || 'Failed to subscribe' },
-        { status: 500 }
-      )
-    }
-
-    // Add source-popup tag to track where subscriber came from
-    if (result.subscriberId) {
+    if (result.isNew || result.wasReactivated) {
       try {
-        await addTagToSubscriber(result.subscriberId, 'source-popup')
+        const { subject, html, text } = renderWelcomeEmail({
+          firstName: result.subscriber.firstName,
+          unsubscribeToken: result.subscriber.unsubscribeToken,
+        })
+        await resend.emails.send({
+          from: FROM,
+          to: result.subscriber.email,
+          replyTo: REPLY_TO,
+          subject,
+          html,
+          text,
+        })
       } catch (error) {
-        // Don't fail the subscription if tagging fails
-        console.error('[Popup Subscribe] Failed to add source-popup tag:', error)
+        console.error('[popup-subscribe] Welcome email failed:', error)
       }
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('[Popup Subscribe] Error:', error)
-    return NextResponse.json(
-      { error: 'An unexpected error occurred' },
-      { status: 500 }
-    )
+    console.error('[popup-subscribe] Error:', error)
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 })
   }
 }

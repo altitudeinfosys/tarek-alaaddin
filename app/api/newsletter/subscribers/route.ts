@@ -1,54 +1,33 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { db, subscribers } from '@/lib/db'
+import { desc } from 'drizzle-orm'
 
-const KIT_API_KEY = process.env.KIT_API_KEY
-const KIT_API_BASE_URL = process.env.KIT_API_BASE_URL || 'https://api.kit.com/v4'
+export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get('authorization')
+  const expected = `Bearer ${process.env.CRON_SECRET}`
+  if (!process.env.CRON_SECRET || authHeader !== expected) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
-export async function GET() {
   try {
-    if (!KIT_API_KEY) {
-      return NextResponse.json(
-        { error: 'Kit API is not configured' },
-        { status: 500 }
-      )
-    }
-
-    // TypeScript guard: KIT_API_KEY is guaranteed to be defined after the check above
-    const apiKey: string = KIT_API_KEY
-
-    // Fetch subscribers from Kit.com API
-    const response = await fetch(`${KIT_API_BASE_URL}/subscribers`, {
-      headers: {
-        'X-Kit-Api-Key': apiKey,
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error(`Kit API error: ${response.status}`)
-    }
-
-    const data = await response.json()
-
-    // Transform Kit API response to match our interface
-    const subscribers = (data.subscribers || []).map((sub: any) => ({
+    const rows = await db.select().from(subscribers).orderBy(desc(subscribers.subscribedAt))
+    const data = rows.map((sub) => ({
       id: sub.id,
-      email: sub.email_address,
-      first_name: sub.first_name,
-      subscribed_at: sub.created_at,
-      confirmed_at: sub.confirmed_at,
-      state: sub.state,
-      tags: sub.tags || [],
+      email: sub.email,
+      first_name: sub.firstName,
+      status: sub.status,
+      source: sub.source,
+      subscribed_at: sub.subscribedAt,
+      unsubscribed_at: sub.unsubscribedAt,
+      interests: {
+        productivity: sub.interestProductivity,
+        ai: sub.interestAi,
+        marketing: sub.interestMarketing,
+      },
     }))
-
-    return NextResponse.json({
-      success: true,
-      subscribers,
-      total: subscribers.length,
-    })
+    return NextResponse.json({ success: true, subscribers: data, total: data.length })
   } catch (error) {
-    console.error('Error fetching subscribers:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch subscribers' },
-      { status: 500 }
-    )
+    console.error('[subscribers list] Error:', error)
+    return NextResponse.json({ error: 'Failed to fetch subscribers' }, { status: 500 })
   }
 }
