@@ -1,0 +1,174 @@
+---
+title: "Stop Telling AI What to Do — Give It Success Criteria Instead"
+description: "Karpathy's approach to AI agents works: define what 'done' looks like, not how to get there. Here's why it matters and how to apply it with practical examples."
+date: "2026-04-21"
+category: "ai-tools"
+tags: ["ai-agents", "prompt-engineering", "karpathy", "success-criteria", "context-engineering", "claude-code", "autoresearch", "agentic-engineering"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Last month I watched an AI agent run 700 experiments in two days. It discovered 20 optimizations that improved language model training performance by 11%. No human touched the code. No one reviewed intermediate results. The agent just looped — proposing changes, running training, measuring results, keeping what worked, discarding what didn't.
+
+The person who set this up was Andrej Karpathy, and the secret wasn't some exotic prompting framework. It was a markdown file with a clear definition of what "better" means and a single instruction in all caps: NEVER STOP.
+
+The most effective way to work with AI in 2026 isn't telling it what to do. It's defining what success looks like and letting the model figure out the rest.
+
+## The Prompting Mental Model That's Holding You Back
+
+Most developers still write prompts like cooking recipes. Step 1: do this. Step 2: do that. Step 3: format the output like this. It's the mental model we inherited from programming — explicit instructions, sequential execution, deterministic outputs.
+
+The problem is that LLMs aren't instruction executors. They're pattern completers with emergent reasoning capabilities trained through reinforcement learning with verifiable rewards. When you give a model step-by-step instructions, you're constraining it to your solution path. When you give it success criteria, you're letting it explore the entire solution space.
+
+Karpathy put it bluntly: "LLMs are exceptionally good at looping until they meet specific goals. Don't tell it what to do, give it success criteria and watch it go."
+
+This isn't a minor tactical adjustment. It's a fundamental reframe of the human-AI collaboration model.
+
+## What Success Criteria Actually Look Like
+
+The difference between instructions and success criteria is the difference between "how" and "what." Here's how common tasks transform:
+
+| Instead of... | Transform to... |
+|---|---|
+| "Add input validation to this form" | "Write tests for every invalid input case, then make them all pass" |
+| "Fix the authentication bug" | "Write a test that reproduces the bug, then make it pass" |
+| "Refactor the payment module" | "All existing tests must pass before and after. No new dependencies." |
+| "Build me a landing page" | "Lighthouse score above 95 on all four metrics. Mobile and desktop." |
+| "Optimize database queries" | "P95 response time under 200ms on the benchmark dataset" |
+
+Notice the pattern. Every success criterion is **verifiable**. There's no ambiguity about whether the model succeeded. A test either passes or it doesn't. A Lighthouse score is either above 95 or it isn't. P95 is either under 200ms or it's not.
+
+This is the critical insight: success criteria work because they give the model a feedback loop. The model can try something, check whether it worked, and iterate. Instructions don't give you that — they're a one-shot bet that your prescribed approach is the best one.
+
+<Callout type="info">
+**The binary rule:** Every success criterion should be answerable with yes or no. "Make it work" is not a criterion — it's a wish. "All tests pass and build succeeds with zero warnings" is a criterion. If you can't express it as pass/fail, rewrite it until you can.
+</Callout>
+
+## Inside Karpathy's AutoResearch
+
+Karpathy's autoresearch project is the clearest demonstration of this philosophy at scale. Here's the architecture stripped to its essentials:
+
+**Three files:**
+- `prepare.py` — The evaluation harness. Immutable. The human defines what "better" means here, and the agent can never modify it.
+- `train.py` — The code the agent iterates on. Every change gets measured against `prepare.py`.
+- `program.md` — The agent's instructions. Goals, constraints, and a running log of what's been tried.
+
+**The loop:**
+1. Agent reads `program.md` and `train.py`
+2. Proposes a modification
+3. Implements the change
+4. Commits to a git branch
+5. Runs exactly 5 minutes of training (fixed wall-clock budget)
+6. Evaluates against the `val_bpb` metric (validation bits-per-byte)
+7. Keeps the commit if the metric improved; reverts if not
+8. Repeats
+
+Throughput is roughly 12 experiments per hour. An overnight run yields 80-100 experiments. In the flagship run, 700 experiments over two days found 20 optimizations, and those optimizations transferred to larger models — yielding an 11% training speed improvement.
+
+Shopify replicated the pattern and saw 37 experiments produce a 19% validation improvement on a 0.8B parameter model — overnight, with no human involvement.
+
+The key insight is what makes this work: **constrained autonomy**. One file to edit. One metric to optimize. A short enough budget that bad ideas die fast. A history log so the agent doesn't repeat itself. These constraints turn "LLM in a loop" from a directionless agent into something that consistently improves over time.
+
+## The 3-to-6 Rule for Criteria Design
+
+After running autoresearch-style loops and studying how others have applied the pattern, I've landed on a simple framework for designing effective success criteria:
+
+**Below 3 criteria:** The agent finds loopholes. It technically satisfies your criteria while producing garbage. A single metric like "minimize training loss" gets gamed — the agent might overfit catastrophically and call it a win.
+
+**3 to 6 criteria:** The sweet spot. Enough constraints to prevent gaming, few enough that the agent can meaningfully optimize across all of them.
+
+**Above 6 criteria:** The agent starts gaming the checklist instead of improving real quality. It spreads its attention thin, making micro-optimizations that tick boxes without moving the needle on what actually matters.
+
+And every criterion must be binary. The moment you introduce a sliding scale — "rate quality from 1 to 7" — the agent learns to produce outputs that score a 5 but read like garbage. Binary forces genuine improvement: it either passes or it doesn't.
+
+<Callout type="warning">
+**Weak vs. strong criteria:** "Make the API faster" is weak — it requires constant clarification. "P95 latency under 100ms, P99 under 500ms, zero 5xx errors on the load test suite" is strong — it enables independent looping. If the agent keeps asking you questions, your criteria aren't specific enough.
+</Callout>
+
+## Why This Works: The RLVR Connection
+
+This isn't just a productivity hack. There's a deep reason why success criteria align with how modern LLMs work.
+
+The 2025 training revolution was Reinforcement Learning with Verifiable Rewards (RLVR). Instead of training models to imitate human text (the old supervised learning approach), RLVR trains models to optimize for outcomes that can be objectively verified. Did the code compile? Did the test pass? Did the proof hold?
+
+When you give a model success criteria at inference time, you're speaking its native language. You're framing the task the same way it was trained — as an optimization problem with a verifiable objective. Step-by-step instructions, by contrast, ask the model to imitate a human's solution process rather than leveraging its own learned reasoning capabilities.
+
+Karpathy described the progression this way: "vibe coding" (human reviews AI output) leads to "agentic engineering" (human orchestrates agents in real time) which leads to fully independent research (human sets direction only). Each stage transfers more execution to the model while the human focuses increasingly on defining what success looks like.
+
+## Context Engineering: The Infrastructure Layer
+
+Giving models success criteria is necessary but not sufficient. You also need to give them the right context to work with.
+
+Anthropic's engineering team published a detailed guide on what they call "context engineering" — the practice of assembling all necessary information into the model's input at runtime. Karpathy frames it this way: LLMs are like CPUs, and the context window is RAM. Your job as an engineer is to be the operating system — loading the right data for each specific task.
+
+The practical techniques:
+
+**Find the right altitude.** Too specific and you create brittle, high-maintenance systems that don't generalize. Too vague and the model lacks concrete behavioral signals. Aim for what Anthropic calls "the minimal set of information that fully outlines your expected behavior."
+
+**Use tools as context efficiency levers.** Well-designed tools should be self-contained with minimal functional overlap and unambiguous use cases. If you as the engineer can't definitively choose which tool applies to a situation, neither can the agent.
+
+**Retrieve just in time.** Instead of loading everything upfront, maintain lightweight identifiers and let the agent fetch data on demand. This mirrors how Claude Code operates — dynamically loading files as needed rather than stuffing the entire codebase into context.
+
+**Structure for long horizons.** For extended tasks, use compaction (summarizing conversation history), structured note-taking (persistent memory outside the context window), and sub-agent architectures (focused specialists returning condensed summaries to a coordinator).
+
+## Karpathy's CLAUDE.md: Four Rules That Actually Work
+
+Karpathy published a concise set of rules for working with Claude Code that operationalizes this philosophy. Adapted into a widely-used `CLAUDE.md` configuration, the four rules are:
+
+1. **Think before writing.** "Do not silently assume. Do not hide confusion." Models should surface uncertainty rather than guessing. This prevents the most common failure mode — the agent confidently doing the wrong thing.
+
+2. **Keep things simple.** "Do not add features that were not requested. Do not abstract one-off code." Simplicity isn't just aesthetic. Every unnecessary abstraction is a surface area for bugs, and agents over-engineer when left unconstrained.
+
+3. **Make precise changes.** "Every changed line should trace directly back to the user's request." This prevents scope creep — one of the biggest problems with autonomous agents. Without this constraint, a model asked to fix a typo might refactor half the file.
+
+4. **Goal-driven execution.** Provide verifiable success criteria with explicit verification steps. Structure multi-step tasks as: step → verify, step → verify, step → verify.
+
+These aren't mysterious techniques. They're guardrails that prevent the three most common AI coding failures Karpathy identified: wrong assumptions, over-complexity, and unintended modifications.
+
+## From Theory to Practice: My Workflow
+
+I've been running this approach for the past several months with Claude Code, and the results have been striking. Here's what changed:
+
+**Before (instruction-based):** I'd write detailed step-by-step prompts. "First, create a new component in `src/components/`. Then add the following props... Then implement the render logic like this..." The output was usually correct but often missed edge cases I hadn't anticipated. If my instructions had a gap, the model produced a gap.
+
+**After (criteria-based):** I describe what "done" looks like. "The component renders a paginated table. All accessibility tests pass. Mobile layout stacks columns. Loading state shows skeleton placeholders. Error state shows a retry button that actually retries." Then I let the model figure out the implementation.
+
+The difference is that criteria-based prompting gives the model room to catch things I missed. When I specified success criteria for a data table component, the model added keyboard navigation I hadn't thought to request — because "all accessibility tests pass" implicitly requires it. The model surprised me within my definition of success.
+
+That's the whole point. You're not constraining the model to your solution. You're constraining it to your desired outcome. Everything between "here's what done looks like" and the finished result is the model's problem to solve.
+
+<Callout type="tip">
+**Start with tests.** The fastest way to adopt this approach is TDD. Write the tests first — they ARE your success criteria. Then tell the model: "Make all tests pass." You've just converted your entire workflow to criteria-based without learning a new framework.
+</Callout>
+
+## The Hard Part: Knowing What to Ask For
+
+Karpathy acknowledged the limitation honestly: "Writing a good `program.md` requires having done the research yourself. You need to know which directions are worth trying. The agent handles execution, but the judgment behind the research agenda remains human."
+
+This is the bottleneck most people skip over. Success criteria only work if they're the right criteria. Telling a model to "optimize for page speed" is useless if the actual problem is a missing database index that wouldn't show up in frontend metrics.
+
+The human's job has shifted from "write the code" to "understand the problem deeply enough to define what success means." That's harder than it sounds. It requires:
+
+- Domain expertise to know what metrics matter
+- Systems thinking to avoid Goodhart's Law (when a measure becomes a target, it ceases to be a good measure)
+- Enough technical depth to write criteria that can't be gamed
+- The discipline to resist the urge to add instructions when criteria feel "too open"
+
+Karpathy has reportedly not written code since December 2025. He runs 10-20 agents in parallel. But he spends significant time on the specifications that drive those agents. The writing didn't disappear — it changed from code to criteria.
+
+## What Happens When You Let Go
+
+The uncomfortable truth about success criteria is that they require trust. You have to believe the model can find a path you didn't prescribe. That's hard for developers who've spent years building up intuitions about the "right" way to solve problems.
+
+But the data is clear. Karpathy's autoresearch produced optimizations that surprised him — techniques he hadn't considered, parameter configurations he wouldn't have tried. Shopify's overnight run found improvements their ML team hadn't explored. The whole point is that the model's search space is larger than yours.
+
+The agent will sometimes take a path you wouldn't have chosen. That's not a bug. If the success criteria are well-defined, the path doesn't matter — only the outcome does. And sometimes the unfamiliar path leads somewhere better than anything you would have prescribed.
+
+The approach that works in 2026 isn't "tell it what to do." It's "tell it what done looks like, give it the tools to verify, and get out of the way."
+
+That's the Karpathy model. And from everything I've seen, it's correct.
+
+---
+
+*If you found this useful, [subscribe to my newsletter](/subscribe) for weekly deep dives on AI tools, agentic engineering, and the frameworks that actually work in production.*
