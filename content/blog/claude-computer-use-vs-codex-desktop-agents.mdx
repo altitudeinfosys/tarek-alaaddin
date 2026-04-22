@@ -1,0 +1,181 @@
+---
+title: "Claude Computer Use vs Codex: Which Desktop AI Agent Actually Works?"
+description: "Comparing Claude computer use and Codex desktop agents — benchmarks, pricing, architecture, and which one to pick."
+date: "2026-04-22"
+category: "ai-tools"
+tags: ["claude-computer-use", "openai-codex", "desktop-agents", "computer-use", "ai-agents", "anthropic", "openai", "ai-comparison", "desktop-automation"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+I asked Claude to file an expense report. It took a screenshot of my desktop, found the spreadsheet icon, double-clicked it, navigated to the right tab, and started filling in cells — methodically, one screenshot at a time, like a very patient intern sharing my screen.
+
+Twenty minutes later I asked Codex to do the same thing. It spun up a background session, did the work with its own cursor while I kept writing code, and pinged me when it was done. I never saw it move.
+
+Same task, same computer, completely different experience. That's the state of desktop AI agents in April 2026 — two companies racing to control your mouse, and they've arrived at opposite architectures for the same problem.
+
+I've been running both since they shipped. Here's what actually works, what doesn't, and which one you should pick.
+
+## The Core Difference: Screenshot-First vs Background-First
+
+The architectural split between Claude and Codex tells you everything about how each company thinks about desktop automation.
+
+**Claude's approach is screenshot-based.** Claude takes a screenshot of your screen, reasons about what it sees, decides what action to take (click, type, scroll), executes it, takes another screenshot, and repeats. It's a perception-action loop that mirrors how a human would operate a computer if they could only see still frames. The model doesn't have access to the DOM or any application APIs — it literally reads pixels.
+
+**Codex's approach is background-first.** When Codex uses your desktop, it runs in a separate session. Multiple agents can operate in parallel without touching your primary workspace. You keep working in one window while Codex agents are clicking through Figma, running Xcode builds, or testing flows in your simulator — each with their own cursor.
+
+This isn't a minor implementation detail. It changes the entire user experience.
+
+With Claude, you hand over your screen. Claude takes the wheel, and you watch (or walk away). With Codex, you never lose control. The agents work alongside you, not instead of you.
+
+<Callout type="info">
+**The concurrency gap matters more than benchmarks.** Claude's computer use is single-threaded — one agent, one screen. Codex can run multiple agents in parallel background sessions. For workflows that involve waiting (builds, deploys, test suites), parallel agents save real time.
+</Callout>
+
+## Benchmarks: Claude Leads on Vision, Codex Leads on Terminal
+
+Let's get the numbers out of the way. Both companies publish results on OSWorld-Verified, the standard benchmark for computer use agents navigating real desktop environments.
+
+| Benchmark | Claude (Opus 4.7) | Codex (GPT-5.3) | Winner |
+|---|---|---|---|
+| OSWorld-Verified | 78.0% | 64.7% | Claude |
+| SWE-bench Verified | 87.6% | ~49% | Claude |
+| Terminal-Bench 2.0 | 65.4% | 77.3% | Codex |
+
+The OSWorld gap is significant — 13+ percentage points. Claude is meaningfully better at understanding visual interfaces, reading UI elements, and coordinating multi-step desktop workflows. Opus 4.7's vision upgrade (2,576-pixel resolution with 1:1 coordinate mapping) gives it an edge that shows up clearly in tasks requiring precise clicking and reading small text.
+
+But Codex dominates terminal tasks. Terminal-Bench 2.0 scores show Codex at 77.3% versus Claude Code at 65.4%. If your automation involves shell commands, file operations, and CLI workflows, Codex has the edge.
+
+The SWE-bench numbers tell the coding story: Claude Code at 87.6% versus Codex at roughly 49%. For complex codebase reasoning — understanding a large project, tracing bugs across files, making multi-file changes — Claude is in a different league.
+
+<Callout type="warning">
+**Benchmark context matters.** OSWorld-Verified scores are close enough across providers that your specific workload will vary more than the benchmark gap. Don't pick a tool based on a 5-point OSWorld difference. Pick it based on whether your tasks are visual (Claude wins) or terminal-heavy (Codex wins).
+</Callout>
+
+## How Each One Actually Works Day-to-Day
+
+### Claude Computer Use: The Methodical Worker
+
+Claude's computer use is available through Claude Cowork (the desktop app) and Claude Code (the terminal). It launched on Mac on March 23, 2026, with Windows following ten days later — Anthropic's fastest platform expansion for a research preview feature.
+
+Here's the workflow:
+
+1. You ask Claude to do something that requires screen interaction
+2. Claude checks if it can use a direct connector first (Slack API, Google Calendar, etc.)
+3. If no connector exists, it tries browser control
+4. Only as a last resort does it take over the desktop
+
+This priority chain is smart. Direct API calls are faster and more reliable than clicking through a UI. Claude only reaches for the mouse when it genuinely has no better option.
+
+When it does use the desktop, Claude is meticulous. It takes a screenshot, announces what it sees, explains what it's about to do, and asks for permission before accessing new applications. The prompt injection scanner runs automatically on every screenshot. You can stop it at any point.
+
+The trade-off is speed. Screenshot-based interaction adds latency at every step. Take screenshot, send to API, get response, execute action, take another screenshot. For tasks with many UI interactions, this loop adds up.
+
+### Codex Computer Use: The Parallel Operator
+
+Codex's computer use shipped on April 16, 2026, as part of the "Codex for (almost) everything" update. It's Mac-only at launch and not yet available in the EU, UK, or Switzerland.
+
+The experience is different from Claude in almost every way:
+
+1. You tell Codex what to do
+2. Codex spins up a background session with its own cursor
+3. It works through the task while you keep using your computer normally
+4. Multiple agents can run simultaneously
+
+The parallel execution model is Codex's killer feature. You can have one agent testing a flow in your iOS simulator, another reviewing a Figma design, and a third running through a CI pipeline — all while you're writing code in your editor.
+
+Codex also has 90+ curated plugins that integrate with tools like Slack, Notion, Google Workspace, GitHub, GitLab, Atlassian, CircleCI, and Render. These plugins act as pre-built skills, so Codex doesn't need to navigate UIs for supported apps.
+
+The memory feature is another standout. Codex remembers your preferences, coding style, past corrections, and project context across sessions. It surfaces this knowledge automatically in future conversations. Claude has memory too, but Codex's implementation feels more tightly integrated with the desktop agent workflow.
+
+## Pricing: The Math That Matters
+
+Both tools are subscription-based for consumer use, but the pricing structures are different enough that the right choice depends on your volume.
+
+| Plan | Claude | Codex |
+|---|---|---|
+| Basic access | Pro: $20/mo | ChatGPT Plus: $20/mo |
+| Power user | Max 5x: $100/mo | Business + Codex add-on: $120/mo |
+| Heavy usage | Max 20x: $200/mo | Enterprise (custom) |
+| API (per MTok input/output) | $3/$15 (Sonnet 4.6) to $5/$25 (Opus 4.7) | Token-based billing |
+
+Claude's computer use is available on the $20/mo Pro plan, which makes it the cheapest entry point. Codex's computer use requires the desktop app with a ChatGPT subscription, and the $100 Codex add-on unlocks higher limits for power users.
+
+For API usage, Claude's computer use is available through the standard Messages API with a beta header. Codex's computer use is currently a desktop-app feature — there's no standalone API for it yet.
+
+<Callout type="tip">
+**If you're cost-sensitive, start with Claude Pro at $20/mo.** You get computer use, Claude Code, and Cowork in a single subscription. Codex requires separate subscriptions for ChatGPT and the Codex add-on if you need higher limits.
+</Callout>
+
+## Platform Support: Cross-Platform vs Mac-First
+
+This is a clear differentiator right now.
+
+**Claude:** Mac, Windows, and Linux (via the API and Docker-based reference implementation). The consumer-facing computer use works on Mac and Windows through Claude Desktop. The API works anywhere you can run a container.
+
+**Codex:** Mac only at launch. EU, UK, and Switzerland are excluded. Windows and Linux support are on the roadmap but don't have dates.
+
+If you're on Windows or Linux, Claude is your only option today. If you're on Mac in the US, you have both.
+
+## What Each Tool Does Better
+
+After running both for a week, here's where each one genuinely excels:
+
+### Choose Claude When:
+
+- **You need cross-platform support.** Windows, Linux, or API-based automation
+- **Your tasks are visually complex.** Reading dense UIs, navigating unfamiliar applications, working with spreadsheets or design tools
+- **You need API-level control.** Claude's computer use is a full API — you can build custom automation harnesses, integrate with CI/CD, and run it in containers
+- **You work with multiple codebases.** Claude Code's SWE-bench dominance (87.6%) means it's better at understanding and modifying complex code
+- **Safety is paramount.** Claude's layered approach (connectors first, browser second, desktop last) plus automatic prompt injection scanning is more conservative
+
+### Choose Codex When:
+
+- **You need parallel execution.** Multiple agents running simultaneously without blocking your workflow
+- **Your workflow is Mac-native.** Xcode, Simulator, Figma, and other Mac apps work well with Codex's background sessions
+- **You want a plugin ecosystem.** 90+ curated integrations means less UI navigation for common tools
+- **Terminal automation matters.** Codex's Terminal-Bench lead (77.3% vs 65.4%) shows it's better for CLI-heavy workflows
+- **You want persistent memory.** Codex remembers your preferences and past interactions more seamlessly across sessions
+
+## The Safety Question
+
+Both companies take safety seriously, but their approaches differ.
+
+Claude is more cautious by default. It asks for permission before accessing new applications, scans screenshots for prompt injection attempts, prioritizes API connectors over UI control, and Anthropic recommends running it in sandboxed environments for the API. Some applications are off-limits entirely.
+
+Codex takes a different stance with its curated plugin model. By vetting and packaging integrations as official plugins, OpenAI reduces the surface area for prompt injection — the agent interacts through a controlled interface rather than navigating arbitrary UIs. But background computer use introduces a new category of risk: agents operating on your machine without you watching.
+
+Neither approach is wrong. Claude's is more transparent (you see what it's doing). Codex's is more autonomous (it works without you watching). Your comfort level with each model operating unsupervised should factor into your choice.
+
+## The Enterprise Angle
+
+For team and enterprise deployments, the integration story matters.
+
+Claude integrates through AWS Bedrock, Google Cloud Vertex AI, and Microsoft Foundry. The computer use API is available with zero data retention (ZDR) for organizations with compliance requirements. This makes it viable for regulated industries where screen data can't be stored by third parties.
+
+Codex inherits ChatGPT Enterprise's SSO, audit logging, and data residency settings. The plugin ecosystem includes business tools like Atlassian Rovo, Microsoft Suite, and CircleCI. For organizations already standardized on OpenAI, Codex slots into the existing procurement and compliance workflow.
+
+## Where This Is All Heading
+
+Both tools are in research preview or early release. The gap will narrow. Here's what I'm watching:
+
+**Claude's next move** is probably parallel sessions. The single-threaded limitation is the biggest gap versus Codex, and Anthropic has the vision capabilities to make multi-agent desktop control work well.
+
+**Codex's next move** is probably cross-platform and API access. Being Mac-only with no standalone computer use API limits who can use it and how. Windows support and an API would open up enterprise automation use cases.
+
+**The wildcard** is Gemini. Google's Project Mariner has been in limited preview, and Google has the advantage of owning Chrome, Android, and a massive cloud platform. When they ship computer use at scale, the three-way competition will reshape this market fast.
+
+## My Recommendation
+
+**Claude for most developers. Codex for Mac-native power users.** That's my call today.
+
+Claude's cross-platform support, superior vision, API availability, and lower entry price ($20/mo for full access) make it the more versatile choice. If you're building automation, working across platforms, or need the best visual understanding, Claude is ahead.
+
+Codex is the better choice if you live in the Mac ecosystem, value parallel background agents, and want a deep plugin library for common dev tools. The ability to keep working while agents handle tasks in the background is a genuine productivity advantage that Claude can't match yet.
+
+The smart move is to try both. Claude Pro is $20/month. Codex is bundled with your ChatGPT subscription. Run them on the same tasks for a week and see which one fits how you actually work — not how benchmarks say you should work.
+
+---
+
+*If you found this useful, [subscribe to my newsletter](/subscribe) for weekly hands-on comparisons of AI developer tools and the workflows that actually work in production.*
