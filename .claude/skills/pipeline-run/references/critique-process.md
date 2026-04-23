@@ -20,6 +20,7 @@ curl -s -X PATCH "https://api.notion.com/v1/pages/PAGE_ID" \
 - Read the generated MDX file from `/Users/tarekalaaddin/Projects/code/tarek-alaaddin/content/blog/SLUG.mdx`
 - Recall research notes from Phase 1.5
 - Read the 2 most recent published posts from `content/blog/` as voice/style references — extract a ~200-word excerpt from each to use as voice calibration in step 4
+- Read `references/voice-profile.md` for voice and fact compliance checking during critique
 
 ## Step 3: Write Blog Content + Research Notes to Critique File
 
@@ -55,15 +56,29 @@ prompt: |
   You are a senior content editor. Critique this blog post across these dimensions:
 
   **a) Voice & Writing Quality:**
-  - Matches target voice: conversational, direct, bold opinions, data-driven
+  - Matches the author's voice profile: operator tone, practical first, substance over fluff,
+    authority mixed with relatability, detail-driven but not stiff, direct, credible, earnest
+  - NOT a marketer, academic, or corporate executive voice — should sound like a builder
   - No AI-writing cliches ("In today's rapidly evolving...", "It's worth noting...", "In conclusion...")
+  - No generic motivational filler
   - Strong hook in first paragraph, engaging section headers
   - Variety in sentence length and structure
+  - Humor: 10-15% dosage, dry/situational only, one witty line every few paragraphs max
+  - No entertainer tone, no trying too hard to be funny, no bitter sarcasm
   - Compare against these reference posts for voice calibration:
     --- Reference Post 1 excerpt ---
     <inline the ~200-word excerpt from reference post 1 here>
     --- Reference Post 2 excerpt ---
     <inline the ~200-word excerpt from reference post 2 here>
+
+  **e) Personal Fact Compliance:**
+  - Check EVERY personal anecdote or detail against confirmed facts:
+    cat named Lulu, has a daughter, gym 4x/week, based in Jordan,
+    works at Altitude InfoSys, uses Claude Code/Cursor/ChatGPT/Gemini/n8n,
+    prefers TypeScript/direct API calls/Supabase
+  - Flag ANY personal detail NOT in the confirmed list as FABRICATION
+  - Known traps: author does NOT have a dog, no pets besides cat Lulu
+  - Check that anecdotes only use confirmed facts, never invented details
 
   **b) Structure & MDX:**
   - Frontmatter has all required fields (title, description, date, category, tags, image, published: true, featured: false)
@@ -119,7 +134,13 @@ prompt: |
   - INFO: Claims that could be more specific
 
   Format: List each finding with the claim text and your assessment.
-  End with: SCORE: [1-10]" < "/tmp/pipeline-critique-SLUG.txt" || echo "GEMINI_FAILED: gemini CLI returned non-zero exit code"
+  End with: SCORE: [1-10]
+
+  Also check for FABRICATED PERSONAL DETAILS about the author:
+  Confirmed personal facts: has a cat named Lulu, has a daughter, lifts weights/gym 4x week,
+  based in Jordan, works at Altitude InfoSys. Does NOT have a dog.
+  Flag any first-person claim about the author's life, habits, possessions, or experiences
+  that is NOT in this confirmed list as: CRITICAL — FABRICATION." < "/tmp/pipeline-critique-SLUG.txt" || echo "GEMINI_FAILED: gemini CLI returned non-zero exit code"
 
   Replace SLUG in the file path with the actual blog slug.
   Return the full output. If the command fails, return the error message.
@@ -145,12 +166,16 @@ WARNINGS:
 
 SUGGESTIONS:
 - [deduplicated list]
+
+FABRICATION:
+- [any invented personal details — from either agent]
 ```
 
 If one agent failed, note it and use only the successful agent's score as the overall score.
 
 Decision:
-- Score >= 8 AND no CRITICAL issues → **PASS** → skip to step 8
+- Score >= 8 AND no CRITICAL issues AND no FABRICATION → **PASS** → skip to step 8
+- Any FABRICATION issue → **REVISE** (always, regardless of score)
 - Otherwise → **REVISE** → continue to step 6
 
 ## Step 6: Auto-Revise (max 2 cycles)
