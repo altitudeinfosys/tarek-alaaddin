@@ -129,6 +129,8 @@ Before generating content, thoroughly research every product, tool, and technolo
 
 6. **Pass the research log** (with source URLs) to Phase 2 as context for blog generation. The blog must cite only facts from this log.
 
+7. **Personal-claim guard**: If `topic_context` does not contain Tarek-supplied first-person anecdotes or personal numbers, do NOT generate any in Phase 2. The blog can still take a strong opinion, but it cannot fabricate "I did X" stories or specific personal magnitudes ("47 hours saved", "tested 12 frameworks", "ran 700 experiments", "11% improvement on my training run"). Hooks must be sourced from the research log or framed as observation/industry pattern/question — never as invented personal experience. Specific numbers in the post must trace back to a research-log source; otherwise replace with a vague magnitude ("dozens", "noticeably faster") or remove.
+
 ### Phase 2: Generate Blog Post
 
 1. Update Notion status to `generating`
@@ -137,7 +139,7 @@ Before generating content, thoroughly research every product, tool, and technolo
 4. **Generate the MDX blog post**:
    - Use topic + topic_context + research notes as input
    - Frontmatter: title, description, date, category, tags, image, published: true, featured: false
-   - Voice: conversational, direct, bold opinions, data-driven
+   - Voice: conversational, direct, bold opinions; **data-driven only with sourced numbers**. Do not invent first-person anecdotes or specific personal metrics — Tarek did not run "700 experiments last month." See Phase 1.5 step 7.
    - 1500-3000 words, 8-15 sections, 2-3 Callout components, newsletter CTA at end
    - Write to `content/blog/SLUG.mdx`
 
