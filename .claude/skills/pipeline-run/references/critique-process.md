@@ -82,6 +82,11 @@ prompt: |
   - CLI commands use correct flags
   - No contradictions within the post
 
+  **e) Fabrication check (CRITICAL severity — be strict):**
+  - Flag every first-person anecdote, e.g. "Last month I…", "Yesterday I watched…", "I ran X tests", "A client told me…", "I saved X hours". For each, check whether the research notes or topic_context contain supporting evidence (a real artifact Tarek supplied, a sourced quote, a public link). If not → CRITICAL: fabricated personal anecdote.
+  - Flag every specific number that does not appear in the research notes — counts ("700 experiments", "47 frameworks", "20 optimizations"), percentages ("11% improvement", "3x faster"), durations ("saved 3 hours/day", "in two days"), and similar magnitudes. Vague magnitudes ("dozens", "a handful", "noticeably faster", "a meaningful share") are fine. Specific magnitudes without a sourced citation → CRITICAL: unsourced specific number.
+  - The bar is strict. Example: *"Last month I watched an AI agent run 700 experiments in two days. It discovered 20 optimizations that improved language model training performance by 11%."* — this is CRITICAL on every count unless the research notes explicitly contain it.
+
   Format response as:
   SCORE: [1-10]
   REVISION_REQUIRED: [YES/NO]
@@ -117,6 +122,16 @@ prompt: |
   - CRITICAL: Claims that contradict the research notes (wrong facts)
   - WARNING: Claims not supported by research notes (unverified)
   - INFO: Claims that could be more specific
+
+  ADDITIONALLY, run a fabrication scan. List EVERY first-person experience claim
+  (\"Last month I…\", \"I watched…\", \"I ran X tests\", \"A client told me…\")
+  and EVERY specific number (counts, percentages, durations, magnitudes) in the post.
+  For each, state whether the research notes contain supporting evidence.
+  - If a first-person claim has no support in research notes → CRITICAL: fabricated personal anecdote.
+  - If a specific number has no support in research notes → CRITICAL: unsourced specific number.
+  The bar is strict. Example: \"Last month I watched an AI agent run 700 experiments in two days\"
+  is CRITICAL on both counts unless the research notes explicitly contain that experience and number.
+  Vague magnitudes (\"dozens\", \"a handful\", \"noticeably faster\") are fine and do NOT need to be flagged.
 
   Format: List each finding with the claim text and your assessment.
   End with: SCORE: [1-10]" < "/tmp/pipeline-critique-SLUG.txt" || echo "GEMINI_FAILED: gemini CLI returned non-zero exit code"
@@ -181,6 +196,7 @@ Guardrails:
 - Never remove Callout components
 - Preserve overall section structure
 - Address specific findings, don't rewrite from scratch
+- **Fabrication fixes**: replace fabricated first-person anecdotes with generic framing or a sourced industry observation (e.g., rewrite "Last month I watched an AI agent run 700 experiments" as "There's a growing pattern of agents running large autonomous experiment loops — Karpathy's `nanochat` is a recent public example."). Replace unsourced specific numbers with vague magnitudes ("dozens", "a noticeable share", "noticeably faster") or remove the claim entirely. **Do not "fix" by inventing a different specific number** — if you don't have a real source, don't write a number.
 
 ## Step 7: Record Critique Results in Notion
 

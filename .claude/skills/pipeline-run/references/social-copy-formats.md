@@ -17,6 +17,7 @@
 - Hashtags count toward the 280 character limit
 - Choose specific, discoverable hashtags (e.g., #ClaudeCode not #AI)
 - Make the hook compelling enough to stop scrolling
+- **The hook must reflect a real, sourced claim from the published blog post.** Do not invent a stat, anecdote, or first-person experience for the social copy that doesn't appear (with a source) in the post. If the blog post avoided fabricated numbers, the social copy must too.
 - URL counts as ~23 characters (t.co shortening)
 
 ## LinkedIn Copy (150-300 words)
@@ -29,7 +30,7 @@
 
 [Paragraph 3 — the insight or solution]
 
-[Paragraph 4 — personal experience or data point]
+[Paragraph 4 — personal experience or data point — only if such a point exists in the blog post with a real source. Do not fabricate one for the social copy.]
 
 [CTA — question to drive engagement]
 
