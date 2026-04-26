@@ -8,6 +8,8 @@ interface TopicSelectorProps {
 }
 
 export default function TopicSelector({ selectedTopics, onChange }: TopicSelectorProps) {
+  const hasSelectedTopic = selectedTopics.productivity || selectedTopics.ai || selectedTopics.marketing
+
   const handleTopicChange = (topic: 'productivity' | 'ai' | 'marketing') => {
     onChange({
       ...selectedTopics,
@@ -85,9 +87,11 @@ export default function TopicSelector({ selectedTopics, onChange }: TopicSelecto
         </label>
       ))}
 
-      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-        Select at least one topic to continue
-      </p>
+      {!hasSelectedTopic && (
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          Select at least one topic to continue.
+        </p>
+      )}
     </div>
   )
 }
