@@ -2,18 +2,19 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { getAllProducts } from '@/data/products'
 import ProductDetail from '@/components/products/ProductDetail'
+import { absoluteUrl } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: 'Products | Tarek Alaaddin',
   description: 'Explore my AI-powered SaaS products: Taskitos (task manager with persistent reminders) and ExpandNote (AI-powered note-taking app).',
   keywords: ['Taskitos', 'ExpandNote', 'AI products', 'SaaS', 'productivity', 'note-taking', 'task manager'],
   alternates: {
-    canonical: 'https://tarekalaaddin.com/products',
+    canonical: absoluteUrl('/products'),
   },
   openGraph: {
     title: 'Products | Tarek Alaaddin',
     description: 'Explore my AI-powered SaaS products: Taskitos and ExpandNote.',
-    url: 'https://tarekalaaddin.com/products',
+    url: absoluteUrl('/products'),
     siteName: 'Tarek Alaaddin',
     locale: 'en_US',
     type: 'website',

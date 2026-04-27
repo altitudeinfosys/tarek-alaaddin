@@ -1,14 +1,17 @@
 import { getAllPosts } from '@/lib/mdx'
-import BlogCard from '@/components/blog/BlogCard'
 import BlogClientWrapper from '@/components/blog/BlogClientWrapper'
+import { absoluteUrl } from '@/lib/site'
 
 export const metadata = {
   title: 'Blog | Tarek Alaaddin',
   description: 'Insights on productivity, AI tools, software engineering, and building SaaS products',
+  alternates: {
+    canonical: absoluteUrl('/blog'),
+  },
   openGraph: {
     title: 'Blog | Tarek Alaaddin',
     description: 'Insights on productivity, AI tools, software engineering, and building SaaS products',
-    url: 'https://tarekalaaddin.com/blog',
+    url: absoluteUrl('/blog'),
     siteName: 'Tarek Alaaddin',
     locale: 'en_US',
     type: 'website',

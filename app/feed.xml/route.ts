@@ -1,7 +1,6 @@
 import { Feed } from 'feed'
 import { getAllPosts } from '@/lib/mdx'
-
-const SITE_URL = 'https://www.tarekalaaddin.com'
+import { SITE_URL } from '@/lib/site'
 const AUTHOR = {
   name: 'Tarek Alaaddin',
   link: SITE_URL,

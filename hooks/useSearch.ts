@@ -19,6 +19,7 @@ export function useSearch() {
   const [isLoading, setIsLoading] = useState(false)
 
   const indexRef = useRef<Document<SearchDocument> | null>(null)
+  const docsRef = useRef<SearchDocument[]>([])
   const loadedRef = useRef(false)
   const pendingQueryRef = useRef<string | null>(null)
 
@@ -51,14 +52,40 @@ export function useSearch() {
     const idx = indexRef.current
     if (!idx) return
 
+    const tokens = q
+      .toLowerCase()
+      .split(/\s+/)
+      .map((token) => token.trim())
+      .filter(Boolean)
     const results = idx.search(q)
-    const slugs = new Set<string>()
+    const candidateSlugs = new Set<string>()
 
     for (const fieldResult of results) {
       for (const id of fieldResult.result) {
-        slugs.add(String(id))
+        candidateSlugs.add(String(id))
       }
     }
+
+    const candidates = candidateSlugs.size
+      ? docsRef.current.filter((doc) => candidateSlugs.has(doc.slug))
+      : docsRef.current
+    const slugs = new Set(
+      candidates
+        .filter((doc) => {
+          const searchableText = [
+            doc.title,
+            doc.description,
+            doc.tags,
+            doc.category,
+            doc.body,
+          ]
+            .join(' ')
+            .toLowerCase()
+
+          return tokens.every((token) => searchableText.includes(token))
+        })
+        .map((doc) => doc.slug)
+    )
 
     setMatchingSlugs(slugs)
   }, [])
@@ -72,6 +99,7 @@ export function useSearch() {
       const res = await fetch('/search-index.json')
       if (!res.ok) throw new Error(`Failed to fetch search index: ${res.status}`)
       const docs: SearchDocument[] = await res.json()
+      docsRef.current = docs
       indexRef.current = buildIndex(docs)
 
       // Execute any pending search
@@ -96,15 +124,18 @@ export function useSearch() {
 
     if (!indexRef.current) {
       pendingQueryRef.current = query
+      setMatchingSlugs(new Set())
+      void loadIndex()
       return
     }
 
+    setMatchingSlugs(new Set())
     const timer = setTimeout(() => {
       executeSearch(query)
     }, 200)
 
     return () => clearTimeout(timer)
-  }, [query, executeSearch])
+  }, [query, executeSearch, loadIndex])
 
   return { query, setQuery, matchingSlugs, isLoading, loadIndex }
 }
