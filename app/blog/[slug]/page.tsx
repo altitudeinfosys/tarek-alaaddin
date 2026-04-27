@@ -12,6 +12,7 @@ import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import Link from 'next/link'
 import Badge from '@/components/ui/Badge'
 import { BlogPostingSchema } from '@/components/JsonLd'
+import { absoluteUrl } from '@/lib/site'
 
 interface BlogPostPageProps {
   params: { slug: string }
@@ -31,7 +32,7 @@ export async function generateMetadata({ params }: BlogPostPageProps) {
     }
   }
 
-  const url = `https://tarekalaaddin.com/blog/${params.slug}`
+  const url = absoluteUrl(`/blog/${params.slug}`)
 
   return {
     title: `${post.title} | Tarek Alaaddin`,

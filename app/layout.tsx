@@ -7,10 +7,12 @@ import Footer from '@/components/Footer'
 import NewsletterPopup from '@/components/NewsletterPopup'
 import { Analytics } from '@vercel/analytics/react'
 import { PersonSchema, WebSiteSchema } from '@/components/JsonLd'
+import { SITE_URL, absoluteUrl } from '@/lib/site'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: 'Tarek Alaaddin | Software Engineer & Product Builder',
   description: 'Software engineer with expertise in backend development, cloud architecture, and full-stack applications. Creator of Taskitos and ExpandNote.',
   keywords: ['software engineer', 'backend developer', 'full-stack', 'cloud architecture', 'AI products', 'SaaS'],
@@ -18,7 +20,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Tarek Alaaddin | Software Engineer & Product Builder',
     description: 'Software engineer with expertise in backend development, cloud architecture, and full-stack applications. Creator of Taskitos and ExpandNote.',
-    url: 'https://tarekalaaddin.com',
+    url: absoluteUrl(),
     siteName: 'Tarek Alaaddin',
     locale: 'en_US',
     type: 'website',
@@ -31,10 +33,10 @@ export const metadata: Metadata = {
     site: '@tarekalaaddin',
   },
   alternates: {
-    canonical: 'https://tarekalaaddin.com',
+    canonical: absoluteUrl(),
     types: {
       'application/rss+xml': [
-        { url: '/feed.xml', title: 'Tarek Alaaddin — Blog' },
+        { url: absoluteUrl('/feed.xml'), title: 'Tarek Alaaddin — Blog' },
       ],
     },
   },

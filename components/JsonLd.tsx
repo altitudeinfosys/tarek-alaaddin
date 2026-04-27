@@ -1,3 +1,5 @@
+import { absoluteUrl } from '@/lib/site'
+
 interface JsonLdProps {
   data: Record<string, unknown> | Record<string, unknown>[]
 }
@@ -19,9 +21,9 @@ export function PersonSchema() {
       data={{
         '@context': 'https://schema.org',
         '@type': 'Person',
-        '@id': 'https://tarekalaaddin.com/#person',
+        '@id': absoluteUrl('/#person'),
         name: 'Tarek Alaaddin',
-        url: 'https://tarekalaaddin.com',
+        url: absoluteUrl(),
         description:
           'Software engineer with expertise in backend development, cloud architecture, and full-stack applications. Creator of Taskitos and ExpandNote.',
         jobTitle: 'Software Engineer & Product Builder',
@@ -49,12 +51,12 @@ export function WebSiteSchema() {
       data={{
         '@context': 'https://schema.org',
         '@type': 'WebSite',
-        '@id': 'https://tarekalaaddin.com/#website',
+        '@id': absoluteUrl('/#website'),
         name: 'Tarek Alaaddin',
-        url: 'https://tarekalaaddin.com',
+        url: absoluteUrl(),
         description:
           'Software engineer with expertise in backend development, cloud architecture, and full-stack applications.',
-        publisher: { '@id': 'https://tarekalaaddin.com/#person' },
+        publisher: { '@id': absoluteUrl('/#person') },
         inLanguage: 'en-US',
       }}
     />
@@ -85,17 +87,17 @@ export function BlogPostingSchema({
         '@type': 'BlogPosting',
         headline: title,
         description,
-        url: `https://tarekalaaddin.com/blog/${slug}`,
+        url: absoluteUrl(`/blog/${slug}`),
         datePublished: date,
         dateModified: date,
         articleSection: category,
         keywords: tags.join(', '),
         inLanguage: 'en-US',
-        author: { '@id': 'https://tarekalaaddin.com/#person' },
-        publisher: { '@id': 'https://tarekalaaddin.com/#person' },
+        author: { '@id': absoluteUrl('/#person') },
+        publisher: { '@id': absoluteUrl('/#person') },
         mainEntityOfPage: {
           '@type': 'WebPage',
-          '@id': `https://tarekalaaddin.com/blog/${slug}`,
+          '@id': absoluteUrl(`/blog/${slug}`),
         },
       }}
     />

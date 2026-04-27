@@ -1,16 +1,17 @@
 import { Metadata } from 'next'
 import NewsletterForm from '@/components/newsletter/NewsletterForm'
+import { absoluteUrl } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: 'Subscribe | Tarek Alaaddin',
   description: 'Get my free guide on becoming innovative and productive. Learn productivity tips, AI tools, and strategies I use to build products.',
   alternates: {
-    canonical: 'https://tarekalaaddin.com/subscribe',
+    canonical: absoluteUrl('/subscribe'),
   },
   openGraph: {
     title: 'Subscribe to Newsletter | Tarek Alaaddin',
     description: 'Get my free guide on becoming innovative and productive.',
-    url: 'https://tarekalaaddin.com/subscribe',
+    url: absoluteUrl('/subscribe'),
     siteName: 'Tarek Alaaddin',
     locale: 'en_US',
     type: 'website',
