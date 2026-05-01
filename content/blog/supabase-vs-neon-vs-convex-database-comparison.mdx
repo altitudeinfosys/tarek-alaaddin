@@ -1,0 +1,238 @@
+---
+title: "Supabase vs Neon vs Convex: Pick the Right Database"
+description: "Supabase bundles everything, Neon gives you serverless Postgres, Convex rethinks the backend entirely — here's when each one is the right call."
+date: "2026-05-01"
+category: "backend"
+tags: ["supabase", "neon", "convex", "database", "postgres", "backend-as-a-service", "serverless-database", "database-comparison", "real-time", "typescript"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+## Three Names, Three Completely Different Bets
+
+"Just use Supabase" has become the new "just use Firebase." It's fine advice — until it isn't. Until you're paying for auth, storage, and real-time features you never use because all you needed was a Postgres database. Or until you realize the real-time layer you bolted on doesn't actually guarantee consistency across clients and your collaborative editor shows different users different data.
+
+Supabase, Neon, and Convex all call themselves database platforms. But one bundles your entire backend into a single service. One gives you serverless Postgres and nothing else. And one throws out SQL entirely and rebuilds the backend as a reactive TypeScript runtime.
+
+They're not interchangeable. Choosing the wrong one means either paying for features you don't need or rebuilding infrastructure you should have had from day one. Here's how they actually differ, what each one costs, and when each one is the right call.
+
+## The 30-Second Version
+
+Before the deep dive, here's the cheat sheet:
+
+| | Supabase | Neon | Convex |
+|---|---|---|---|
+| **Core** | Postgres + auth + storage + realtime | Serverless Postgres | Reactive TypeScript backend |
+| **Database** | PostgreSQL | PostgreSQL | Custom document DB |
+| **Query Language** | SQL | SQL | TypeScript functions |
+| **Real-time** | Event-based (WAL) | None built-in | Reactive subscriptions |
+| **Auth** | Built-in (50K MAUs free) | Neon Auth (60K MAUs free) | Integrations (Clerk, Auth0) |
+| **File Storage** | Built-in (1GB free) | None | Built-in (1GB free) |
+| **Free Tier** | $0 (500MB DB, 2 projects) | $0 (100 CU-hours, 0.5GB) | $0 (0.5GB DB, 1M calls) |
+| **Paid Start** | $25/month (per project) | ~$5/month (usage-based) | $25/month (per developer) |
+| **Best For** | Full-stack apps needing everything | Pure Postgres with serverless scaling | Real-time TypeScript apps |
+
+Supabase and Neon charge per project; Convex charges per developer — a team of five on Convex Professional pays $125/month before usage. Keep that in mind when comparing the "$25" lines above.
+
+Now let's break each one down.
+
+## Supabase: The Backend-in-a-Box
+
+Supabase is the platform that wants to replace your entire backend layer. At its core, it's a managed PostgreSQL database — but that's like saying a smartphone is a device that makes phone calls. The database is the foundation, not the product.
+
+### What You Get
+
+Every Supabase project comes with:
+
+- **A full PostgreSQL database** with extensions like pgvector for AI embeddings, PostGIS for geospatial queries, and pg_cron for scheduled jobs
+- **Authentication** supporting email/password, OAuth providers, SSO, MFA, and passwordless flows — up to 50,000 monthly active users on the free tier
+- **S3-compatible file storage** with Row Level Security policies controlling who can upload and download what
+- **Real-time subscriptions** via PostgreSQL's Write-Ahead Log, broadcasting database changes to connected clients over WebSockets
+- **Edge Functions** running on Deno for serverless compute closest to your users
+- **Queues** built on pgmq for durable message processing
+- **Vector search** via pgvector for building AI-powered features directly in your database
+
+The 2026 additions are meaningful. Cron jobs now support sub-minute scheduling (every 1-59 seconds) and can trigger SQL snippets, database functions, or HTTP requests. Queues provide Postgres-native message processing with guaranteed delivery. Log Drains ship your logs to Datadog, Grafana Loki, Sentry, or Axiom directly from the Pro plan.
+
+### The Architecture
+
+Supabase wraps PostgreSQL with a service layer. Your database is a real Postgres instance — you can connect to it with psql, run raw SQL, use any Postgres extension, and migrate away by dumping and restoring.
+
+The auto-generated REST and GraphQL APIs mean you can query your database directly from the frontend using Row Level Security for authorization. No backend server required for straightforward CRUD operations.
+
+Real-time works through Postgres replication: changes hit the WAL, Supabase broadcasts them to subscribed clients. It's event-based, not query-based — you get notified that a row changed, but there's no guarantee that your client's view reflects the exact state of the database at any given moment.
+
+<Callout type="info">
+**The Supabase sweet spot:** You want a full-stack backend without stitching together five different services. Auth, storage, database, real-time, and serverless functions from one provider, all managed, all integrated, all speaking Postgres under the hood.
+</Callout>
+
+### Pricing
+
+| Plan | Cost | Database | Auth MAUs | File Storage | Key Limits |
+|---|---|---|---|---|---|
+| Free | $0/mo | 500 MB | 50,000 | 1 GB | 2 projects, pauses after 7 days |
+| Pro | $25/mo | 8 GB | 100,000 | 100 GB | Email support, 7-day backups |
+| Team | $599/mo | 8 GB | 100,000 | 100 GB | SOC2, ISO 27001, SLAs |
+| Enterprise | Custom | Custom | Custom | Custom | HIPAA, dedicated support |
+
+The Pro plan includes $10/month in compute credits. Most small-to-medium production apps land in the $35-75/month range once usage-based charges (extra storage, bandwidth, MAUs) are factored in.
+
+One catch on the free tier: projects pause after 7 days of inactivity. If your side project needs to stay alive 24/7, you need Pro.
+
+## Neon: Serverless Postgres, Nothing More
+
+Neon takes the opposite approach to Supabase. No auth service. No file storage. No edge functions. No bundled real-time layer. Just PostgreSQL — but reimagined for serverless infrastructure.
+
+### What Makes It Different
+
+The core innovation is **separating storage from compute**. Traditional managed Postgres ties your data to a specific server. Neon stores data in durable object storage and spins up stateless compute instances on demand. This architecture enables three features that change how you work with databases:
+
+**Scale-to-zero**: When nobody's querying your database, compute shuts down entirely. You pay nothing for idle time. The free tier defaults to suspending after 5 minutes of inactivity; paid plans let you configure the threshold down to 1 minute or keep it always-on.
+
+**Autoscaling**: Compute scales from a fraction of a CPU up to 16 CU (64 GB RAM) on the Launch plan, or up to 56 CU (224 GB RAM) on the Scale plan — automatically, based on query load. No manual instance resizing, no downtime.
+
+**Instant branching**: Clone your entire database in seconds. Not a logical dump-and-restore — a copy-on-write branch that shares storage with the parent until data diverges. Use it for preview deployments, migration testing, CI/CD pipelines, or giving each developer their own database copy.
+
+**Instant restores**: Rewind your database to any point in time in seconds, regardless of size. The versioned storage engine makes this a metadata operation, not a data copy.
+
+### The AI Agent Angle
+
+Here's a detail worth paying attention to: Neon reports that over 80% of the databases provisioned on its platform were created by AI agents rather than humans. The instant branching feature makes Neon a natural fit for agentic workflows — an AI agent can spin up an isolated database branch, run schema migrations, execute tests, and tear it down in seconds. The Neon Postgres plugin is now in the OpenAI Codex plugin directory, and their MCP server lets AI coding assistants manage databases from chat.
+
+If you're building AI-powered development tools or agentic pipelines, Neon's branch-per-agent model is hard to replicate on other platforms.
+
+### The Extension Ecosystem
+
+Because it's real Postgres, you get the full extension ecosystem: pgvector, PostGIS, TimescaleDB, pg_stat_statements, and dozens more. You can run the same analytical queries, the same ORMs, and the same migrations you'd use with any other Postgres provider. The switching cost is low because the interface is standard.
+
+<Callout type="warning">
+**The Neon trade-off:** You get the best serverless Postgres experience available, but you're assembling your own stack. Need auth? Add Clerk or Auth0. Need file storage? Add S3 or Cloudflare R2. Need real-time? Add Ably or Pusher. Neon gives you a phenomenal database and nothing else.
+</Callout>
+
+### Pricing
+
+| Plan | Compute | Storage | Projects | Key Limits |
+|---|---|---|---|---|
+| Free | 100 CU-hours/mo | 0.5 GB | 100 | 10 branches, scale-to-zero at 5 min |
+| Launch | $0.106/CU-hour | $0.35/GB-month | 100 | 16 CU max, 100 GB egress |
+| Scale | $0.222/CU-hour | $0.35/GB-month | 1,000 | 56 CU max, HIPAA/SOC2, private networking |
+
+The usage-based model means costs scale precisely with usage. A side project that gets occasional traffic might cost $2-5/month. A production app with consistent load will cost more, but you never pay for provisioned capacity you're not using.
+
+Snapshot storage is billed at $0.09/GB-month as of May 2026.
+
+## Convex: The Reactive Backend Runtime
+
+Convex is the outlier. It's not Postgres. It's not even SQL. It's a reactive backend platform where you write queries, mutations, and actions in TypeScript, and the database automatically tracks dependencies and pushes updates to every connected client.
+
+### How It Works
+
+Traditional databases are pull-based: your frontend sends a query, gets a result, and has no idea when the data changes. Real-time layers like Supabase's WAL subscriptions add push notifications on top, but they're bolted onto a system that wasn't designed for them.
+
+Convex flips the model. Every query function you write becomes a live subscription. The database tracks which data each query touches. When a mutation changes any of that data, Convex re-runs the affected queries server-side and pushes consistent snapshots to all subscribed clients over WebSockets.
+
+```typescript
+// This isn't just a query — it's a live subscription
+// Every client running this function gets automatic updates
+export const listMessages = query({
+  args: { channel: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("messages")
+      .withIndex("by_channel", (q) => q.eq("channel", args.channel))
+      .order("desc")
+      .take(50);
+  },
+});
+```
+
+The key difference from Supabase's real-time: Convex guarantees consistency. Multiple queries that touch related data update atomically on the client. You never see a half-updated state where one component shows new data and another shows old data. For collaborative apps — multiplayer editors, shared dashboards, live feeds — this is the difference between "kind of real-time" and "actually real-time."
+
+### The TypeScript-Everything Model
+
+In Convex, your schema is TypeScript. Your queries are TypeScript. Your mutations are TypeScript. Your server-side actions are TypeScript. Types flow from the database schema through the API to the frontend automatically — change a field name in the schema, and your IDE flags every component that references it.
+
+There's no SQL. No ORM. No migration files. Schema changes are deployed as code. This is liberating if your team thinks in TypeScript and constraining if anyone on the team prefers SQL or needs complex analytical queries that SQL handles naturally.
+
+### What Else Is Included
+
+Beyond the reactive database:
+
+- **File storage** with programmatic access controls
+- **Text and vector search** for AI applications — vector embeddings sit alongside your regular data, queryable in the same TypeScript functions
+- **Scheduled functions** (cron jobs) and webhooks
+- **Authentication** via integrations with Clerk, Auth0, and custom providers
+- **Preview deployments** for branch-based development
+
+The platform is open-source under FSL-1.1-Apache-2.0 and self-hostable. Currently, deployment is limited to North America for the managed service.
+
+<Callout type="warning">
+**The Convex bet:** You're trading SQL, the Postgres extension ecosystem, and a decades-old data portability standard for a dramatically simpler real-time development experience. The productivity gains are real — but so is the lock-in. Migrating away from Convex means rewriting your entire data access layer.
+</Callout>
+
+### Pricing
+
+| Plan | Cost | Database | Function Calls | Key Limits |
+|---|---|---|---|---|
+| Free | $0/mo | 0.5 GB | 1M/month | 1-6 devs, 1K concurrent sessions |
+| Professional | $25/dev/mo | 50 GB | 25M/month | 1-20 devs, 10K concurrent sessions |
+| Business | $2,500/mo min | Custom | Custom | 50+ devs, dedicated options |
+
+Note the per-developer pricing on the Professional plan. A team of five pays $125/month before usage-based charges. Supabase's Pro plan at $25/month is per project, not per developer — the cost model is fundamentally different.
+
+## When to Use Each One
+
+### Choose Supabase When:
+
+- You want auth, storage, database, and real-time from one provider
+- Your team is comfortable with SQL and relational data modeling
+- You need the PostgreSQL extension ecosystem (pgvector, PostGIS, TimescaleDB)
+- Predictable monthly pricing matters more than pay-per-query granularity
+- You might want to self-host later — Supabase is fully open source
+- You're migrating from Firebase and want a similar developer experience with less vendor lock-in
+
+### Choose Neon When:
+
+- You need pure PostgreSQL with no compromises or abstractions
+- Serverless cost efficiency matters — you don't want to pay for idle compute
+- Database branching would improve your development workflow (preview deployments, CI pipelines, migration testing)
+- You're building for AI agents that need disposable, isolated database instances
+- You're already using separate services for auth, storage, and real-time and just need a great database
+- You're on Vercel and want tight integration through the Vercel Marketplace
+
+### Choose Convex When:
+
+- Real-time reactivity is core to your product, not a nice-to-have
+- Your team writes TypeScript exclusively and doesn't want to context-switch to SQL
+- You need guaranteed consistency across multiple simultaneous subscribers
+- You're building collaborative tools, multiplayer features, or live dashboards
+- You want vector search alongside your operational data in one platform
+- You're willing to accept vendor lock-in for a significantly simpler development experience
+
+### The Quick Decision Filter
+
+If the bullet lists feel overwhelming, run through these four questions:
+
+| Question | Supabase | Neon | Convex |
+|---|---|---|---|
+| Need more than a database? | Yes — one provider for everything | Yes — but I'll pick best-in-class per service | I need a reactive backend runtime |
+| How critical is real-time? | Nice to have (good enough) | Not built-in (add your own) | Core to the product (best-in-class) |
+| SQL or TypeScript? | SQL essential | SQL essential | TypeScript preferred |
+| How much does portability matter? | High (Postgres + open source) | Highest (standard Postgres) | Low (proprietary data layer) |
+
+## The Honest Assessment
+
+There isn't a universal winner here, and anyone telling you otherwise is selling something.
+
+Supabase is the default recommendation for most projects because it covers the most ground. If you're building a typical SaaS application, a mobile app backend, or anything that needs auth + database + storage, Supabase gives you all of it from day one without stitching services together. The trade-off is that no individual service is best-in-class — the real-time is decent but not Convex-level, the Postgres is managed but not Neon-level serverless.
+
+Neon is the right choice when you want the best possible Postgres experience and you're happy assembling your own stack around it. The serverless architecture, branching, and scale-to-zero are genuinely differentiated. If your database bill is a significant cost center, Neon's usage-based pricing can save real money compared to provisioned instances.
+
+Convex is the right choice when real-time reactivity is the defining feature of your application and you want to build it as fast as possible. The developer experience for collaborative and live-updating apps is unmatched. The trade-off is real lock-in — there's no SQL escape hatch, and migrating away means rewriting your backend.
+
+Pick the one that matches the problem you're solving, not the one with the best landing page.
+
+---
+
+If you found this comparison useful, [subscribe to the newsletter](/newsletter) for more honest takes on the tools that actually matter for shipping software in 2026.
