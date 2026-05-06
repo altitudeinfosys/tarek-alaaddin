@@ -1,0 +1,304 @@
+---
+title: "OpenAI Codex and /goal: The Complete Guide to Getting Real Work Done"
+description: "What Codex actually is, how /goal changes autonomous coding, and the AGENTS.md config, parallel tasks, and pricing details that matter."
+date: "2026-05-06"
+category: "ai-tools"
+tags: ["openai-codex", "codex-goal", "ai-coding-agents", "developer-tools", "autonomous-coding", "coding-workflows", "agents-md", "codex-cli", "software-engineering"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Most developers install Codex, type a prompt, watch it generate some code, and walk away thinking they've seen what it can do. They haven't. That's like test-driving a car in the parking lot and deciding it tops out at 15 mph.
+
+The real shift happened in late April 2026 when OpenAI shipped `/goal` — a persistent workflow mode that turns Codex from a one-shot code generator into something closer to a junior developer you can hand a multi-hour objective and walk away from. But even without `/goal`, the gap between how most people use Codex and how it's designed to be used is enormous.
+
+This is the guide that covers all of it: what Codex actually is under the hood, why `/goal` matters, and the specific workflows that make the difference between Codex being a toy and Codex being a force multiplier.
+
+## What Codex Actually Is (Not What You Think)
+
+Codex isn't a code completion tool. It isn't GitHub Copilot with a different logo. It's a cloud-based autonomous coding agent that runs in its own sandboxed environment.
+
+When you give Codex a task, here's what happens:
+
+1. Your repository gets loaded into a dedicated cloud sandbox
+2. Codex reads your codebase, understands the structure, and builds a plan
+3. It writes code, runs tests, executes linters, and iterates — all autonomously
+4. When it's done, it proposes changes as a pull request
+
+Each task runs in isolation. You can fire off multiple tasks in parallel. One Codex agent can be writing a feature while another fixes a bug while a third generates tests — all against the same repo, all in separate sandboxes, all running simultaneously.
+
+This is fundamentally different from tools that autocomplete your current line or respond to inline prompts in your editor. Codex doesn't need your IDE open. It doesn't need you watching. It works in the background while you do something else entirely.
+
+<Callout type="info">
+Codex is available across four surfaces: the web app at chatgpt.com/codex, the desktop app (macOS and Windows), IDE extensions (VS Code, Cursor, Windsurf, and JetBrains), and the CLI via `npm install -g @openai/codex`. Each surface connects to the same cloud infrastructure.
+</Callout>
+
+## The Model Stack: codex-1 to GPT-5.5
+
+Understanding which model powers your Codex session matters more than most people realize.
+
+Codex launched in May 2025 with **codex-1**, a version of OpenAI's o3 reasoning model fine-tuned specifically for software engineering using reinforcement learning on real-world coding tasks. The training was designed to make generated code match human style and PR conventions.
+
+The model stack has evolved rapidly since then:
+
+- **GPT-5.3-Codex** (February 2026) — Major capability jump that pushed weekly active users past 1.6 million
+- **GPT-5.3-Codex-Spark** (February 2026) — A smaller, faster variant delivering over 1,000 tokens per second, deployed on Cerebras hardware for near-instant responses
+- **GPT-5.4 for Codex** (March 2026) — By mid-March, weekly active users crossed 2 million
+- **GPT-5.5** (April 2026) — Current recommended model for implementation, refactoring, debugging, and testing
+
+The reasoning level matters too. Codex lets you dial reasoning intensity per task: low for fast, well-scoped work; medium/high for complex changes; extra high for long agentic sessions that require deep reasoning chains. In the CLI, you can toggle this with `Alt+,` and `Alt+.` shortcuts.
+
+## How /goal Changes Everything
+
+Before `/goal`, every Codex interaction was disposable. You'd type a prompt, get a result, and the context evaporated. If you wanted multi-step work — migrate a package, increase test coverage across a module, refactor an API layer — you had to manually chain individual prompts together and hope the context survived each turn.
+
+`/goal` treats larger objectives as stateful work instead of single disposable turns.
+
+When you set a goal, Codex creates a first-class object that persists across turns, interruptions, session breaks, and even token budget boundaries. It tracks progress, maintains state, and keeps pursuing the objective until it's complete or you tell it to stop.
+
+### What /goal Looks Like in Practice
+
+```bash
+/goal "Migrate the authentication module from v2 to v3 of the auth library. 
+Update all imports, fix breaking API changes, update tests to match new 
+interfaces, and verify everything passes."
+```
+
+Codex doesn't just start coding. It builds a plan, identifies every file that needs changes, creates a dependency graph of what has to change in what order, and then executes methodically. If it hits a blocker — a test failure, an ambiguous API change, a dependency conflict — it adjusts its approach rather than crashing out.
+
+You can pause a goal, resume it later, check its progress, or clear it entirely. The TUI (terminal UI) has dedicated controls: create, pause, resume, and clear.
+
+### Why This Matters
+
+The `/goal` feature is OpenAI's implementation of what the developer community calls the "Ralph loop" — a persistent cycle where an AI agent keeps working toward an objective until it's met. This pattern has been the dominant approach for serious agentic coding work, and having it built into the tool eliminates the need for external orchestration scripts.
+
+<Callout type="warning">
+`/goal` is powerful but not magic. It works best with clearly scoped objectives that have verifiable completion criteria. "Make the codebase better" is a bad goal. "Increase test coverage for the payments module to 80% and fix all failing tests" is a good one.
+</Callout>
+
+## Getting Started: Zero to First Task
+
+### Install
+
+Pick your surface:
+
+```bash
+# CLI (works everywhere)
+npm install -g @openai/codex
+
+# Desktop app — download from openai.com/codex
+# IDE extension — install from VS Code/Cursor marketplace
+# Web — visit chatgpt.com/codex
+```
+
+### Authenticate
+
+Sign in with your ChatGPT account or OpenAI API key. If you use an API key, some features like cloud threads may not be available.
+
+### First Task
+
+Navigate to your project directory and start simple:
+
+```bash
+codex
+> Tell me about this project
+```
+
+Codex reads your codebase, identifies the structure, and gives you an overview. From there, try something actionable:
+
+```bash
+> Find and fix any type errors in the src/utils directory
+```
+
+### Connect GitHub
+
+For the cloud workflow, connect your GitHub account in the Codex settings. This lets Codex create branches and pull requests directly from completed tasks.
+
+## The AGENTS.md File: Your Most Important Configuration
+
+If you take one thing from this guide, let it be this: **write an AGENTS.md file.** It's the single highest-leverage thing you can do to improve Codex output quality.
+
+`AGENTS.md` is a markdown file you place in your repository root (or subdirectories for local overrides) that tells Codex how your project works. Without it, Codex guesses. With it, Codex follows your standards.
+
+Here's a practical structure:
+
+```markdown
+# AGENTS.md
+
+## Repository Layout
+- `src/` — Application source code (TypeScript)
+- `tests/` — Test files, mirrors src/ structure
+- `scripts/` — Build and deployment scripts
+
+## Build & Test
+- Install: `pnpm install`
+- Build: `pnpm build`
+- Test: `pnpm test`
+- Lint: `pnpm lint`
+- Type check: `pnpm typecheck`
+
+## Engineering Conventions
+- Use TypeScript strict mode
+- All exports must have explicit types
+- Tests use vitest, not jest
+- Prefer `async/await` over `.then()` chains
+- Error handling: use Result types, not try/catch for business logic
+
+## PR Standards
+- One logical change per PR
+- Tests required for all new functions
+- No console.log in production code
+
+## Constraints
+- Do NOT modify files in `src/generated/`
+- Do NOT change the database schema without explicit approval
+- Always run `pnpm typecheck` before committing
+```
+
+Store your configuration at three levels:
+- **Global** (`~/.codex/AGENTS.md`) — Personal defaults across all projects
+- **Repository** (root `AGENTS.md`) — Team-shared standards
+- **Subdirectory** (`src/api/AGENTS.md`) — Local overrides for specific modules
+
+A short, accurate `AGENTS.md` beats a long one full of vague rules every time.
+
+## Workflows That Actually Work
+
+### The Plan-First Workflow
+
+For anything non-trivial, start in plan mode:
+
+```bash
+/plan Refactor the notification service to support multiple delivery channels
+```
+
+Codex gathers context, identifies the relevant files, and builds a plan before writing a single line of code. You review the plan, adjust if needed, and then let it execute. This avoids the common failure mode where Codex starts implementing the wrong approach and you have to undo everything.
+
+### The Test-First Workflow
+
+This is the pattern that consistently produces the cleanest output:
+
+1. Write tests that capture the desired behavior
+2. Confirm they all fail
+3. Ask Codex to implement until all tests pass
+
+```bash
+> The tests in tests/payments/refund.test.ts describe the refund flow I want. 
+  All tests currently fail. Implement the refund service until every test passes.
+```
+
+Codex has clear success criteria, a defined scope, and automated verification. This eliminates the ambiguity that causes most AI coding failures.
+
+### The Parallel Task Workflow
+
+This is where Codex's cloud architecture really shines. Spin up multiple concurrent tasks:
+
+- Task 1: "Write integration tests for the user registration flow"
+- Task 2: "Add input validation to all API endpoints in src/api/"
+- Task 3: "Generate API documentation from the route handlers"
+
+Each runs in its own sandbox. None blocks the others. You review the results as they complete.
+
+### The /goal Migration Workflow
+
+For large-scale changes that span dozens of files:
+
+```bash
+/goal "Migrate from Express to Hono. Update all route handlers, middleware, 
+error handling, and tests. Run the test suite after each module migration 
+to catch regressions early. Done when all tests pass and the server starts 
+cleanly."
+```
+
+`/goal` keeps track of which modules have been migrated, which tests are passing, and what's left. If you close your laptop and come back tomorrow, it picks up where it left off.
+
+<Callout type="tip">
+Structure your `/goal` prompts with four elements: **Goal** (what you're changing), **Context** (relevant files or docs), **Constraints** (standards to follow), and **Done when** (completion criteria). This format directly matches OpenAI's recommended prompt structure.
+</Callout>
+
+## Pricing: What It Actually Costs
+
+Codex access comes bundled with ChatGPT subscriptions:
+
+- **ChatGPT Plus** ($20/month) — Includes Codex access with standard usage limits
+- **ChatGPT Pro** ($200/month) — Designed for full-time development with significantly higher task usage limits
+
+For teams, the model shifted in April 2026 to **pay-as-you-go API token-based pricing**. ChatGPT Business and Enterprise can add Codex-only seats with no fixed seat fee — you pay for actual token consumption.
+
+In practice, typical developer usage runs around $100-200/month, though this varies significantly based on model selection, number of concurrent instances, and whether you're using fast mode or high-reasoning mode.
+
+The key pricing insight: the cost comes from token consumption, not seat licenses. A developer running multiple parallel `/goal` workflows on GPT-5.5 with extra-high reasoning will cost significantly more than someone using Codex-Spark for quick edits.
+
+## Security and Sandboxing
+
+Every Codex cloud task runs in an isolated sandbox with its own filesystem, network boundaries, and execution context. Your code doesn't leak between tasks or between users.
+
+The CLI has a configurable permission model:
+
+- **Default sandbox** — Tight permissions, no write access to your local filesystem
+- **Workspace write** — Can modify files in your project directory
+- **Permission profiles** — Named configurations you can switch between projects
+
+The April 2026 update deprecated the `--full-auto` flag in favor of explicit permission profiles. This is a good change — instead of a binary "trust everything" toggle, you define exactly what Codex can and can't do per project.
+
+OpenAI also shipped **Codex Security** in March 2026 — a vulnerability detection tool that identified nearly 800 critical vulnerabilities and more than 10,000 high-severity issues across major open source projects including Chromium and OpenSSL during testing.
+
+## The Plugin Ecosystem
+
+As of April 2026, Codex has more than 90 plugins spanning app integrations, MCP servers, and skill packages:
+
+- **Code platforms**: GitHub, GitLab Issues, CircleCI, CodeRabbit
+- **Project management**: Atlassian Rovo (JIRA), Linear, Notion
+- **Communication**: Slack, Microsoft Teams
+- **Infrastructure**: AWS, Vercel, Docker
+
+Plugins connect Codex to external context and action surfaces. Instead of manually copying JIRA ticket details into your prompt, a plugin lets Codex read the ticket directly and understand the full context.
+
+The marketplace model (`codex marketplace add`) supports remote installation, upgrades, and bundled hooks — so plugins can register their own automation triggers.
+
+## What Codex Is Bad At
+
+Honest assessment: Codex isn't the right tool for everything.
+
+**Highly interactive development** — If you need to see every change as it happens, iterate visually on UI components, or maintain tight control over each edit, a tool like Cursor gives you real-time visual feedback that Codex's async model can't match.
+
+**Ambiguous requirements** — Codex performs best with clear objectives and verifiable completion criteria. If you can't define what "done" looks like, Codex will make assumptions that may not match your intent.
+
+**Deep architectural decisions** — Codex executes well within defined boundaries. It's less suited for open-ended architectural exploration where you need to think through tradeoffs before committing to a direction. Use plan mode for this, but recognize the human still needs to make the judgment calls.
+
+**Small, quick edits** — If you just need to rename a variable or fix a typo, Codex's cloud round-trip is overkill. Use your IDE or a terminal tool for these.
+
+## The Practical Playbook
+
+Here's how to actually integrate Codex into a real workflow:
+
+1. **Write your AGENTS.md first.** Before running a single task, tell Codex about your project.
+
+2. **Start with plan mode** for any task you haven't done before. Let Codex show you its approach before it starts executing.
+
+3. **Use `/goal` for multi-step work.** Migrations, coverage improvements, refactors across multiple modules — these are goal territory.
+
+4. **Run parallel tasks for independent work.** Test generation, documentation, linting fixes — fire all of these off simultaneously.
+
+5. **Keep one thread per task.** Don't overload a single conversation with unrelated work. Fresh context produces better results.
+
+6. **Configure permission profiles per project.** Tight defaults, loosened only where needed.
+
+7. **Review everything.** Codex is fast and capable, but it's not infallible. Use `/review` to catch issues before merging.
+
+8. **Convert repeated prompts into Skills.** If you keep typing the same instructions, package them as a `SKILL.md` file and reuse them across sessions.
+
+## Where Codex Is Going
+
+OpenAI isn't building a code editor. They're building the platform where AI agents do knowledge work.
+
+The trajectory is clear: Codex is evolving from a coding tool into a broader enterprise agent platform. The April 2026 superapp announcement — merging the ChatGPT desktop app and Codex into a single application — signals that coding is the proving ground, not the final product.
+
+The `/goal` feature is the foundation for this expansion. Persistent, stateful workflows that survive interruptions and span multiple sessions aren't just useful for code migrations. The same architecture works for any complex knowledge work with verifiable outcomes. Today it's "migrate this package." Tomorrow it's "process these invoices" or "audit this compliance checklist."
+
+The teams getting the most out of Codex right now aren't the ones with the best prompts — they're the ones with the best `AGENTS.md` files, the clearest goal definitions, and the discipline to let Codex work while they do something else. That's the skill that matters: knowing what to delegate, defining it precisely, and trusting the machine to execute.
+
+---
+
+If you found this useful, subscribe to the newsletter for more deep dives on AI developer tools, workflows, and the practical side of building with agents.
