@@ -1,0 +1,399 @@
+---
+title: "Codex CLI vs Claude Code: Commands, Skills, and MCP Compared"
+description: "Side-by-side breakdown of Codex CLI and Claude Code slash commands, skills, MCP config, and hooks — what exists in one but not the other."
+date: "2026-05-05"
+category: "ai-tools"
+tags: ["codex-cli", "claude-code", "ai-comparison", "coding-agents", "skills", "mcp", "developer-tools", "cli-tools", "openai", "anthropic"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Everyone says "just pick one" — Claude Code or Codex CLI. But if you're building anything serious, you'll end up using both. And the moment you do, you'll discover that these tools look similar from the outside but diverge sharply once you start configuring skills, wiring up MCP servers, or writing hooks.
+
+This is the reference that should exist: every slash command, CLI flag, skill format, MCP setup, and hook configuration compared side-by-side. What exists in one but is completely missing from the other. And crucially — how to share your skills and workflows across both without duplicating work.
+
+## The Architecture Split
+
+Before diving into commands, understand the philosophical difference:
+
+**Claude Code** runs locally in your environment. It reads your files directly, executes shell commands on your machine, and integrates with your local git. Everything happens where your code lives.
+
+**Codex CLI** defaults to cloud-sandboxed execution. Your code runs in isolation, and Codex operates within sandbox boundaries. You can override this with `--sandbox workspace-write` or `--yolo` for local execution, but the default is containment.
+
+This architectural choice ripples through every feature comparison below.
+
+## Slash Commands: Head-to-Head
+
+Here's the complete mapping of slash commands between both tools:
+
+### Commands That Exist in Both
+
+| Feature | Claude Code | Codex CLI |
+|---------|------------|-----------|
+| Clear conversation | `/clear` | `/clear` |
+| Compress context | `/compact` | `/compact` |
+| Switch model | `/model` | `/model` |
+| Set permissions | `/permissions` | `/permissions` |
+| List MCP servers | `/mcp` | `/mcp` |
+| Code review | `/review` | `/review` |
+| Exit session | `/exit` or `/quit` | `/exit` or `/quit` |
+| Resume session | `/resume` | `/resume` |
+| Show status | `/status` | `/status` |
+| Toggle fast mode | `/fast` | `/fast` |
+| Fork conversation | N/A | `/fork` |
+| Plan mode | Plan mode (via skill) | `/plan` |
+
+<Callout type="warning">
+**Don't assume identical behavior.** Both tools have `/review`, but Claude Code's reviews against your current branch diff while Codex's analyzes your working tree with customizable instructions. Same command name, different implementations.
+</Callout>
+
+### Commands Only in Claude Code
+
+| Command | What It Does |
+|---------|-------------|
+| `/init` | Generates a `CLAUDE.md` template for project instructions |
+| `/memory` | Edit global or project memory directly |
+| `/hooks` | View and manage hook configuration interactively |
+| `/config` | Open settings interface |
+| `/cost` | Display token usage and accumulated cost |
+| `/theme` | Change color scheme |
+| `/add-dir` | Grant access to additional directories |
+| `/pr` | Generate pull request from current work |
+| `/commit` | Stage and commit with auto-generated message |
+| `/security-review` | Run dedicated security audit |
+| `/todos` | Display tracked task list |
+| `/bug` | File bug report with session context |
+| `/login` / `/logout` | Authentication management |
+| `#text` | Add a fact to memory immediately |
+
+### Commands Only in Codex CLI
+
+| Command | What It Does |
+|---------|-------------|
+| `/fork` | Branch conversation into a new thread |
+| `/side` | Start an ephemeral side conversation |
+| `/plan` | Switch to plan mode with optional prompt |
+| `/agent` | Switch between active agent threads |
+| `/apps` | Browse and insert app connectors into prompts |
+| `/plugins` | Browse installed and discoverable plugins |
+| `/copy` | Copy the latest completed output |
+| `/diff` | Display git diff including untracked files |
+| `/init` | Generate an `AGENTS.md` scaffold (different from Claude Code's) |
+| `/personality` | Choose a communication style |
+| `/ps` | Display background terminals |
+| `/stop` | Terminate all background terminals |
+| `/new` | Start fresh conversation within same session |
+| `/sandbox-add-read-dir` | Grant sandbox read access (Windows) |
+| `/debug-config` | Print configuration layer diagnostics |
+| `/statusline` | Configure footer status-line items |
+| `/title` | Configure terminal window/tab title |
+| `/keymap` | Remap TUI keyboard shortcuts |
+| `/experimental` | Enable optional experimental features |
+| `/feedback` | Submit logs and diagnostics to maintainers |
+| `/mention` | Attach files or folders to conversations |
+
+## CLI Flags and Execution Modes
+
+### Claude Code CLI Flags
+
+```bash
+claude                    # Launch interactive session
+claude "prompt"           # Start with initial prompt
+claude -p "prompt"        # Print mode (non-interactive, outputs to stdout)
+claude -p --json          # JSON output for scripting
+claude --model opus       # Specify model
+claude --resume           # Resume last session
+claude --teleport         # Pull a web/mobile session locally
+```
+
+### Codex CLI Flags
+
+```bash
+codex                        # Launch interactive TUI
+codex "prompt"               # Start with initial prompt
+codex exec "prompt"          # Non-interactive execution (like claude -p)
+codex exec --json            # JSON output for CI/CD
+codex --model gpt-5.5        # Specify model
+codex resume --last          # Resume last session
+codex --sandbox read-only    # Sandbox policy control
+codex --yolo                 # Bypass all approvals and sandbox
+codex --search               # Enable live web search
+codex --remote ws://host     # Connect TUI to remote server
+codex --add-dir /path        # Grant additional directory access
+codex --image photo.png      # Attach images to prompt
+codex cloud "task"           # Run task in the cloud
+codex apply TASK_ID          # Apply cloud task diff locally
+codex mcp-server             # Run Codex AS an MCP server
+```
+
+<Callout type="info">
+**The biggest CLI difference:** Codex has `codex exec` as a dedicated non-interactive subcommand with its own flag set — including `--ephemeral` (don't persist session), `--output-schema` (validate response against JSON Schema), and session resume. Claude Code uses `claude -p` for the same purpose but with fewer scripting-specific options.
+</Callout>
+
+### What Codex Has That Claude Code Doesn't (CLI Level)
+
+| Feature | Codex CLI | Claude Code Equivalent |
+|---------|-----------|----------------------|
+| Cloud-sandboxed execution | Default behavior | Not available — runs locally |
+| Cloud tasks (`codex cloud`) | Submit tasks to run remotely | Web sessions at claude.ai/code |
+| Run as MCP server | `codex mcp-server` | Not available |
+| Remote TUI connection | `--remote ws://host` | Remote Control (different approach) |
+| Built-in web search | `--search` flag | Via MCP server (Firecrawl, etc.) |
+| Image generation | Built-in via `$imagegen` | Not available natively |
+| Output schema validation | `--output-schema` | Not available |
+| Configuration profiles | `--profile dev` | Not available |
+| Desktop app launcher | `codex app` | Separate desktop app |
+
+### What Claude Code Has That Codex Doesn't (CLI Level)
+
+| Feature | Claude Code | Codex CLI Equivalent |
+|---------|------------|---------------------|
+| Agent Teams (multi-agent) | Built-in team orchestration | MultiAgentV2 (more limited) |
+| Git worktrees for agents | Automatic isolation per agent | Not available |
+| Computer use | Full desktop control via MCP | Browser-only via app |
+| Teleport sessions | `--teleport` pulls web sessions locally | Not available |
+| Channels (Telegram, Discord) | Push events into sessions | Not available |
+| Routines (scheduled agents) | Cron-based recurring tasks | Not available |
+| Desktop app diff review | Visual inline diffs | Basic TUI diffs |
+| IDE extensions | VS Code + JetBrains native | VS Code extension |
+
+## Skills: The Cross-Platform Standard
+
+Here's the good news: skills are interoperable. Both tools use the same SKILL.md format, and a skill written for one works in the other without modification.
+
+### The Skill Format (Shared Standard)
+
+```
+my-skill/
+├── SKILL.md          # Required: frontmatter + instructions
+├── scripts/          # Optional: executable code
+├── references/       # Optional: documentation
+└── assets/           # Optional: templates, resources
+```
+
+The SKILL.md frontmatter is identical:
+
+```yaml
+---
+name: my-skill
+description: One-line description used for matching
+---
+
+Instructions for the AI agent...
+```
+
+### Storage Paths
+
+| Location | Claude Code | Codex CLI |
+|----------|------------|-----------|
+| User-level skills | `~/.claude/skills/` | `~/.codex/skills/` |
+| Project-level skills | `.claude/skills/` | `.codex/skills/` (or `.agents/skills/`) |
+
+**Pro tip:** Symlink a single skills directory across both tools to maintain one unified library:
+
+```bash
+ln -s ~/.claude/skills ~/.codex/skills
+```
+
+### Skill Invocation Differences
+
+| Behavior | Claude Code | Codex CLI |
+|----------|------------|-----------|
+| Explicit invocation | Type `/skill-name` or natural language | Use `$skill-name` prefix or `/skills` |
+| Implicit (auto-match) | Always on — Claude matches by description | On by default, disable via `allow_implicit_invocation: false` in `openai.yaml` |
+| Skill management | Built into `/` menu | Via `/plugins` and `$skill-installer` |
+| Marketplace | Community skills via GitHub repos | Agensi marketplace + plugin marketplace |
+
+### Can You Use Claude Code Skills in Codex CLI?
+
+**Yes — directly.** Copy any skill folder from `~/.claude/skills/` to `~/.codex/skills/` and it works. No modifications needed.
+
+The reverse is also true. Codex skills work in Claude Code. The only exception: if a Codex skill includes an `agents/openai.yaml` metadata file with Codex-specific UI hints or MCP dependencies declared in Codex format — those metadata files are ignored by Claude Code but don't break anything.
+
+### What You Need to Do
+
+1. **Copy the skill directory** to the other tool's skill path
+2. **That's it.** The SKILL.md is the only file that matters for functionality
+3. **Optional:** If the skill references tool names that differ between platforms (e.g., `apply_patch` in Codex vs `Edit` in Claude Code), the AI adapts automatically since skills are natural-language instructions, not code
+
+<Callout type="tip">
+**The SKILL.md standard originated with Claude Code in late 2025** and was adopted by Codex CLI within weeks. By early 2026, Google Antigravity, Cursor, and GitHub Copilot all support the same format. Write once, use everywhere.
+</Callout>
+
+## MCP Configuration: Same Protocol, Different Config Files
+
+Both tools fully support the Model Context Protocol. The difference is purely in how you configure servers.
+
+### Claude Code MCP Configuration
+
+Claude Code uses JSON. Add servers to `.claude/settings.local.json` or via the CLI:
+
+```bash
+claude mcp add github --scope user
+```
+
+Configuration format (`.claude/settings.local.json`):
+
+```json
+{
+  "mcpServers": {
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"],
+      "env": {
+        "API_KEY": "your-key"
+      }
+    }
+  }
+}
+```
+
+### Codex CLI MCP Configuration
+
+Codex uses TOML. Add servers via CLI or edit `~/.codex/config.toml`:
+
+```bash
+codex mcp add context7 -- npx -y @upstash/context7-mcp
+```
+
+Configuration format (`~/.codex/config.toml`):
+
+```toml
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+env_vars = ["API_KEY"]
+startup_timeout_sec = 10
+tool_timeout_sec = 60
+```
+
+### MCP Feature Comparison
+
+| Feature | Claude Code | Codex CLI |
+|---------|------------|-----------|
+| Config format | JSON | TOML |
+| Config location | `.claude/settings.local.json` | `~/.codex/config.toml` |
+| CLI management | `claude mcp add/remove` | `codex mcp add/remove/get/login/logout` |
+| OAuth support | Via MCP server implementation | Built-in `codex mcp login` with OAuth flow |
+| HTTP transport | Supported | Supported (streamable HTTP) |
+| STDIO transport | Supported | Supported |
+| Bearer token auth | Via env vars | `bearer_token_env_var` field |
+| Per-tool timeouts | Not configurable per-server | `tool_timeout_sec` per server |
+| Startup timeouts | Not configurable | `startup_timeout_sec` per server |
+| Selective tool enable/disable | Not available | `enabled_tools` / `disabled_tools` arrays |
+| Run AS MCP server | Not supported | `codex mcp-server` (Codex itself becomes a server) |
+| Shared config (CLI + IDE) | Separate configs | Unified `config.toml` for both |
+
+## Hooks: Both Have Them, Different Maturity
+
+Both tools support lifecycle hooks that let you inject custom logic before and after agent actions.
+
+### Shared Hook Events
+
+| Event | Claude Code | Codex CLI |
+|-------|------------|-----------|
+| Session start | `SessionStart` | `SessionStart` |
+| Before tool call | `PreToolUse` | `PreToolUse` |
+| After tool call | `PostToolUse` | `PostToolUse` |
+| User prompt submitted | `UserPromptSubmit` | `UserPromptSubmit` |
+| End of turn | `Stop` | `Stop` |
+| Permission request | N/A (via PreToolUse) | `PermissionRequest` (separate event) |
+
+### Configuration Format
+
+**Claude Code** (`.claude/settings.json`):
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [{
+          "type": "command",
+          "command": "./scripts/check-command.sh"
+        }]
+      }
+    ]
+  }
+}
+```
+
+**Codex CLI** (`~/.codex/hooks.json` or `config.toml`):
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [{
+          "type": "command",
+          "command": "./scripts/check-command.sh",
+          "timeout": 30,
+          "statusMessage": "Checking command"
+        }]
+      }
+    ]
+  }
+}
+```
+
+### Hook Differences
+
+| Feature | Claude Code | Codex CLI |
+|---------|------------|-----------|
+| Total event types | 21+ lifecycle events | 6 event types |
+| Handler types | command, http, prompt, agent | command only |
+| Feature flag required | No | Yes (`codex_hooks = true`) |
+| Interactive editor | `/hooks` command | Edit config manually |
+| Regex matchers | Supported | Supported |
+| Async execution | Yes | Concurrent within event |
+| Enterprise managed hooks | Via policy settings | Via `requirements.toml` |
+| HTTP webhook handlers | POST to endpoint, get JSON back | Not supported |
+
+## Project Instructions: CLAUDE.md vs AGENTS.md
+
+Both tools read a markdown file at session start for project-specific instructions. Same concept, different file names and discovery.
+
+| Aspect | Claude Code (`CLAUDE.md`) | Codex CLI (`AGENTS.md`) |
+|--------|--------------------------|------------------------|
+| Global location | `~/.claude/CLAUDE.md` | `~/.codex/AGENTS.md` |
+| Project location | Repo root `CLAUDE.md` | Repo root `AGENTS.md` |
+| Override mechanism | Nested CLAUDE.md files in subdirectories | `AGENTS.override.md` takes precedence |
+| Size limit | No documented limit | 32 KiB (`project_doc_max_bytes`) |
+| Discovery | Walks up from cwd to find project root | Walks down from root to cwd |
+| Auto-memory | Yes — Claude builds memory automatically | No auto-memory (manual only) |
+| Fallback names | None | Configurable via `project_doc_fallback_filenames` |
+
+## The Verdict: When to Use Which
+
+**Use Claude Code when:**
+- You need deep multi-file refactoring with architectural awareness
+- Agent Teams and parallel worktree execution matter
+- Computer use and browser automation are part of your workflow
+- You want mature hooks with 21+ event types and HTTP handlers
+- Scheduled routines and cross-device session continuity are important
+
+**Use Codex CLI when:**
+- You want sandboxed execution by default for safety
+- CI/CD scripting with `codex exec` and output schema validation
+- Cloud tasks that run independently of your machine
+- Plugin marketplace for quick tool discovery
+- Token efficiency matters (reportedly 4x fewer tokens per task)
+- You want to run the agent AS an MCP server for other tools
+
+**Use both when:**
+- Skills are fully portable — write once, use everywhere
+- MCP servers work with both (just different config formats)
+- Hooks follow similar patterns across both tools
+
+The tools are converging fast. Six months ago, this comparison would have been twice as long. Today, the meaningful differences are architectural (local vs. sandboxed), ecosystem (hooks maturity, agent teams), and workflow (cloud tasks vs. routines). Pick based on how you work, not which has more features.
+
+---
+
+*Want to share your own skills across both platforms? Check the [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills) repository for skills compatible with Claude Code, Codex CLI, Gemini CLI, Cursor, and more.*
+
+---
+
+If you found this useful, I write about AI development tools, automation pipelines, and building with agents every week. Subscribe to the newsletter to get the next comparison before everyone else debates it on Twitter.
