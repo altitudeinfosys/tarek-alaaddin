@@ -1,0 +1,348 @@
+---
+title: "Plugin Engineering Is Your Job Now — Skills, MCPs, and Plugins"
+description: "Skills, MCP servers, and plugins are the new extension primitives for AI coding agents — and building them is now a core engineering skill."
+date: "2026-05-09"
+category: "ai-tools"
+tags: ["plugin-engineering", "claude-code", "mcp", "skills", "plugins", "coding-agents", "model-context-protocol"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+There's a shift happening that most engineers haven't caught up to yet. The tools we use every day — Claude Code, Cursor, Codex, Windsurf — all have extension systems now. Not just configuration files. Full extension architectures with skills, MCP servers, plugins, hooks, and agent definitions.
+
+And here's the uncomfortable truth: nobody is going to build these for you. Not Anthropic. Not OpenAI. Not your favorite open-source maintainer. If you have a workflow that repeats, a data source that needs connecting, or a process that your team keeps doing manually — it's on you to turn that into a plugin.
+
+This isn't optional anymore. It's a core engineering skill.
+
+## The Three Extension Primitives
+
+Before building anything, you need to understand what you're working with. There are three distinct primitives in the modern AI coding agent ecosystem, and they serve very different purposes.
+
+### Skills: Instructions in Markdown
+
+A skill is the simplest extension you can build. It's a directory with a single `SKILL.md` file — YAML frontmatter at the top, markdown instructions underneath. When triggered, the agent loads those instructions and follows them.
+
+```text
+~/.claude/skills/my-skill/
+├── SKILL.md           # Main instructions (required)
+├── references/        # Supporting documentation
+└── scripts/
+    └── helper.sh      # Scripts the skill can execute
+```
+
+The frontmatter tells the agent when to load the skill and what tools it can use:
+
+```yaml
+---
+description: Deploy the application to production
+disable-model-invocation: true
+allowed-tools: Bash(git *) Bash(npm *)
+---
+```
+
+Skills are powerful because they're just text. No compilation. No runtime. No dependencies. Write a markdown file, drop it in the right directory, and your coding agent gains a new capability immediately.
+
+<Callout type="info">
+**When to build a skill:** You keep pasting the same instructions, checklist, or multi-step procedure into chat. Or a section of your CLAUDE.md has grown from a fact into a procedure. That's a skill waiting to be extracted.
+</Callout>
+
+### MCP Servers: The Universal Connector
+
+MCP — the Model Context Protocol — is an open specification that standardizes how AI applications discover and interact with external tools and data sources. Write your tool once, plug it into any compatible agent.
+
+An MCP server is a process that exposes tools, resources, or prompts over a documented JSON-RPC protocol. The same server works across Claude Code, Cursor, Windsurf, and any other MCP-compatible client. Official SDKs exist for TypeScript, Python, C#, Java, and Swift.
+
+Here's what a minimal MCP server looks like in Python using FastMCP:
+
+```python
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("my-tools")
+
+@mcp.tool()
+def check_deployment_status(environment: str) -> str:
+    """Check if a deployment is running in the given environment."""
+    # Your logic here
+    return f"Deployment in {environment} is healthy"
+```
+
+That decorator and type hint is all FastMCP needs to generate the tool schema automatically. TypeScript requires explicit Zod schemas, but the pattern is the same: define functions, expose them over the protocol, let any compatible agent call them.
+
+The ecosystem has grown fast. Hundreds of public MCP servers now cover GitHub, Slack, PostgreSQL, Stripe, Docker, Kubernetes, and more. OpenAI added native MCP support, Google followed for Gemini, and open-source tools like Ollama and LM Studio speak the protocol natively.
+
+### Plugins: The Distribution Package
+
+Plugins bundle multiple primitives into a single installable unit. A plugin can contain skills, agents, hooks, MCP server configurations, LSP servers, monitors, and executable scripts — all wrapped in a manifest that describes the package.
+
+```text
+my-plugin/
+├── .claude-plugin/
+│   └── plugin.json      # Manifest (name, version, description)
+├── skills/
+│   └── deploy/
+│       └── SKILL.md
+├── agents/
+│   └── reviewer.md
+├── hooks/
+│   └── hooks.json
+├── .mcp.json             # MCP server configurations
+└── bin/
+    └── lint-helper.sh    # Added to PATH when plugin is active
+```
+
+The manifest is minimal:
+
+```json
+{
+  "name": "my-team-tools",
+  "description": "Shared engineering workflows",
+  "version": "1.0.0",
+  "author": { "name": "Your Team" }
+}
+```
+
+Plugin skills are namespaced — `/my-team-tools:deploy` instead of just `/deploy` — which prevents conflicts when multiple plugins coexist. You install them from marketplaces, test them locally with `--plugin-dir`, and share them through git repositories.
+
+## When to Build What
+
+The quick reference:
+
+| Signal | Build This |
+|--------|-----------|
+| You repeat the same instructions or checklist | **Skill** |
+| You need to connect to an external data source or API | **MCP Server** |
+| You want to share a workflow with teammates | **Plugin** |
+| You need event-driven automation (on save, on commit) | **Hook** (inside a plugin or settings) |
+| You need agents to understand your repo structure | **AGENTS.md** |
+
+These aren't mutually exclusive. A plugin might contain three skills, an MCP server configuration, and a hook. But understanding which primitive solves which problem prevents over-engineering.
+
+<Callout type="warning">
+**Don't start with a plugin.** Start with a standalone skill in `.claude/skills/`. Get it working. Iterate. Only convert to a plugin when you're ready to share. Premature packaging creates maintenance burden without value.
+</Callout>
+
+## Building Your First Skill: A Practical Walkthrough
+
+Let's build something real. Say your team has a deployment process that involves running tests, checking the staging environment, building the application, and pushing to production. Everyone on the team does it slightly differently. That's a skill.
+
+### Step 1: Create the Directory
+
+```bash
+mkdir -p ~/.claude/skills/deploy
+```
+
+### Step 2: Write SKILL.md
+
+```yaml
+---
+name: deploy
+description: Deploy the application to production. Use when the user asks to deploy, ship, or push to prod.
+disable-model-invocation: true
+allowed-tools: Bash(npm *) Bash(git *) Bash(curl *)
+---
+
+## Pre-deploy checks
+
+!`git status --short`
+
+## Deploy process
+
+1. Run the full test suite: `npm test`
+2. Build the production bundle: `npm run build`
+3. Check staging health: `curl -s https://staging.example.com/health`
+4. If staging is healthy, push to production
+5. Verify production deployment
+6. Create a git tag with the current date
+
+Report each step's result before proceeding to the next.
+```
+
+Notice the `` !`git status --short` `` syntax in the pre-deploy checks section. That's dynamic context injection — it runs before the agent sees the instructions and inlines the output. The agent receives your actual git status, not the command.
+
+The `disable-model-invocation: true` flag means you invoke this with `/deploy`. The agent won't decide to run it on its own — deployments shouldn't happen by accident.
+
+### Step 3: Test It
+
+Start a Claude Code session and type `/deploy`. The skill loads, checks your git status, and walks through the deployment process step by step.
+
+No npm package. No build step. No API key. Just markdown and intention.
+
+## Building an MCP Server: Connecting External Data
+
+Skills handle workflows. MCP servers handle integrations. When you need your agent to query a database, check a monitoring dashboard, or interact with an internal API, that's an MCP server.
+
+### The Minimal Python Server
+
+```python
+import os
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("internal-api")
+
+@mcp.tool()
+def get_service_health(service_name: str) -> str:
+    """Check the health status of an internal service."""
+    import requests
+    resp = requests.get(
+        f"https://internal.example.com/api/health/{service_name}",
+        headers={"Authorization": f"Bearer {os.environ['API_TOKEN']}"}
+    )
+    return resp.json()
+
+@mcp.tool()
+def list_active_incidents() -> str:
+    """List all active incidents from the incident management system."""
+    import requests
+    resp = requests.get(
+        "https://internal.example.com/api/incidents?status=active",
+        headers={"Authorization": f"Bearer {os.environ['API_TOKEN']}"}
+    )
+    return resp.json()
+```
+
+### Register It with Your Agent
+
+Add the server to your `.mcp.json` or Claude Code MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "internal-api": {
+      "command": "python3",
+      "args": ["/path/to/server.py"],
+      "env": {
+        "API_TOKEN": "your-token"
+      }
+    }
+  }
+}
+```
+
+Now your coding agent can check service health and list incidents as naturally as reading a file. The MCP protocol handles discovery, schema validation, and transport. You just write the functions.
+
+<Callout type="tip">
+**Critical gotcha for STDIO servers:** Never use `print()` or `console.log()` in MCP servers running over STDIO transport. These write to stdout, which is the same channel MCP uses for JSON-RPC messages. Use `stderr` or a logging library instead. This single mistake corrupts the protocol and produces cryptic errors.
+</Callout>
+
+### Debugging with the Inspector
+
+The official MCP Inspector (`npx @modelcontextprotocol/inspector`) gives you a UI for listing tools, testing invocations, and inspecting JSON-RPC traffic without involving an LLM. Use it before connecting your server to an agent.
+
+## The AGENTS.md Convention
+
+While skills and MCPs extend what your agent can *do*, AGENTS.md tells it how to *think* about your codebase. It's an open standard — donated to the Linux Foundation under the Agentic AI Foundation (AAIF) alongside MCP — that provides hierarchical project instructions any agent can read.
+
+```markdown
+# AGENTS.md
+
+## Build & Test
+- Run tests: `npm test`
+- Run single test: `npm test -- --grep "test name"`
+- Build: `npm run build`
+
+## Architecture
+- API routes in `src/routes/`
+- Business logic in `src/services/`
+- Database models in `src/models/`
+
+## Conventions
+- Use camelCase for variables, PascalCase for classes
+- Every API endpoint needs input validation
+- Never commit directly to main
+```
+
+The agent reads the nearest AGENTS.md in the directory tree automatically. Subprojects can have their own, and the closest one takes precedence. Unlike a README, AGENTS.md is optimized for machine parsing: explicit commands, exact paths, hard rules rather than prose.
+
+The key insight: write only what the agent cannot discover by reading your code. Build commands, testing patterns, security constraints, deployment conventions. Skip anything that `grep` or `git log` would reveal.
+
+## From Standalone to Plugin: The Packaging Step
+
+Once your skills are battle-tested, converting them to a plugin takes minutes.
+
+### 1. Create the Manifest
+
+```bash
+mkdir -p my-team-tools/.claude-plugin
+```
+
+Create `my-team-tools/.claude-plugin/plugin.json`:
+
+```json
+{
+  "name": "team-tools",
+  "description": "Shared engineering workflows for the team",
+  "version": "1.0.0"
+}
+```
+
+### 2. Move Your Skills
+
+```bash
+cp -r ~/.claude/skills/deploy my-team-tools/skills/
+```
+
+### 3. Add MCP Configurations
+
+Drop a `.mcp.json` at the plugin root to include MCP server configurations that install with the plugin.
+
+### 4. Add Hooks for Automation
+
+Create `hooks/hooks.json` to wire up event-driven behaviors — run linting after every file edit, validate tests before commits, check types on save:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [{
+          "type": "command",
+          "command": "jq -r '.tool_input.file_path' | xargs npx eslint --fix"
+        }]
+      }
+    ]
+  }
+}
+```
+
+### 5. Test and Distribute
+
+```bash
+claude --plugin-dir ./my-team-tools
+```
+
+When it works, push to a git repository. Your team installs it through the plugin manager. Updates flow through version bumps or commit SHAs.
+
+## The Cross-Platform Advantage
+
+Here's what makes this ecosystem different from traditional IDE extensions: MCP is universal. The same MCP server you build for Claude Code works in Cursor, Windsurf, Codex, Gemini, and any other MCP-compatible client.
+
+Skills and plugins are more tool-specific, but the pattern is converging. Cursor inherits the full VS Code extension ecosystem. Windsurf supports MCP integrations across dozens of IDEs. The AGENTS.md convention works everywhere.
+
+Build your MCP servers for portability. Build your skills for the tool you use most. Package everything in a plugin when the team needs it.
+
+## The Skills and MCP Ecosystem in 2026
+
+The numbers tell the story of how fast this space is moving. As of May 2026, community directories list over 4,200 skills and more than 770 MCP servers across public repositories and marketplaces. Official MCP SDKs ship in five languages with active development, and every major AI coding tool now supports MCP natively.
+
+Community-driven skill collections have emerged from independent developers and engineering teams who publish production-grade workflows covering everything from TDD to security audits to database migrations. Open-source repositories like Addy Osmani's `agent-skills` and Jesse Vincent's Superpowers plugin demonstrate the pattern: encode expert-level engineering discipline into reusable, installable packages.
+
+## Start Building Today
+
+You don't need to build a framework. You don't need to learn a new language. You need a text editor and a clear understanding of your own workflows.
+
+Start here:
+
+1. **Identify one workflow you repeat weekly.** A deployment checklist. A code review process. A database migration sequence.
+2. **Write it as a SKILL.md file.** Drop it in `~/.claude/skills/your-skill-name/`. Test it.
+3. **If it needs external data, build an MCP server.** A dozen lines of Python or TypeScript. Register it in your MCP config.
+4. **When the team needs it, package it as a plugin.** Add the manifest, organize the directory, push to git.
+
+The engineers who build their own plugins aren't waiting for someone else to solve their problems. They're encoding their expertise into reusable, shareable extensions that compound over time.
+
+Plugin engineering isn't something that happens to you. It's something you do.
+
+---
+
+*Want more practical guides on AI engineering and developer tools? Subscribe to the newsletter for weekly deep dives.*
