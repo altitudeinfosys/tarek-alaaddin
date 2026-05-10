@@ -1,0 +1,306 @@
+---
+title: "Every Claude Code Command Reviewed — What Actually Improves Your Productivity"
+description: "A thorough evaluation of Claude Code's 60+ slash commands, CLI flags, and keyboard shortcuts — rated by real productivity impact, with a gap analysis against Codex CLI."
+date: "2026-05-09"
+category: "ai-tools"
+tags: ["claude-code", "cli-commands", "developer-productivity", "coding-agents", "codex-cli", "slash-commands", "keyboard-shortcuts", "developer-tools"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Claude Code ships with over 60 built-in slash commands, 40+ CLI flags, a dozen keyboard shortcuts, and a handful of bundled skills. Nobody uses all of them. Most developers discover three or four commands that feel useful and ignore the rest.
+
+That's a mistake. There are commands buried in the list that save significant time every week — and others that sound impressive but deliver nothing. This is the honest review that the documentation doesn't give you: what each command category actually does for your productivity, and where Claude Code still has blind spots that Codex CLI has already solved.
+
+## Context Management Commands — The Ones That Actually Matter
+
+These commands control your conversation window, and they're the difference between a productive 4-hour session and hitting a wall at 45 minutes.
+
+### /compact — The Command You Should Use More
+
+Rating: Essential
+
+When your session gets long, Claude Code starts losing track of earlier context. `/compact` compresses the conversation into a dense summary while preserving what matters. You can even tell it what to keep: `/compact retain the database schema and API endpoints`.
+
+The productivity gain is real. Instead of starting fresh every time you hit context limits, you carry forward accumulated understanding. A session that would normally die at 200K tokens can effectively run indefinitely.
+
+### /clear — The Nuclear Option
+
+Rating: Situational
+
+Unlike `/compact`, `/clear` wipes everything. Your file edits stay, but Claude forgets what it was working on. Use this when context has gotten so polluted with dead-end approaches that compacting would preserve confusion.
+
+### /context — Know Before You're Blindsided
+
+Rating: Underrated
+
+This visualizes how much of the context window you've used. Most developers don't check until they notice degraded output quality — by then you're already at 80% capacity. Checking `/context` every 30 minutes and deciding whether to compact is a discipline that prevents wasted cycles.
+
+### /rewind — Selective Time Travel
+
+Rating: High Impact
+
+Double-press Escape (or type `/rewind`) and you get a menu to roll back both conversation history and code changes to any previous point. This is dramatically better than `git stash` or manual undo because it rewinds Claude's understanding too — not just the files.
+
+<Callout type="info">
+**Pro tip:** `/rewind` is most powerful after Claude goes down a wrong path. Rather than explaining why the approach was wrong and hoping it course-corrects, rewind to before the wrong turn and rephrase your intent.
+</Callout>
+
+## Session Management — Working Across Time
+
+### /resume — Pick Up Where You Left Off
+
+Rating: Essential
+
+`/resume` opens a picker showing your last 50 sessions. Combined with the CLI flag `claude -c` (resume most recent), this means you never lose work just because you closed a terminal. Context, file state, conversation — all preserved.
+
+### /fork — Branch Your Conversation
+
+Rating: Useful for Exploration
+
+Fork creates a copy of the current session in a new thread. Useful when you want to explore an alternative approach without losing your current progress. Think of it as `git branch` for conversations.
+
+### /rename — Organizational Hygiene
+
+Rating: Minor
+
+Names your session for easier identification in the resume picker. Small quality-of-life improvement when you're running multiple parallel sessions.
+
+## Model and Performance Controls
+
+### /model — Switch Intelligence Levels
+
+Rating: Essential
+
+Switch between Opus (deep reasoning), Sonnet (fast and capable), and Haiku (quick answers) mid-session. The productivity pattern: use Opus for architecture decisions and complex debugging, drop to Sonnet for implementation, and use Haiku for quick lookups.
+
+### /fast — Speed Over Depth
+
+Rating: Situational
+
+Toggles a faster output mode on Opus 4.6. It doesn't downgrade the model — it optimizes for throughput. Good for boilerplate generation and bulk operations where you don't need deep deliberation.
+
+### /effort — Dial the Thinking
+
+Rating: Underrated
+
+Sets thinking level to low, medium, or high. At `low`, Claude skips extended reasoning and just answers. At `high`, it thinks through implications carefully. The sweet spot: `low` for file reads and simple edits, `high` for debugging and architecture.
+
+<Callout type="warning">
+**Don't set effort to low and then ask complex questions.** You'll get superficial answers and waste time going back and forth. Match the effort level to the actual complexity of what you're asking.
+</Callout>
+
+## Code Quality and Review Commands
+
+### /simplify — The Pre-PR Quality Gate
+
+Rating: High Impact
+
+This spawns three parallel review agents that analyze your recent changes for architectural issues, duplicate logic, and performance problems. It replaced the older `/review` command and is significantly more thorough because it runs multiple perspectives simultaneously.
+
+### /security-review — Catch What You Missed
+
+Rating: Essential for Production Code
+
+Audits uncommitted changes specifically for security vulnerabilities. Not a replacement for proper security tooling, but it catches obvious issues like exposed secrets, injection vectors, and missing input validation before they reach a PR.
+
+### /diff — See What Changed
+
+Rating: Utility
+
+Shows the git diff including untracked files. Minor convenience over running `git diff` manually, but useful when you want Claude to discuss the changes in the same context.
+
+### /pr-comments — Stay Connected to Reviews
+
+Rating: Useful
+
+Pulls PR comments for the current branch directly into your session. Instead of context-switching to GitHub, you can read reviewer feedback and address it immediately with Claude's help.
+
+## Automation and Parallel Work
+
+### /batch — Parallel Changes at Scale
+
+Rating: Game-Changing for Large Repos
+
+This is the command that justifies Claude Code for teams working on large codebases. `/batch` takes a list of tasks, creates isolated git worktrees for each one, runs them in parallel, and produces PRs. Migrations, pattern refactors, multi-service changes — tasks that previously required sequential, tedious manual work now run concurrently without merge conflicts.
+
+### /loop — Recurring Automation
+
+Rating: High Impact for Ops
+
+Runs a prompt on a schedule within your session. Useful for monitoring builds, polling deployment status, or running periodic checks. Example: `/loop 5m check if the CI pipeline is green and notify me if it fails`.
+
+### /plan — Think Before Acting
+
+Rating: Essential
+
+Toggles Plan Mode, where Claude proposes changes but doesn't execute them until you approve. This is the sweet spot between full autonomy and constant permission prompting. You see exactly what will happen before it happens.
+
+<Callout type="info">
+**Plan mode is most valuable for destructive operations.** Database migrations, file deletions, permission changes — anything where a mistake costs real time to recover from.
+</Callout>
+
+## Integration and Extension Commands
+
+### /mcp — Your Tool Ecosystem
+
+Rating: Essential
+
+Lists all connected MCP (Model Context Protocol) servers and their status. MCP is how Claude Code connects to external services — databases, APIs, deployment platforms, monitoring tools. If you're not using MCP, you're using Claude Code at half its potential.
+
+### /plugin — Extend Everything
+
+Rating: Growing Importance
+
+Manages installed plugins that add slash commands, MCP servers, and hooks in one package. The plugin ecosystem is still maturing, but marketplace-distributed plugins are becoming the standard way to share team workflows.
+
+### /install-github-app — Automated PR Reviews
+
+Rating: Set and Forget
+
+Installs Anthropic's GitHub app for automatic code review on every PR. Once configured, you get AI-powered review comments without any manual invocation.
+
+### /hooks — Lifecycle Automation
+
+Rating: Power User Essential
+
+Configures shell commands that run before or after Claude Code actions. Auto-format after every file edit. Run lint before commits. Send notifications when sessions complete. There are 17 hook events covering everything from tool use to session lifecycle.
+
+## Input and Navigation
+
+### /vim — For the Keyboard Purists
+
+Rating: Niche but Beloved
+
+Enables vim keybindings in the prompt input. Mode switching, hjkl navigation, operators, text objects — the full experience. If you already think in vim, this removes friction. If you don't, skip it.
+
+### /voice — Speak Your Intent
+
+Rating: Experimental
+
+Push-to-talk mode for voice input. Useful when you're thinking through a problem and want to verbalize rather than type. Quality varies with microphone setup and ambient noise.
+
+### @ and ! Notation — The Hidden Multipliers
+
+Rating: Essential
+
+These aren't slash commands but deserve mention. `@filename` references a specific file in your prompt. `!command` executes a shell command inline. `& task` runs something in the background. These notations are faster than describing what you want Claude to look at.
+
+## Configuration and Diagnostics
+
+### /config — Central Settings Hub
+
+Rating: One-time Setup
+
+Opens the settings interface. Permission modes, model defaults, auto-formatting preferences — set once and forget.
+
+### /doctor — When Things Break
+
+Rating: Emergency Only
+
+Runs environment diagnostics. Useful when MCP servers aren't connecting, authentication is failing, or something feels wrong. Not something you use daily.
+
+### /usage and /cost — Budget Awareness
+
+Rating: Important for Teams
+
+Shows token consumption and session costs. If you're on a usage-based plan or managing a team budget, check these regularly.
+
+## Keyboard Shortcuts Worth Memorizing
+
+The five shortcuts that deliver the most value:
+
+| Shortcut | What It Does | Why It Matters |
+|----------|-------------|----------------|
+| `Shift+Tab` | Cycle permission modes | Switch between auto-accept and plan mode instantly |
+| `Tab` | Toggle extended thinking | Quick depth control without typing /effort |
+| `Esc` (double) | Rewind menu | Fastest way to undo a wrong path |
+| `Ctrl+S` | Stash prompt | Save what you're typing without sending |
+| `& task` | Background task | Keep working while something runs |
+
+## The CLI Flags That Change How You Work
+
+Beyond slash commands, the CLI invocation flags unlock entirely different workflows:
+
+**`claude -p "prompt"`** — Non-interactive mode. Essential for scripts, CI pipelines, and automation. Pipe in data, get answers out, no human in the loop.
+
+**`claude -c`** — Resume last session instantly. The fastest way to pick up where you left off.
+
+**`claude -w`** — Worktree isolation. Spawns a session in its own git worktree so concurrent sessions don't collide.
+
+**`--model opus`** — Start with a specific model without switching later.
+
+**`--max-turns N`** — Safety limit for automated runs. Prevents runaway sessions in CI.
+
+**`--dangerously-skip-permissions`** — Full autonomy with zero approval gates. The name is intentionally scary. Use this exclusively in containers, VMs, or disposable environments — never on your actual machine.
+
+## What Claude Code Lacks That Codex CLI Has
+
+After this thorough review, here's the honest gap analysis — where Codex CLI offers something Claude Code doesn't:
+
+### Cloud-Native Execution
+
+Codex CLI defaults to sandboxed cloud execution. You fire off a task with `codex cloud exec` and it runs on OpenAI's infrastructure. Claude Code is fundamentally local-first — your machine, your resources. There's no equivalent to firing off 10 parallel cloud tasks without consuming your own compute.
+
+### Built-In Web Search
+
+Codex CLI has integrated web search enabled by default (cached or live mode). Claude Code relies on MCP servers or the WebSearch tool to access the internet. It works, but it's not zero-config out of the box.
+
+### Image Generation in the Terminal
+
+Codex generates images directly in the CLI using `gpt-image-2`. Need an icon, a placeholder, or a banner? Done without leaving the terminal. Claude Code has no built-in image generation.
+
+### Side Conversations
+
+Codex's `/side` creates an ephemeral conversation that doesn't affect your main thread. Claude Code's `/fork` is close but creates a full persistent session rather than a disposable scratchpad.
+
+### Remote Server Architecture
+
+`codex app-server` runs a workspace server that multiple TUI clients can connect to over WebSocket. Claude Code has Remote Control for accessing sessions from other devices, but not the same persistent server model for team collaboration.
+
+## What Codex CLI Lacks That Claude Code Has
+
+The gap goes both ways. Claude Code advantages that don't exist in Codex:
+
+### Agent Teams
+
+Claude Code's Agent Teams system enables multiple coordinated agents sharing a task list, claiming work, and communicating with each other. Codex has subagents, but they report back to a parent — they don't collaborate laterally.
+
+### Hooks System (17 Events)
+
+Claude Code's hooks are more granular. PreToolUse, PostToolUse, SessionStart, SubagentStart, WorktreeCreate — 17 distinct lifecycle events you can attach shell commands to. Codex's exec policies and configuration are less flexible for reactive automation.
+
+### /batch with Worktree Isolation
+
+Claude Code's `/batch` creates isolated worktrees, runs parallel work, and produces PRs — all from a single command. Codex can parallelize with subagents, but the worktree coordination isn't as turnkey.
+
+### Vim Mode
+
+Small but meaningful: Claude Code gives you full vim keybindings in the input. Codex has `/keymap` for remapping, but not a vim emulation layer.
+
+### Skills as Sharable Packages
+
+Claude Code's skill system (SKILL.md files with frontmatter) enables distributing reusable workflows that auto-invoke based on context. Codex has custom slash commands, but they lack the metadata-driven auto-invocation and marketplace distribution.
+
+### Desktop App and Multi-Surface Experience
+
+Claude Code runs in Terminal, VS Code, JetBrains, a Desktop app, the web, and even the Claude iOS app — all sharing the same engine. Codex CLI is terminal-first with a lighter desktop experience.
+
+## The Verdict
+
+Claude Code's command set is deep. Most developers use 10% of what's available. The highest-impact commands to adopt immediately: `/compact`, `/plan`, `/batch`, `/simplify`, and the `/effort` toggle. Those five alone represent a step-change in how effectively you use the tool.
+
+The data backs this up: in blind code quality evaluations, Claude Code wins 67% of comparisons against Codex's 25%. But Codex leads decisively on terminal-native tasks — scripting and DevOps workflows — at 77.3% versus Claude Code's 65.4%. Neither tool dominates everywhere.
+
+The comparison with Codex isn't about which tool is better — it's about which tool fits your workflow. If you need cloud execution and fire-and-forget automation, Codex's architecture is built for that. If you need deep local reasoning, coordinated agents, and granular lifecycle control, Claude Code's command set is unmatched.
+
+The real power move: learn both command sets and use the right tool for the job.
+
+<Callout type="info">
+**Want to get the most from Claude Code?** Type `/` and scroll through the full command list. Then check your keyboard shortcuts with `?`. There's almost certainly a command for the thing you've been doing manually.
+</Callout>
+
+---
+
+*Want more practical breakdowns of AI development tools? Subscribe to get the next deep dive delivered to your inbox.*
