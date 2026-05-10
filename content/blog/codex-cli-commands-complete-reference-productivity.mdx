@@ -1,0 +1,307 @@
+---
+title: "Every Codex CLI Command Explained — The Complete Productivity Reference"
+description: "A deep dive into every Codex CLI command from the official docs, organized by what actually makes you faster, with a gap analysis against Claude Code."
+date: "2026-05-10"
+category: "ai-tools"
+tags: ["codex-cli", "openai", "cli-commands", "developer-productivity", "coding-agents", "claude-code", "terminal-tools", "ai-comparison"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Codex CLI ships with over 35 slash commands, a dozen subcommands, and enough flags to fill a manual. OpenAI pushes updates frequently — version 0.130.0 dropped on May 8, 2026 — and each release adds features that most developers never discover.
+
+The official documentation lists everything alphabetically, which is useless for deciding what matters. This is the reference organized by what you'll actually reach for: commands that save time daily, commands for specific workflows, and commands that exist but rarely justify their complexity. At the end, a direct comparison with what Claude Code offers and what's still missing from each side.
+
+## Session and Context Commands
+
+These are the commands you'll use in every session. Get comfortable with them first.
+
+### /compact — Reclaim Your Context Window
+
+When a session runs long, Codex starts losing earlier details. `/compact` compresses the conversation into a dense summary while keeping the important context alive. This is identical in concept to Claude Code's `/compact`, and it works the same way — the difference is that Codex's context window starts at 272K tokens by default (expandable to 1.05M with long-context mode), so you'll hit the wall at different points depending on your model configuration.
+
+Use it proactively. Don't wait for the model to start hallucinating about files it read thirty minutes ago.
+
+### /clear — Start Fresh Without Restarting
+
+Wipes the conversation state while keeping your terminal session alive. Your file edits persist, but Codex forgets everything discussed. This is the right call when your context has gotten so tangled with dead-end approaches that compacting would just compress the confusion.
+
+### /status — The Quick Health Check
+
+Displays your active model, approval policy, writable roots, and current token usage in one snapshot. Run this before starting complex work to make sure you're on the right model with the right permissions. It takes two seconds and prevents the "why is this so slow" realization twenty minutes in when you discover you're running on the wrong model.
+
+### /copy — Grab the Last Output
+
+Copies the latest completed output to your clipboard. The shortcut `Ctrl+O` does the same thing. Simple, but it eliminates the select-all-copy dance that breaks your flow when you need to paste a code block somewhere else.
+
+<Callout type="info">
+**Tab queueing is underused.** While Codex is actively running, pressing Tab lets you queue a follow-up message that fires as soon as the current turn finishes. This prevents the awkward pause where you're watching output and waiting to give the next instruction.
+</Callout>
+
+## Navigation and Planning Commands
+
+These commands shape how you approach a problem before writing any code.
+
+### /plan — Think Before You Act
+
+Switches Codex into plan mode where it reasons through the approach without making changes. You can also pass a prompt directly: `/plan migration proposal for the auth module`. The plan sits in your transcript, and you can approve, modify, or reject it before Codex touches any files.
+
+This is the command most developers skip and most developers should not skip. On multi-file changes, a brief planning step prevents a much longer cleanup cycle.
+
+### /goal — Persistent Objectives Across Turns
+
+This is experimental (requires `features.goals` enabled) but genuinely useful. Type `/goal finish the database migration` and Codex keeps that objective in mind across turns. It doesn't just remember what you asked — it tracks progress and can tell you what's left.
+
+You can also `/goal pause` to temporarily shelve the objective, `/goal resume` to pick it back up, and `/goal clear` to drop it entirely. As of v0.128.0, goals persist across sessions via the app-server API, so you can close the terminal and pick up where you left off.
+
+<Callout type="warning">
+**Goal is experimental for a reason.** It occasionally loses track of sub-objectives on complex multi-step tasks. Treat it as a helpful guide, not a project manager. Check `/goal` status periodically to make sure it hasn't drifted from your actual intent.
+</Callout>
+
+### /diff — See What Changed
+
+Shows the Git diff including untracked files. You get the same information as `git diff` plus `git status`, but inside your Codex session without switching context. Fast way to verify changes before committing.
+
+### /review — Dedicated Code Review Mode
+
+Launches a dedicated review workflow against your current changes. You can review against the base branch, uncommitted changes, a specific commit, or add custom review instructions. The review uses your active model by default, but you can override it with `review_model` in your config.
+
+This is more structured than asking "review my changes" in the main conversation. It produces a separate review turn in the transcript that doesn't pollute your working context.
+
+## Model and Performance Commands
+
+### /model — Switch Models Mid-Session
+
+Opens a picker to switch between available models. As of May 2026, the recommended options are GPT-5.5 (newest, best for complex tasks) and GPT-5.4 (reliable fallback). GPT-5.3-Codex-Spark is available for ChatGPT Pro subscribers and runs noticeably faster.
+
+You don't need to restart your session to switch. If you've been using GPT-5.4 for planning and want to switch to GPT-5.5 for a complex implementation, just `/model` and select.
+
+### /fast — Speed vs. Quality Toggle
+
+`/fast on` switches to a faster model variant. `/fast off` returns to the default. `/fast status` shows the current setting. This is the equivalent of Claude Code's `/fast` toggle, and the tradeoff is the same — faster responses at the cost of some reasoning depth.
+
+### /personality — Change the Communication Style
+
+Switches between communication styles without rewriting your system prompt. Options include friendly, pragmatic, and none (raw output). This is cosmetic — it doesn't change the model's reasoning, just how it presents results.
+
+## Conversation Management
+
+### /fork — Branch Your Conversation
+
+Creates a new conversation thread from the current point. The forked thread carries the full context from the original but evolves independently. This is valuable when you want to explore an alternative approach without losing your current line of work.
+
+Claude Code doesn't have a direct equivalent of this. You can start a new session and use `/resume` to get back to the original, but you can't branch from a specific point in the conversation.
+
+### /side — Quick Detour Without Derailing
+
+Starts an ephemeral side conversation that exists outside your main thread. Type `/side check for security risks in the auth handler` and Codex does the analysis without adding it to your main context. When the side conversation ends, your main thread continues exactly where you left off.
+
+This is one of the most elegant features in Codex CLI and one of the clearest gaps in Claude Code. The ability to ask a quick question without contaminating your working context is a significant productivity advantage.
+
+### /resume — Pick Up Where You Left Off
+
+Opens a picker of recent sessions. Add `--all` to see sessions from other directories, or `--last` to jump straight to the most recent one. Claude Code has `/resume` too, but Codex's session management feels slightly more polished with its directory-scoped default and cross-directory option.
+
+### /new — Fresh Conversation, Same Session
+
+Starts a clean conversation within the same terminal session. Your configuration, model selection, and permissions carry over, but the conversation history resets. Less disruptive than `/clear` because it explicitly creates a new conversational thread rather than wiping the current one.
+
+## File and Environment Commands
+
+### /mention — Attach Files to Context
+
+Type `/mention src/lib/api.ts` to explicitly add a file to the conversation context. This is the equivalent of `@file` in Claude Code. It ensures Codex reads the specific file you want to discuss rather than relying on it discovering the file through exploration.
+
+### /permissions — Control the Approval Boundary
+
+Opens a menu to set your approval requirements. The presets are:
+
+- **Auto** (default): Read, edit, and run within the working directory. Asks permission for anything outside scope.
+- **Read Only**: Browse files, no changes without explicit approval per action.
+- **Full Access**: Work across the machine with network access and no prompts.
+
+Claude Code's equivalent is `Shift+Tab` to cycle through permission modes (`default`, `acceptEdits`, `plan`, `auto`, `bypassPermissions`). Codex's three-tier system is simpler; Claude Code's five modes offer more granularity.
+
+### /sandbox-add-read-dir — Expand the Sandbox (Windows)
+
+Grants read access to an additional directory inside the sandbox. This is Windows-specific and addresses a pain point where the kernel sandbox blocks access to directories you legitimately need to reference.
+
+## Agent and Plugin Commands
+
+### /agent — Switch Active Agent Thread
+
+When running subagents (parallel worker threads), this command switches your view between them. Subagent roles are configurable in `config.toml` under `[agents]`.
+
+### /apps — Browse Connectors
+
+Opens a marketplace-style browser for inserting connectors into your session. This is the Codex equivalent of MCP integration, though the implementation and ecosystem differ.
+
+### /plugins — Plugin Management
+
+Browse installed and discoverable plugins. Codex's plugin system has matured significantly — workspace sharing, source filtering, and bundled hooks arrived in v0.129.0. The `codex plugin marketplace` subcommand manages plugin sources from GitHub.
+
+### /mcp — List MCP Tools
+
+Lists available Model Context Protocol servers and tools. Add `verbose` for detailed output. Both Codex and Claude Code support MCP, but the configuration differs — Codex uses `config.toml`, Claude Code uses `settings.json` or CLI flags.
+
+## Codex CLI Configuration and Debugging Commands
+
+### /experimental — Toggle Feature Flags
+
+Opens a picker to enable or disable experimental features. This is how you access pre-release capabilities like goals, unified exec, and shell snapshots. Changes persist to `~/.codex/config.toml`.
+
+### /debug-config — Config Layer Diagnostics
+
+Prints exactly where your configuration values come from — which file, which layer, what's overriding what. Invaluable when your config isn't behaving as expected and you need to trace precedence.
+
+### /statusline — Customize the Footer
+
+Configure what information appears in the TUI footer. Toggle and reorder items to show token usage, model name, permissions, or other indicators that matter to your workflow.
+
+### /title — Configure Terminal Title
+
+Controls what shows in your terminal's title bar. Similar to `/statusline` but for the window title rather than the in-app footer.
+
+### /keymap — Remap Keyboard Shortcuts
+
+Remap TUI keyboard shortcuts to your preferences. Added in v0.128.0, this lets you customize the keybinding scheme if the defaults conflict with your terminal setup. Run `/keymap debug` for key event inspection.
+
+### /feedback — Report Issues
+
+Sends logs and context to the Codex maintainers. Useful when you hit a bug that's hard to reproduce — the logs include session context that helps with debugging.
+
+### /init — Generate AGENTS.md
+
+Scaffolds an `AGENTS.md` file for your project. This is the Codex equivalent of `claude init` generating a `CLAUDE.md`, but AGENTS.md follows an open standard that multiple tools can read.
+
+### /logout — Sign Out
+
+Removes stored authentication credentials. Straightforward, but worth knowing exists if you're switching between accounts or API keys.
+
+## The CLI Subcommands You Should Know
+
+Beyond slash commands, Codex CLI has powerful subcommands for automation and integration.
+
+### codex exec — Non-Interactive Automation
+
+The most important subcommand for CI/CD. `codex exec "fix the CI failure"` runs Codex without the interactive UI, streams results to stdout, and exits with a meaningful exit code. This is how you integrate Codex into pipelines, Git hooks, and cron jobs.
+
+The short form `codex e` works identically. You can resume previous sessions with `codex exec resume --last "continue with the next step"` for multi-stage automation.
+
+```bash
+# CI/CD example: auto-fix lint failures
+codex exec --sandbox workspace-write "fix all ESLint errors and run the test suite"
+
+# Pipe into downstream processing
+codex exec --json "analyze the test coverage report" | jq '.result'
+```
+
+### codex cloud — Fire-and-Forget Task Delegation
+
+Submit tasks to Codex Cloud for asynchronous execution. `codex cloud exec --env ENV_ID "refactor the payment module"` fires the task and returns immediately. You can check progress with `codex cloud list` or apply results locally with `codex apply TASK_ID`.
+
+This is a fundamentally different model from Claude Code's local-first approach. With Codex Cloud, you submit work, switch to something else, and come back to review the results. Claude Code keeps you in the loop for every action.
+
+### codex resume — Session Continuity
+
+`codex resume` opens a session picker. `codex resume --last` jumps to the most recent session. `codex resume --all` shows sessions from all directories. Session persistence means you never lose work because you closed a terminal.
+
+### codex sandbox — Run Commands in the Sandbox
+
+`codex sandbox` lets you run arbitrary commands under the same sandboxing policies Codex uses internally. This is useful for testing scripts in a restricted environment before giving Codex full access.
+
+### codex mcp — Manage MCP Servers
+
+Full MCP server lifecycle management: `codex mcp add`, `codex mcp get`, `codex mcp list`, `codex mcp remove`, plus OAuth management with `codex mcp login` and `codex mcp logout`. The configuration lives in `~/.codex/config.toml`.
+
+<Callout type="info">
+**Codex as MCP server.** Run `codex mcp-server` to expose Codex itself as an MCP server over stdio. This means other tools can call Codex as a capability provider — a powerful integration pattern for complex multi-agent workflows.
+</Callout>
+
+### codex app-server — Remote TUI
+
+Start a headless app server on one machine and connect the TUI from another: `codex app-server --listen ws://127.0.0.1:4500` on the server, `codex --remote ws://127.0.0.1:4500` on the client. Three authentication modes: no auth (local), capability tokens, and signed bearer tokens.
+
+## What Codex CLI Has That Claude Code Doesn't
+
+Here are the gaps that matter most:
+
+**Cloud task delegation.** Codex Cloud lets you fire off a task and come back later. Claude Code's web sessions and routines approach this from a different angle, but the fire-and-forget model is simpler for well-scoped tasks.
+
+**Kernel-level sandboxing.** Codex's sandbox uses OS-level enforcement (Seatbelt on macOS, Landlock and seccomp on Linux). Claude Code's application-layer hooks are more programmable but share a process boundary with the agent. For running untrusted code, Codex's approach is inherently more secure.
+
+**Session forking.** `/fork` creates a true branch of your conversation. Claude Code lets you start new sessions but can't branch from a specific point in an existing one.
+
+**Side conversations.** `/side` starts an ephemeral thread that doesn't affect your main context. Claude Code doesn't have this — every question adds to your single conversation thread.
+
+**Open-source CLI.** Codex CLI is Apache 2.0 with over 67,000 GitHub stars. Claude Code is proprietary. If you need to audit the agent's behavior or contribute fixes, Codex is the only option.
+
+**AGENTS.md portability.** AGENTS.md is an open standard that multiple tools can read. CLAUDE.md only works with Anthropic's tools. If you're using both Codex and Claude Code in the same repo, you need two configuration files.
+
+## What Claude Code Has That Codex CLI Doesn't
+
+The comparison goes both ways:
+
+**Hooks with 26 lifecycle events.** Claude Code's hook system is far more granular than anything in Codex. You can run validation before file edits, after commits, on session start — and the hooks execute arbitrary shell commands with full context about what triggered them.
+
+**Multi-surface availability.** Claude Code runs in the terminal, VS Code, JetBrains, a desktop app, the web, and the Claude iOS app. Codex CLI has the terminal and a macOS desktop app, but the surface coverage is narrower.
+
+**Agent Teams.** Claude Code's Agent tool spawns coordinated sub-agents with file ownership boundaries and messaging between them. Codex has subagents, but the coordination model is less mature.
+
+**Remote Control and Teleport.** Start a session locally, continue from your phone or another browser. Claude Code's `/remote-control` and `--teleport` flags make this seamless.
+
+**Worktrees.** Claude Code's `--worktree` flag creates isolated git worktrees for parallel work on the same repo. Codex doesn't have this built in.
+
+**Ultrareview.** Multi-agent cloud code review that runs against your branch or PR. Codex's `/review` is single-agent and local.
+
+## The Productivity Stack: Using Both
+
+The most productive setup isn't choosing one — it's knowing when to reach for each.
+
+**Use Codex CLI for:** well-scoped implementation tasks, CI/CD automation via `codex exec`, DevOps and infrastructure work (Terminal-Bench 2.0 numbers back this up), and fire-and-forget tasks via Codex Cloud.
+
+**Use Claude Code for:** complex multi-file refactoring, architecture planning, frontend development (blind code quality evaluations consistently favor Claude), and workflows that benefit from deep customization via hooks and skills.
+
+**The handoff pattern:** Plan with Claude Code, implement with Codex. Claude Code's extended thinking and planning capabilities map the approach; Codex's token efficiency and fast execution handles the implementation. Codex reads AGENTS.md, and Claude Code reads CLAUDE.md — you'll need to maintain both if your repo uses both tools, but the project-level instructions in each serve the same purpose.
+
+## Quick Reference Table
+
+| Command | Category | What It Does |
+|---------|----------|-------------|
+| `/compact` | Context | Compress conversation history |
+| `/clear` | Context | Wipe conversation state |
+| `/status` | Context | Show session config and token usage |
+| `/copy` | Context | Copy last output to clipboard |
+| `/plan` | Planning | Enter plan-only mode |
+| `/goal` | Planning | Set persistent objective (experimental) |
+| `/diff` | Planning | Show git diff with untracked files |
+| `/review` | Planning | Dedicated code review workflow |
+| `/model` | Performance | Switch active model |
+| `/fast` | Performance | Toggle speed vs quality |
+| `/personality` | Performance | Change communication style |
+| `/fork` | Conversation | Branch conversation into new thread |
+| `/side` | Conversation | Start ephemeral side conversation |
+| `/resume` | Conversation | Pick up previous session |
+| `/new` | Conversation | Fresh conversation, same session |
+| `/mention` | Files | Attach file to context |
+| `/permissions` | Files | Set approval requirements |
+| `/agent` | Agents | Switch active agent thread |
+| `/apps` | Agents | Browse connectors |
+| `/plugins` | Agents | Manage plugins |
+| `/mcp` | Agents | List MCP tools |
+| `/experimental` | Config | Toggle feature flags |
+| `/debug-config` | Config | Print config diagnostics |
+| `/statusline` | Config | Customize footer display |
+| `/title` | Config | Configure terminal title |
+| `/keymap` | Config | Remap keyboard shortcuts |
+| `/init` | Config | Generate AGENTS.md |
+| `/feedback` | Misc | Report issues to maintainers |
+| `/logout` | Misc | Sign out |
+| `/exit` / `/quit` | Misc | Exit the CLI |
+
+---
+
+<Callout type="tip">
+**Want the next deep dive in your inbox?** Subscribe to the newsletter for breakdowns of AI coding tools, CLI workflows, and the developer productivity patterns that actually hold up in production. No fluff, no hype — just what works.
+</Callout>
