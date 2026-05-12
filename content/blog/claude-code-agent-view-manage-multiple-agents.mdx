@@ -1,0 +1,287 @@
+---
+title: "Claude Code Agent View — Manage All Your Agents from One Screen"
+description: "Agent View lets you dispatch, monitor, and steer multiple Claude Code sessions from a single CLI dashboard. Here's how it works."
+date: "2026-05-12"
+category: "ai-tools"
+tags: ["claude-code", "agent-view", "background-agents", "developer-productivity", "coding-agents", "cli-tools", "parallel-development", "anthropic"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Running one Claude Code agent is productive. Running five is chaos. You open a terminal for a bug fix, another for a PR review, a third for test generation, and suddenly you're playing air traffic controller instead of writing software. You don't know which agent finished, which one is stuck waiting for a permission prompt you forgot about, and which one wandered off into a bad approach twenty minutes ago.
+
+Anthropic just shipped the answer. Agent View, released on May 11, 2026, gives you a single CLI dashboard to dispatch, monitor, and steer every Claude Code session you have running. It's the feature that turns Claude Code from a powerful single-agent tool into an actual multi-agent workflow system.
+
+## How Agent View Works
+
+Agent View is a full-screen terminal interface that replaces the multi-tab, multi-tmux-pane juggling act most power users have been doing. Open it with `claude agents` from any terminal, and you get a table showing every background session: what it's doing, whether it needs you, and when it last changed state.
+
+Each row is a session. Each session is an independent Claude Code agent working on a task you gave it. The key insight is that these sessions don't need a terminal attached to keep running — a supervisor process manages them in the background.
+
+```text
+Pinned
+  ✽ auth refactor           Edit src/auth/middleware.ts                    2m
+
+Needs input
+  ✻ API migration           needs input: breaking change or deprecate?     1m
+
+Working
+  ✽ test coverage           Running pytest suite on /api endpoints         3m
+  ✢ PR babysitter           run 4 · all checks passing                 in 8m
+
+Completed
+  ✻ docs update             result: API reference updated for v3           12m
+```
+
+That's the whole interface. No web dashboards, no separate apps, no context switching out of your terminal.
+
+## The Coordination Problem Agent View Solves
+
+Before Agent View, running parallel Claude Code sessions meant managing terminal tabs manually. You'd `Ctrl+Tab` between them, try to remember which tab was doing what, and inevitably miss the one that's been waiting for input while you were focused on another.
+
+Agent View solves three problems simultaneously:
+
+**Visibility.** Every session's state is right there — working, waiting, done, failed. No guessing, no tab hunting. Sessions that need your input float to the top.
+
+**Minimal context switching.** The peek panel (press `Space`) shows you what a session needs without attaching to its full transcript. You can read the question, type an answer, press `Enter`, and the session continues — all without leaving the dashboard.
+
+**True backgrounding.** Sessions run via a per-user supervisor process. Close your terminal, close Agent View, go to lunch — your agents keep working. When you come back, `claude agents` shows you exactly where everything stands.
+
+<Callout type="info">
+**Key distinction:** Agent View sessions are local processes on your machine. They survive terminal closes and auto-updates, but not sleep or shutdown. If your machine sleeps, run `claude respawn --all` to restart stopped sessions from where they left off.
+</Callout>
+
+## How to Get Started
+
+Agent View requires Claude Code v2.1.139 or later. It's available as a Research Preview on Pro, Max, Team, Enterprise, and Claude API plans.
+
+### Opening Agent View
+
+Two ways in:
+
+```bash
+claude agents
+```
+
+Or from inside any Claude Code session, press `←` (left arrow) on an empty prompt. This backgrounds your current session and opens Agent View with it pre-selected.
+
+### Dispatching Your First Agent
+
+Once Agent View is open, type a task in the input at the bottom and press `Enter`:
+
+```
+Fix the flaky auth test in tests/integration/auth.test.ts
+```
+
+A new session appears in the table, starts working, and you're free to dispatch another one immediately. Each session gets its own isolated git worktree automatically, so parallel agents can read your codebase but write to separate directories without stepping on each other.
+
+### Three Ways to Launch Background Sessions
+
+| Method | Command | When to use |
+|--------|---------|-------------|
+| From Agent View | Type prompt, press `Enter` | You're already monitoring sessions |
+| From a session | `/bg` or `/bg run tests and fix failures` | You want to background current work |
+| From the shell | `claude --bg "investigate the flaky test"` | Quick dispatch without opening Agent View |
+
+## The Peek Panel — Where You'll Spend Most of Your Time
+
+Press `Space` on any session row to open the peek panel. This is the feature that makes Agent View practical rather than just pretty.
+
+The peek panel shows the session's most recent output and what it needs from you. Most of the time, this is enough. You don't need the full transcript to answer "should I use breaking change or deprecation?" — you just need the question and enough context to decide.
+
+From the peek panel you can:
+
+- **Type a reply and press Enter** to send it without leaving Agent View
+- **Press a number key** to answer multiple-choice questions (like permission prompts)
+- **Press Tab** to auto-fill a suggested reply, then edit before sending
+- **Prefix with `!`** to send a Bash command to the session
+- **Press `↑`/`↓`** to peek at adjacent sessions without closing the panel
+
+When you need the full picture, press `→` or `Enter` to attach. The session takes over your terminal exactly like a normal Claude Code session. Press `←` on an empty prompt to detach and return to Agent View.
+
+<Callout type="tip">
+**Workflow pattern:** Start your day by opening `claude agents`. Dispatch tasks for the first hour of work. Then shift to peek-and-reply mode — scanning which sessions need you, answering questions inline, and only attaching when you need to course-correct something significant.
+</Callout>
+
+## Session States at a Glance
+
+Each session's icon tells you two things: what state it's in and whether the process is still alive.
+
+| State | What It Means |
+|-------|---------------|
+| Animated spinner | Claude is actively working — running tools, generating code |
+| Yellow indicator | Waiting for your input — a permission decision or a question |
+| Dimmed | Idle — waiting for input but not blocked on anything specific |
+| Green | Task completed successfully |
+| Red | Task ended with an error |
+| Grey | Session was stopped manually |
+
+Sessions that need your input are grouped at the top. Completed sessions fold into a collapsed "N more" row to keep the list clean. Failed sessions and sessions with open PRs always stay visible.
+
+## Organizing Your Dashboard
+
+As you dispatch more agents, the list grows. Agent View gives you tools to manage it:
+
+**Grouping.** Press `Ctrl+S` to toggle between grouping by state (default) and grouping by directory. Your choice persists across sessions.
+
+**Pinning.** Press `Ctrl+T` to pin important sessions to the top of their group.
+
+**Reordering.** `Shift+↑` and `Shift+↓` move sessions within a group.
+
+**Filtering.** Type in the dispatch input to filter instead of dispatching:
+- `a:<name>` — show sessions running a specific custom agent
+- `s:<state>` — show sessions in a given state (e.g., `s:blocked`)
+- `#<number>` or a PR URL — find the session working on that pull request
+
+**Cleanup.** `Ctrl+X` stops a session. Press `Ctrl+X` again within two seconds to delete it. On a group header, this deletes every session in the group after confirmation.
+
+## Dispatching Custom Agents and Skills
+
+Agent View isn't limited to free-form prompts. You can dispatch custom subagents and skills directly:
+
+```
+@code-reviewer address review comments on PR 1234
+```
+
+Or type `/` to browse available skills and dispatch them as repeatable workflows. If you've packaged a recurring task as a skill — like running your test suite and fixing failures — you can dispatch it from Agent View repeatedly without retyping.
+
+When Agent View is grouped by directory, the highlighted row's directory becomes the dispatch target. Scroll to a repository's group and dispatch into it without specifying a path.
+
+From the shell, combine `--bg` with `--agent` for scripted dispatch:
+
+```bash
+claude --agent code-reviewer --bg "address review comments on PR 1234"
+```
+
+## How File Isolation Works
+
+Every background session automatically gets its own git worktree under `.claude/worktrees/`. This means parallel agents can all read your main checkout but each writes to an isolated branch. No merge conflicts between agents. No accidentally overwriting each other's work.
+
+When a session opens a pull request, the Agent View row shows the PR link and CI check status. For many tasks, this row is your final touchpoint — review the PR, merge it, and you're done.
+
+One important detail: worktrees are deleted when you delete the session. Merge or push changes you want to keep before cleaning up sessions.
+
+## The Supervisor Process
+
+Behind the scenes, a per-user supervisor daemon manages all background sessions. It starts automatically the first time you background a session or open Agent View. You don't interact with it directly.
+
+Key behaviors:
+- Sessions are independent processes parented to the supervisor, not your terminal
+- Active sessions keep running indefinitely; finished sessions stop after about an hour of being unattached
+- The supervisor handles auto-updates — it watches the Claude Code binary and restarts into new versions seamlessly
+- Session state persists to disk under `~/.claude/jobs/<id>/state.json`
+
+<Callout type="warning">
+**Rate limit awareness:** Each background session consumes your subscription quota independently. Running ten agents in parallel uses quota roughly ten times as fast as running one. The practical sweet spot for most developers is four to eight parallel sessions before coordination overhead and rate limits diminish the returns.
+</Callout>
+
+## Shell Commands for Scripting
+
+Everything in Agent View is also available from the command line:
+
+| Command | Purpose |
+|---------|---------|
+| `claude agents` | Open Agent View |
+| `claude attach <id>` | Attach to a session in your terminal |
+| `claude logs <id>` | Print recent output from a session |
+| `claude stop <id>` | Stop a session |
+| `claude respawn <id>` | Restart a stopped session with conversation intact |
+| `claude respawn --all` | Restart every stopped session |
+| `claude rm <id>` | Remove a session from the list |
+
+These commands make it possible to integrate Agent View into scripts and automation. Background a long-running task with `claude --bg`, check on it later with `claude logs`, and attach when it needs you.
+
+## Essential Keyboard Shortcuts
+
+Press `?` inside Agent View to see the complete list, but these are the ones you'll use daily:
+
+| Shortcut | Action |
+|----------|--------|
+| `↑` / `↓` | Navigate between sessions |
+| `Space` | Open/close peek panel |
+| `Enter` | Attach to session or dispatch if text is in the input |
+| `→` | Attach to selected session |
+| `←` | Detach and return to Agent View |
+| `Shift+Enter` | Dispatch and attach immediately |
+| `Alt+1`..`Alt+9` | Jump to the Nth session in the focused group |
+| `Ctrl+S` | Toggle grouping (state vs. directory) |
+| `Ctrl+T` | Pin/unpin session |
+| `Ctrl+R` | Rename session |
+| `Ctrl+X` | Stop session (press twice to delete) |
+| `Esc` | Close peek panel, clear input, or exit |
+
+## Practical Workflow Patterns
+
+### The Morning Dispatch
+
+Open `claude agents` and fire off your day's tasks in rapid succession:
+
+1. "Fix the three failing integration tests from last night's CI run"
+2. "Review PR #247 for security issues and code quality"
+3. "Add OpenAPI documentation for the /users endpoint"
+4. "Investigate why the cache hit rate dropped significantly yesterday"
+
+Four agents start working in parallel. Switch to peek-and-reply mode. Answer questions as they come in. By the time you've finished your coffee, you have four PRs to review instead of four tasks to start.
+
+### The PR Factory
+
+Dispatch multiple independent feature tasks, each in its own worktree. Agent View shows PR links and CI status for each. Your workflow becomes: peek at the PR → review the diff → merge. The coding part is done.
+
+### The Background Monitor
+
+Some sessions don't finish in minutes — they loop. A `/loop` session checking CI status or watching for deployment issues shows its run count and a countdown to the next iteration. Agent View turns these into glanceable status lines instead of terminals you forget about.
+
+### The Deep Dive Pivot
+
+You're peeking at a session and realize it's headed in the wrong direction. Press `→` to attach, take over with full interactive control, course-correct, then press `←` to detach and let it continue. You were in and out in under a minute.
+
+## Agent View vs. Other Approaches
+
+**vs. Multiple terminal tabs:** Agent View eliminates tab management entirely. Sessions that need you bubble to the top automatically.
+
+**vs. tmux grids:** Similar concept, but Agent View understands what Claude is doing. A tmux pane shows raw output. Agent View shows state, summarized in one line by a Haiku-class model that refreshes at most every 15 seconds.
+
+**vs. OpenAI Codex:** Codex uses a cloud-based, fire-and-forget model — you dispatch tasks and they run in an isolated sandbox. Agent View keeps you in the loop with peek-and-reply, running on your local machine with full filesystem access. Different philosophies: Codex optimizes for delegation, Agent View optimizes for steering.
+
+## Limitations to Know About
+
+Agent View is a Research Preview, and there are constraints worth understanding:
+
+- **Local execution only.** Sessions run on your machine. Sleep or shutdown stops them (though `claude respawn --all` picks up where they left off).
+- **Rate limits scale linearly.** Five parallel agents burn quota five times faster. Budget accordingly, especially on Pro plans.
+- **Worktree cleanup is manual.** Worktrees persist until you delete the session. If you skip cleanup, `.claude/worktrees/` grows. Use `git worktree list` and `git worktree remove` to clean up orphaned entries.
+- **No cross-session communication.** Agent View sessions are independent. For agents that need to coordinate, look at Agent Teams instead.
+- **Admins can disable it.** The `disableAgentView` managed setting or `CLAUDE_CODE_DISABLE_AGENT_VIEW` environment variable turns it off organization-wide.
+
+## Getting the Most Out of Agent View
+
+A few habits that get the most out of Agent View:
+
+**Dispatch early, steer later.** Don't wait for one task to finish before starting the next. The whole point is parallelism.
+
+**Use peek before attach.** Most questions can be answered from the peek panel in five seconds. Only attach when you need the full conversation.
+
+**Name your sessions.** Press `Ctrl+R` to rename sessions to something meaningful. "auth refactor" is easier to scan than "session 7c5dcf5d".
+
+**Package repeating tasks as skills.** If you're dispatching the same kind of task regularly — code review, test generation, documentation updates — turn it into a skill you can dispatch with one command.
+
+**Respect rate limits.** Start with three or four parallel sessions and scale up as you understand your quota consumption. Going well past the four-to-eight sweet spot on a Pro plan will drain your limits fast.
+
+**Use the right model per task.** Route routine work — code review, test generation, documentation — to Sonnet, and reserve Opus for complex reasoning tasks. This keeps your quota healthy and your agents responsive.
+
+## Where Developer Tools Are Headed
+
+Agent View isn't just a feature. It's a signal about where developer tools are headed. The shift from "AI assistant that helps you code" to "AI workforce that you manage" is happening, and Agent View is the management interface for that workforce.
+
+The comparison to Codex is instructive. Codex gives you a visual command center for fire-and-forget tasks. Agent View gives you a steering wheel. Both acknowledge that the future involves running multiple agents — they just disagree about how much you should stay involved.
+
+For developers who want to maintain control while scaling their output, Agent View is the right model. You're not delegating and hoping for the best. You're dispatching, monitoring, and course-correcting in real time, all from a single terminal screen.
+
+That's not just a productivity feature. That's a new way to work.
+
+---
+
+*Agent View is available now as a Research Preview in Claude Code v2.1.139+. Open it with `claude agents` and start dispatching.*
+
+*Want more breakdowns of the tools reshaping how developers work? Subscribe to the newsletter for weekly analysis of what actually matters in AI-powered development.*
