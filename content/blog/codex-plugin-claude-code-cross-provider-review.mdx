@@ -1,0 +1,282 @@
+---
+title: "Codex Plugin for Claude Code — Cross-Provider Review Guide"
+description: "OpenAI's official plugin lets you run Codex code reviews and delegate tasks from Claude Code. Every command, workflow, and pricing gotcha explained."
+date: "2026-05-15"
+category: "ai-tools"
+tags: ["claude-code", "codex-cli", "codex-plugin", "cross-provider-review", "openai", "developer-productivity", "code-review", "plugins"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Your AI coding tool reviewing its own output is like proofreading your own email — you'll miss the same mistakes every time. The model that wrote the code carries the same biases, the same blind spots, the same tendency to think its approach was the right one. Self-review catches syntax issues. It rarely catches design problems.
+
+OpenAI shipped a fix for this on March 30, 2026. The Codex plugin for Claude Code (`codex-plugin-cc`) is an official OpenAI plugin — published from their own GitHub account — that lets you trigger Codex code reviews and delegate entire tasks to Codex without ever leaving your Claude Code session. It's not a community hack or an unofficial workaround. It's a deliberate product decision to put a competing model's review capability inside a rival's environment.
+
+The result is the first mainstream cross-provider developer workflow. You write code with Claude. You review it with Codex. Different training data, different fine-tuning approaches, different assumptions about what good code looks like. The non-overlapping biases are the whole point.
+
+## What the Plugin Actually Does
+
+The Codex plugin wraps the local Codex CLI and app server, routing requests through your existing Codex authentication and configuration. When you run a review command, your code goes to OpenAI's models for evaluation. When you delegate a task, Codex spins up a subagent that works independently while you continue in Claude Code.
+
+Seven slash commands. Two review modes. One delegation system. Job management for everything running in the background.
+
+The plugin doesn't replace either tool — it connects them. Claude Code handles implementation. Codex handles independent review and overflow work. You stay in one terminal the entire time.
+
+## Installation in Four Steps
+
+Getting the plugin running requires both Claude Code and Codex CLI on your machine.
+
+**Prerequisites:**
+- Claude Code installed and working
+- Node.js 18.18 or later
+- A ChatGPT subscription (Free tier works) or an OpenAI API key
+
+**Install the plugin:**
+
+```bash
+/plugin marketplace add openai/codex-plugin-cc
+/plugin install codex@openai-codex
+/reload-plugins
+/codex:setup
+```
+
+If `/codex:setup` reports that Codex isn't installed, install it globally:
+
+```bash
+npm install -g @openai/codex
+```
+
+Then authenticate:
+
+```bash
+!codex login
+```
+
+This supports both ChatGPT account login and API key authentication. If you already use Codex standalone, the plugin picks up your existing credentials automatically. The plugin is currently at v1.0.4 (released April 18, 2026).
+
+<Callout type="info">
+**The plugin delegates through your local Codex binary.** It doesn't bundle its own runtime or make direct API calls. Your existing Codex configuration, MCP servers, and project-level settings all carry over into plugin-triggered reviews.
+</Callout>
+
+## Every Command Explained
+
+The plugin ships seven commands. Here's what each one does, when to use it, and the flags that matter.
+
+### /codex:review — Standard Code Review
+
+The primary command. Sends your current changes to Codex for a structured read-only review.
+
+```bash
+/codex:review                        # review uncommitted changes
+/codex:review --base main            # review branch vs main
+/codex:review --scope branch         # explicitly compare branch tip to base
+/codex:review --background           # run async, check with /codex:status
+/codex:review --wait                 # block session until review finishes
+```
+
+**Key flags:**
+- `--base <ref>` — Compare against a specific Git reference
+- `--scope <auto|working-tree|branch>` — Control what gets reviewed: `working-tree` checks uncommitted changes, `branch` checks commits since merge-base, `auto` picks based on repo state
+- `--background` / `--wait` — Async or synchronous execution
+- `--model <model>` — Override the default Codex model
+- `--effort <low|medium|high|max>` — Control reasoning depth
+
+The review returns a structured result: a verdict (`approve` or `needs-attention`), a summary, an array of findings with severity and file locations, and concrete next steps. This isn't a conversational opinion — it's a formatted assessment you can act on systematically.
+
+**When to use it:** After completing a feature or fix, before committing. The standard review catches bugs, logic errors, and style issues. Run it with `--background` for anything beyond a couple of files.
+
+### /codex:adversarial-review — The Devil's Advocate
+
+Same mechanics as `/codex:review`, but the prompt steers Codex to actively challenge your implementation. Instead of asking "is this correct?", it asks "what's wrong with this approach?"
+
+```bash
+/codex:adversarial-review
+/codex:adversarial-review --background question the retry and rollback strategy
+/codex:adversarial-review --base main challenge the caching design
+```
+
+The key difference: you can append free-text focus after the flags. This directs the adversarial review toward specific concerns — authentication edge cases, data loss scenarios, race conditions, scaling assumptions.
+
+**When to use it:** For infrastructure changes, migrations, security-sensitive code, or any design decision where you want pushback. If standard review is a spell-checker, adversarial review is an editor who asks hard questions.
+
+### /codex:rescue — Delegate Work to Codex
+
+This is the task-delegation command. Instead of reviewing what Claude Code did, you hand a problem to Codex and let it investigate, prototype, or fix independently.
+
+```bash
+/codex:rescue investigate why the tests started failing
+/codex:rescue fix the failing test with the smallest safe patch
+/codex:rescue --resume apply the top fix from the last run
+/codex:rescue --background investigate the regression
+/codex:rescue --model gpt-5.4-mini --effort medium investigate the flaky test
+```
+
+Rescue launches a Codex subagent that runs in the background. It can read your repository, modify files, and run commands — this isn't read-only like the review commands.
+
+**Key flags:**
+- `--resume` — Continue from the last rescue run's results
+- `--background` — Run async (default for most cases)
+- `--model <model>` — Choose a specific model (use `gpt-5.4-mini` or `spark` for cost control)
+- `--effort <level>` — Adjust reasoning depth
+
+**When to use it:** When you hit a wall on a specific problem and want a fresh perspective with actual implementation capability. Also useful for parallelizing work — hand a bug investigation to Codex while you continue building features in Claude Code.
+
+<Callout type="warning">
+**Model selection matters for cost.** The default model for rescue tasks can be expensive on complex investigations. Explicitly passing `--model gpt-5.4-mini` or `--model spark` controls spend. Check your Codex usage limits before launching multiple rescue tasks.
+</Callout>
+
+### /codex:status — Check Running Jobs
+
+```bash
+/codex:status
+```
+
+Shows all running and recent Codex jobs for the current repository. Displays job IDs, current state, and elapsed time. This is your dashboard for background work.
+
+### /codex:result — Get Finished Output
+
+```bash
+/codex:result
+```
+
+Retrieves the final stored output from a completed job, including the session ID for reference. Use this after `/codex:status` shows a job as finished.
+
+### /codex:cancel — Stop Active Jobs
+
+```bash
+/codex:cancel
+```
+
+Cancels an active background Codex job. Useful when you've changed direction or realized the task was scoped wrong.
+
+### /codex:setup — Configuration and Health Check
+
+```bash
+/codex:setup                        # check if Codex is installed and authenticated
+/codex:setup --enable-review-gate   # enable automatic review gating
+/codex:setup --disable-review-gate  # disable review gating
+```
+
+The setup command verifies your environment. Run it after installation and whenever something feels off.
+
+The **review gate** is an experimental feature that deserves special attention — and caution.
+
+## The Review Gate: Powerful but Dangerous
+
+The review gate (`--enable-review-gate`) installs a stop hook that automatically runs a Codex review on Claude Code's output. If Codex flags issues, Claude Code's response is blocked until the problems are addressed.
+
+In theory, this creates an automated write-review-fix loop. In practice, it can create runaway cost spirals.
+
+The problem: when Claude Code fixes an issue flagged by Codex, the fix triggers another Codex review. If that review finds a new issue (or disagrees with the fix), the cycle continues. Each iteration consumes usage from both your Claude Code and Codex quotas.
+
+OpenAI's own documentation warns that this feature can rapidly drain usage limits. Enable it only when you're actively supervising the session and prepared to intervene if the loop doesn't converge.
+
+<Callout type="tip">
+**Start without the review gate.** Use manual `/codex:review` calls first. Once you understand the review patterns and how quickly issues resolve, you can experiment with the gate on low-risk changes. Never enable it on a session you plan to walk away from.
+</Callout>
+
+## The Workflow That Makes This Worthwhile
+
+The plugin enables a specific pattern that's difficult to replicate with separate tools:
+
+**1. Build with Claude Code.** Write your feature, fix your bug, do whatever implementation work you're doing.
+
+**2. Review with Codex in the background.**
+
+```bash
+/codex:review --base main --background
+```
+
+This starts while you continue working on the next thing.
+
+**3. Check and apply.**
+
+```bash
+/codex:status            # is it done?
+/codex:result            # what did it find?
+```
+
+Fix the flagged issues in Claude Code based on Codex's structured findings.
+
+**4. Adversarial review on risky changes.**
+
+For the design decisions that keep you up at night:
+
+```bash
+/codex:adversarial-review --background challenge the error handling assumptions
+```
+
+**5. Rescue when stuck.**
+
+```bash
+/codex:rescue investigate why the auth middleware rejects valid tokens
+```
+
+Let Codex investigate independently while you work on something else.
+
+This isn't about replacing human review. It's about catching the categories of issues that self-review systematically misses — and doing it without switching tools, losing context, or waiting for a human reviewer who might not be available.
+
+## What Plan Do You Need?
+
+The plugin requires a working Codex CLI, which means you need either a ChatGPT subscription or an OpenAI API key.
+
+**ChatGPT subscription tiers (as of May 2026):**
+
+| Plan | Monthly Cost | Local Messages (5hr window) | Code Reviews | Cloud Tasks |
+|------|-------------|----------------------------|-------------|-------------|
+| Free | $0 | Limited | Limited | No |
+| Plus | $20 | 15-80 (GPT-5.5) | 5/hour | No |
+| Pro 5x | $100 | 80-400 (GPT-5.5)* | Higher limits | Yes |
+| Pro 20x | $200 | 300-1600 (GPT-5.5)* | Higher limits | Yes |
+| Business | $30/user | Same as Plus | 5/hour | Yes |
+
+*Pro 5x includes doubled Codex usage through May 31, 2026. These ranges reflect the boosted limits.
+
+Code reviews triggered by the plugin count against your Codex usage. On the Plus plan, you get 5 code reviews per hour — enough for a typical development session, but easy to burn through if you're running the review gate or doing adversarial reviews on every commit.
+
+**API key alternative:** If you configure Codex with an API key instead of a ChatGPT login, usage charges at standard API rates. As of April 2026, token-based pricing applies: GPT-5.4 runs at roughly 62.50 credits per million input tokens and 375 credits per million output tokens. Cached input tokens cost approximately 90% less.
+
+**The practical recommendation:** ChatGPT Plus at $20/month is the minimum viable plan for regular plugin use. The 5 reviews per hour limit is workable if you batch your reviews rather than running one after every small change. Pro 5x at $100/month makes sense if you're using rescue tasks or adversarial reviews heavily.
+
+## Cross-Provider Integration Goes Both Ways
+
+The Codex plugin for Claude Code isn't the only direction. Sendbird released `cc-plugin-codex`, an open-source plugin that runs inside Codex and lets you call Claude Code and Claude models for review, rescue, and tracked background workflows. Same concept, opposite direction — Codex users who prefer Claude's review style can get it without switching tools.
+
+Both plugins follow the same architectural pattern: wrap the other tool's local CLI, delegate through existing authentication, and surface results inline. Neither requires running a separate server or managing additional infrastructure. The pattern is lightweight enough that more cross-provider plugins are likely to follow as the developer tooling ecosystem matures.
+
+## Limitations Worth Knowing
+
+**Dual authentication overhead.** You need active accounts on both Anthropic and OpenAI. For individual developers, this is a minor annoyance. For teams, it means managing two sets of credentials and two usage budgets.
+
+**Split usage tracking.** Codex usage counts against your ChatGPT subscription. Claude Code usage counts against your Anthropic plan. There's no unified dashboard showing combined spend. You need to monitor both independently.
+
+**Background latency.** Multi-file reviews take time. A review of a significant branch can take a minute or more. The `--background` flag exists for a reason — synchronous reviews block your entire Claude Code session.
+
+**No fine-grained loop control.** The official plugin doesn't let you configure how many review-fix iterations to allow. If you enable the review gate, the loop runs until convergence or until you manually intervene. For more control, some developers use raw `codex exec` commands instead of the plugin's review gate.
+
+## When It Makes Sense (And When It Doesn't)
+
+**Use the plugin when:**
+- You're doing solo development without human reviewers available
+- You want a second opinion from a fundamentally different model
+- You're working on security-sensitive or infrastructure code where blind spots are expensive
+- You want to parallelize: build in Claude Code, review with Codex, investigate with rescue
+
+**Skip the plugin when:**
+- You already have human code review on every PR
+- Your changes are trivial (one-line fixes, config changes)
+- You're on a tight Codex usage budget and can't afford the review overhead
+- You're doing exploratory prototyping where review would slow you down
+
+## The Bigger Picture
+
+OpenAI publishing an official plugin for a competitor's development environment is unusual. It reflects a market reality: developers aren't loyal to one AI model. They use Claude for some tasks and GPT for others, and the friction of switching between them is real.
+
+The Codex plugin eliminates that friction for the specific case of code review and task delegation. It's not altruism — every plugin-triggered review generates OpenAI usage revenue. But the incentive alignment works: developers get better reviews, OpenAI gets usage, and the code quality improves because two different models caught two different categories of issues.
+
+Cross-provider workflows are going to become normal. This plugin is one of the first examples of what that looks like in practice.
+
+---
+
+*Want more deep dives on AI developer tools and cross-provider workflows? [Subscribe to the newsletter](/newsletter) to get new posts delivered to your inbox.*
