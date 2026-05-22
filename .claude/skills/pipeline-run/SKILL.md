@@ -1,6 +1,6 @@
 ---
 name: pipeline-run
-description: "Automated content pipeline - reads a topic from the Notion content queue, generates a blog post, creates social media copy, posts to X and LinkedIn, and updates the queue status."
+description: "Fully autonomous content pipeline - reads a topic from the Notion content queue, generates a blog post, creates social media copy, posts to X and LinkedIn, and updates the queue status. Runs unattended as a scheduled task."
 user-invocable: true
 arguments: "optional: topic override to bypass queue, or dry-run to test without posting"
 ---
@@ -8,6 +8,17 @@ arguments: "optional: topic override to bypass queue, or dry-run to test without
 # Content Pipeline Runner
 
 Master orchestrator for the blog-to-social-media pipeline. Reads topics from a Notion database queue, generates blog posts, creates social media copy, and posts to X and LinkedIn.
+
+## Autonomous Execution
+
+**This pipeline is designed to run fully autonomously as a scheduled task with no user present.** All required permissions are pre-configured in `.claude/settings.json`. Follow these rules at every phase:
+
+- **NEVER ask for user confirmation or approval** — make the best decision and proceed
+- **NEVER stop to ask clarifying questions** — use reasonable defaults
+- **NEVER wait for user input** — if information is missing, use what's available or skip that step
+- **On recoverable errors**: retry once, then skip and continue to the next phase
+- **On unrecoverable errors**: update Notion status to `failed` with the error in Notes, log it, and stop gracefully
+- **All tool permissions are pre-allowed** — do not expect permission prompts for Bash, MCP tools, file operations, WebSearch, or WebFetch
 
 ## Usage
 
@@ -22,6 +33,7 @@ Master orchestrator for the blog-to-social-media pipeline. Reads topics from a N
 - User must be logged into X (x.com) and LinkedIn (linkedin.com)
 - The project repo must be at `/Users/tarekalaaddin/Projects/code/tarek-alaaddin/`
 - `gh` CLI must be authenticated for GitHub operations
+- All tool permissions pre-configured in `.claude/settings.json` (Bash, MCP, file ops, web research)
 
 ## References
 
@@ -54,10 +66,12 @@ Load these as needed during the relevant phase:
 3. **Detect browser backend** — read `references/browser-automation.md` for detection logic and tool mapping.
    Log: "Using [Chrome Extension / Playwright] backend for social posting"
 
-4. Check that the project repo is clean:
+4. Check that the project repo is clean and auto-resolve if dirty:
    ```bash
    cd /Users/tarekalaaddin/projects/code/tarek-alaaddin && git status
    ```
+   - If there are uncommitted changes: `git stash push -m "pipeline-auto-stash-$(date +%Y%m%d-%H%M%S)"`
+   - Do NOT stop to ask the user — stash automatically and continue
 5. Ensure we're on the `main` branch:
    ```bash
    git checkout main && git pull
@@ -197,15 +211,17 @@ Read `references/social-copy-formats.md` for format rules.
 
 1. Update Notion status to `posting-x`
 2. Follow `/post-to-x` skill logic — use browser backend detected in Phase 0
-3. If successful: update status to `posted-x`
-4. If failed: update status to `failed` with error in Notes
+3. Pass the X Text from Phase 4 directly — do NOT ask for input
+4. If successful: update status to `posted-x`
+5. If failed (login issue, browser error, etc.): log the error, update Notes with the failure reason, and **continue to Phase 6** — do NOT stop the pipeline
 
 ### Phase 6: Post to LinkedIn
 
 1. Update Notion status to `posting-linkedin`
 2. Follow `/post-to-linkedin` skill logic — use browser backend detected in Phase 0
-3. If successful: update status to `posted-linkedin`
-4. If failed: update status to `failed` with error in Notes
+3. Pass the LinkedIn Text from Phase 4 directly — do NOT ask for input
+4. If successful: update status to `posted-linkedin`
+5. If failed (login issue, browser error, etc.): log the error, update Notes with the failure reason, and **continue to Phase 7** — do NOT stop the pipeline
 
 ### Phase 7: Finalize
 
@@ -223,16 +239,19 @@ Read `references/social-copy-formats.md` for format rules.
 
 ## Safety Checks
 
+All failure actions are designed to self-resolve without user intervention:
+
 | Check | When | Action on Failure |
 |-------|------|-------------------|
-| Notion API is accessible | Phase 0 | STOP with error |
-| Git repo is clean | Phase 0 | Stash changes or STOP |
-| No duplicate slug | Phase 2 | Modify slug |
-| Build passes | Phase 2 | Fix or mark failed |
-| PR merge succeeds | Phase 3 | Mark failed, STOP |
-| Logged into X | Phase 5 | Skip X, continue to LinkedIn |
-| Logged into LinkedIn | Phase 6 | Skip LinkedIn, update status |
-| Critique score < 8 or CRITICAL issues | Phase 2.5 | Auto-revise up to 2x, then proceed |
+| Notion API is accessible | Phase 0 | Log error and STOP (unrecoverable) |
+| Git repo is clean | Phase 0 | Auto-stash changes, continue |
+| No duplicate slug | Phase 2 | Auto-append date suffix to slug |
+| Build passes | Phase 2 | Auto-fix once, retry up to 3x, then mark `failed` |
+| PR merge succeeds | Phase 3 | Mark `failed`, log error, STOP |
+| Logged into X | Phase 5 | Skip X, log "skipped", continue to LinkedIn |
+| Logged into LinkedIn | Phase 6 | Skip LinkedIn, log "skipped", update status |
+| Critique score < 8 or CRITICAL issues | Phase 2.5 | Auto-revise up to 2x, then proceed regardless |
+| Browser backend unavailable | Phase 0 | Skip social posting phases (5-6), mark `generated` |
 
 ## Dry Run Mode
 
