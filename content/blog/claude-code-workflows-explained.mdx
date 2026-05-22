@@ -1,0 +1,306 @@
+---
+title: "Claude Code Workflows Explained — Skills, Hooks, Routines, and When to Use Each"
+description: "Claude Code now has four ways to automate your work: Skills, Hooks, Routines, and Subagents. Here's what each does, how they differ, and how to build workflows that actually run themselves."
+date: "2026-05-22"
+category: "ai-tools"
+tags: ["claude-code", "workflows", "skills", "routines", "hooks", "automation", "anthropic", "developer-productivity", "ai-agents"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Four systems that all automate things. Skills. Hooks. Routines. Subagents. Developers keep asking which one to use — and the answer isn't picking one.
+
+Anthropic has shipped an entire workflow automation layer on top of Claude Code, and each piece solves a different problem. A Skill tells Claude *how* to do something. A Hook *enforces* that something always happens. A Routine runs the *entire session* without you being present. And a Subagent isolates a *chunk of work* so it doesn't pollute your main conversation.
+
+The confusion is real. This post eliminates it.
+
+## Why Anthropic Built a Workflow Layer
+
+The short answer: single-turn interactions don't scale.
+
+When developers first use Claude Code, they type a prompt, get a response, and repeat. That works for quick fixes. It breaks down the moment you need multi-step processes — code generation followed by testing followed by PR creation followed by deployment. Every time you start a new session, Claude rediscovers your project from scratch. Every time you need a recurring task, you babysit it manually.
+
+Anthropic recognized that the gap wasn't intelligence — Claude could already reason through complex tasks. The gap was orchestration. Developers needed ways to package multi-step processes, trigger them automatically, enforce consistency, and run them without supervision.
+
+That's what the workflow layer solves. Each piece handles a different kind of automation need.
+
+## The Four Pillars of Claude Code Automation
+
+Here's the mental model that makes everything click.
+
+<Callout type="info">
+Think of it like this: **Skills** are the playbook. **Hooks** are the rules that can't be broken. **Routines** are the scheduled jobs. **Subagents** are the specialists you delegate to.
+</Callout>
+
+### 1. Skills — Reusable Instruction Packs
+
+A Skill is a markdown file (`SKILL.md`) that gives Claude specific instructions for a task. When Claude detects that your request matches a Skill's description, it loads the instructions and follows them. You can also invoke Skills directly with `/skill-name`.
+
+**What makes Skills different from just pasting instructions into chat:** Skills load only when needed, persist across turns, and can bundle supporting files like templates, scripts, and reference docs. They also support dynamic context injection — running shell commands before Claude sees the instructions so the prompt arrives with live data already embedded.
+
+**Here's a practical example.** This Skill automates PR summaries by fetching actual PR data before Claude reads the instructions:
+
+```yaml
+# .claude/skills/pr-summary/SKILL.md
+---
+name: pr-summary
+description: Summarize the current pull request with changes and risks
+context: fork
+agent: Explore
+allowed-tools: Bash(gh *)
+---
+
+## Pull request context
+- PR diff: !`gh pr diff`
+- Comments: !`gh pr view --comments`
+- Changed files: !`gh pr diff --name-only`
+
+## Your task
+Summarize this pull request. List the key changes in 3-5 bullets,
+flag any risks, and note if tests are missing for changed code.
+```
+
+The `` !`command` `` syntax is the dynamic injection — those commands run first, and their output replaces the placeholder before Claude ever sees the Skill content. Claude receives the actual diff, not the command to fetch it.
+
+**Where Skills live determines who can use them:**
+
+| Location | Path | Scope |
+|----------|------|-------|
+| Personal | `~/.claude/skills/name/SKILL.md` | All your projects |
+| Project | `.claude/skills/name/SKILL.md` | This repo only |
+| Plugin | `plugin/skills/name/SKILL.md` | Where plugin is enabled |
+
+Skills load progressively. At session start, Claude only sees each Skill's name and description — roughly 100 tokens per Skill. The full body loads only when Claude decides it's relevant or you invoke it directly.
+
+### 2. Hooks — Deterministic Automation Rules
+
+Hooks are shell commands that execute at specific points in Claude Code's lifecycle. Unlike Skills, which rely on Claude choosing to use them, Hooks *always* fire when their trigger condition is met. No AI judgment involved.
+
+This is the critical distinction: Skills give Claude instructions it can follow. Hooks enforce rules that cannot be skipped.
+
+**Common Hook triggers include:**
+
+- After Claude edits a file (run formatter, linter)
+- Before Claude executes a shell command (validate, block dangerous operations)
+- When a notification should fire (desktop alert when Claude needs input)
+- After the session ends (cleanup, logging)
+
+**Example: Auto-format every file Claude edits:**
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "npx prettier --write $CLAUDE_FILE_PATH"
+      }
+    ]
+  }
+}
+```
+
+Every time Claude writes or edits a file, Prettier runs on it. Claude doesn't need to remember to format. It just happens.
+
+**Example: Block dangerous commands:**
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "command": "if echo \"$CLAUDE_TOOL_INPUT\" | grep -q 'rm -rf'; then echo 'DENY: rm -rf blocked by hook'; exit 1; fi"
+      }
+    ]
+  }
+}
+```
+
+This prevents Claude from running `rm -rf` regardless of what it's trying to accomplish. Deterministic safety, no exceptions.
+
+Hooks can also be prompt-based or agent-based for decisions that require judgment, but the default is simple shell commands that execute predictably.
+
+<Callout type="warning">
+Skills and Hooks complement each other perfectly. A deploy Skill can give Claude step-by-step deployment instructions, while a Hook ensures the test suite passes before any deploy command actually runs. The Skill provides the brain, the Hook provides the guardrail.
+</Callout>
+
+### 3. Routines — Scheduled Cloud Sessions
+
+Routines are the newest addition to the automation stack. A Routine is a saved Claude Code configuration — a prompt, one or more repositories, and a set of connectors — that runs on Anthropic's cloud infrastructure without your machine being involved.
+
+Three types of triggers:
+
+- **Scheduled**: Run hourly, daily, weekly, or at a specific future time
+- **GitHub events**: Trigger when a PR is opened, a release is published, or other repo events occur
+- **API**: Fire on demand via HTTP POST from alerting systems, deploy pipelines, or internal tools
+
+**The key difference from Skills:** A Skill enhances an existing session. A Routine *is* the entire session. It runs autonomously with no approval prompts, executes shell commands, uses any Skills committed to the cloned repository, and accesses your connected MCP integrations.
+
+**Example: Nightly issue triage Routine:**
+
+You configure this at [claude.ai/code/routines](https://claude.ai/code/routines) or via `/schedule` in the CLI:
+
+```
+Prompt: Review all GitHub issues opened in the last 24 hours.
+For each issue:
+1. Apply appropriate labels based on content
+2. Assign to the right team member based on the component affected
+3. Flag any issues that mention security or data loss as high priority
+4. Post a summary to the #engineering Slack channel
+
+Repository: my-org/my-repo
+Trigger: Daily at 8:00 AM
+Connectors: Slack, GitHub
+```
+
+That runs every morning whether your laptop is open or not. Claude reads the new issues, applies labels, assigns owners, and posts a Slack summary.
+
+**From the CLI, you can create Routines conversationally:**
+
+```bash
+/schedule daily PR review at 9am
+/schedule clean up feature flag in one week
+/schedule list
+```
+
+Routines are available on Pro, Max, Team, and Enterprise plans. They draw from the same subscription usage as interactive sessions.
+
+### 4. Subagents — Isolated Task Delegation
+
+Subagents run tasks in their own context window so the results don't clutter your main conversation. Think of them as Claude spinning off a focused worker that reports back with a summary.
+
+This matters for research-heavy tasks. If you ask Claude to investigate how your auth system handles token refresh, it might read 30 files to answer. With a Subagent, those 30 file reads happen in a separate context, and only the findings come back to you.
+
+**You can trigger Subagents from Skills by setting `context: fork`:**
+
+```yaml
+---
+name: deep-research
+description: Research a topic thoroughly
+context: fork
+agent: Explore
+---
+
+Research $ARGUMENTS thoroughly.
+Find relevant files, read and analyze the code,
+and summarize findings with specific file references.
+```
+
+**Or invoke them directly in conversation:**
+
+```
+use a subagent to investigate how our auth system handles token refresh
+```
+
+Subagents can use different models, tools, and permissions than your main session. The built-in `Explore` agent, for example, has read-only tools optimized for codebase exploration and skips loading CLAUDE.md to keep context small.
+
+## How They All Differ — The Decision Matrix
+
+This is the part most people get wrong. Here's when to reach for each one:
+
+| Need | Use | Why |
+|------|-----|-----|
+| Teach Claude a process | **Skill** | Reusable instructions that load when relevant |
+| Enforce a rule without exceptions | **Hook** | Deterministic shell commands, no AI judgment |
+| Run a task while you sleep | **Routine** | Cloud-based sessions on Anthropic infrastructure |
+| Delegate without cluttering context | **Subagent** | Isolated context, returns summary only |
+| React to a GitHub event | **Routine** | GitHub trigger on PRs, releases, etc. |
+| Format code after every edit | **Hook** | Fires automatically on file changes |
+| Generate social posts from a blog | **Skill** | Multi-step instructions with templates |
+| Review PRs automatically | **Routine** | Trigger on `pull_request.opened` event |
+
+<Callout type="info">
+**The simplest rule:** If it should happen every time without thinking, use a Hook. If it needs Claude's intelligence to execute, use a Skill. If it should run without you present, use a Routine. If it should run in a side process, use a Subagent.
+</Callout>
+
+## Real-World Workflow: Combining All Four
+
+Here's how these pieces work together in practice. Consider a content pipeline that publishes blog posts and distributes them to social media:
+
+1. **Routine** triggers nightly, checking a Notion database for queued topics
+2. **Skills** provide the blog generation instructions, social media copy formats, and posting procedures
+3. **Hooks** auto-format generated MDX files and run build validation after every file write
+4. **Subagents** handle research in isolation — fetching documentation, verifying facts — so the main pipeline context stays clean
+
+Each piece handles what it's best at. The Routine provides the schedule and cloud execution. Skills provide the domain knowledge. Hooks provide the guardrails. Subagents provide the focused research.
+
+The documentation and tooling already support this kind of end-to-end automation. Developers are combining these pieces to build pipelines that process topics from databases, generate content, create PRs, merge, and post to social platforms — with minimal human intervention.
+
+## Can Claude Code Create Workflows for You?
+
+Yes. And this is where things get interesting.
+
+**Claude Code can generate Skills directly.** Tell it what you want to automate, and it will create the `SKILL.md` file with the right frontmatter, instructions, and dynamic context injection. For example:
+
+```
+Create a skill that reviews my staged git changes,
+checks for TODO comments, and warns about any files
+over 500 lines
+```
+
+Claude will create the skill directory, write `SKILL.md` with the appropriate description and instructions, and you can immediately use it with `/skill-name`.
+
+**Claude Code can set up Hooks.** Ask it to add formatting, linting, or validation hooks to your settings, and it will write the configuration directly to `.claude/settings.json`.
+
+**Routines are created through the web UI or CLI.** You configure them at [claude.ai/code/routines](https://claude.ai/code/routines) or use the `/schedule` command. Claude helps you write the prompt, but the trigger and repository configuration happens through the interface.
+
+**The `/run-skill-generator` Skill is particularly clever.** It watches you get your app running from a clean environment, captures what worked — the install commands, environment variables, launch script — and commits it as a per-project Skill. After that, every future session follows the recorded recipe instead of rediscovering it.
+
+There's also a growing ecosystem of community Skills you can install. The [Agent Skills](https://agentskills.io) open standard means Skills work across multiple AI tools, not just Claude Code.
+
+## Getting Started: Your First Workflow in Five Minutes
+
+If you want to try this right now, start with a Skill. It's the fastest path from zero to automated workflow.
+
+**Step 1:** Create the directory:
+
+```bash
+mkdir -p .claude/skills/review-changes
+```
+
+**Step 2:** Write the Skill:
+
+```yaml
+# .claude/skills/review-changes/SKILL.md
+---
+name: review-changes
+description: Review uncommitted changes and flag risks.
+  Use when the user asks about their changes or wants
+  a pre-commit review.
+---
+
+## Current changes
+
+!`git diff HEAD`
+
+## Instructions
+
+Summarize the changes in 3-5 bullets. Flag any risks:
+missing error handling, hardcoded values, tests that
+need updating, or security concerns. If the diff is
+empty, say there are no uncommitted changes.
+```
+
+**Step 3:** Test it. Open Claude Code and either ask about your changes or type `/review-changes`.
+
+That's it. Claude now has a pre-commit review workflow that runs with live data from your working tree. From here, you can add Hooks to enforce formatting, Routines to run reviews on a schedule, and Subagents to parallelize the work.
+
+## The Bigger Picture
+
+Anthropic is clearly investing in making Claude Code a complete development automation platform. The progression from simple chat to Skills to Hooks to Routines shows a deliberate strategy — each layer handles a different aspect of workflow automation that the previous layers couldn't cover.
+
+Recent additions reinforce this direction. The `/goal` command keeps Claude working across turns until a completion condition holds — ideal for long-running workflows where you set the target and walk away. Agent View (`claude agents`) manages multiple parallel sessions from one screen. And Ultraplan drafts execution plans in the cloud that you review and comment on before running.
+
+Claude Code is becoming the orchestration layer for your entire development workflow, not just the coding part.
+
+## Bottom Line
+
+You don't need all four systems on day one. Start with Skills for the workflows you repeat most. Add Hooks when you find yourself checking that Claude remembered to format or lint. Graduate to Routines when you want tasks running without you. Use Subagents when research starts eating your context window.
+
+The power is in the combination. Each system handles what it's best at, and together they create automation that's smarter, more reliable, and more capable than any single approach.
+
+<Callout type="info">
+If you want to stay updated on Claude Code features and workflows like this, subscribe to the newsletter below. I cover new releases, practical guides, and workflow patterns as Anthropic ships them.
+</Callout>
