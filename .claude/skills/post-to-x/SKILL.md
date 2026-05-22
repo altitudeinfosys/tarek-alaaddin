@@ -30,9 +30,13 @@ For detection logic, full tool mapping table, and Playwright prerequisites, read
 
 ### Step 1: Validate Tweet Text
 
-- If no text provided, ask the user for the tweet text
+- If no text provided:
+  - **Pipeline mode** (called from `/pipeline-run`): STOP and return error — tweet text is required
+  - **Manual mode**: ask the user for the tweet text
 - Verify the tweet is 280 characters or fewer
-- If over 280 chars, trim or ask user to revise
+- If over 280 chars:
+  - **Pipeline mode**: auto-trim to 280 chars at the nearest word boundary (preserve the URL if present)
+  - **Manual mode**: ask user to revise
 - Store the final tweet text for posting
 
 ### Step 2: Pre-Flight Check
@@ -42,7 +46,9 @@ For detection logic, full tool mapping table, and Playwright prerequisites, read
 3. Navigate to `https://x.com/compose/post`
 4. Wait 3 seconds for page load
 5. Take a screenshot to verify login state
-6. **If not logged in** (login page visible): STOP and tell the user "You're not logged into X. Please log in manually and try again."
+6. **If not logged in** (login page visible):
+   - **Pipeline mode**: return `{ success: false, error: "Not logged into X" }` — do NOT stop the pipeline, let the caller skip to the next phase
+   - **Manual mode**: STOP and tell the user "You're not logged into X. Please log in manually and try again."
 
 ### Step 3: Compose Tweet
 
@@ -57,9 +63,8 @@ For detection logic, full tool mapping table, and Playwright prerequisites, read
 
 1. Take a screenshot
 2. Verify the tweet text appears correctly in the compose box
-3. **If running in pipeline mode** (called from `/pipeline-run`): proceed to posting automatically
-4. **If running manually**: Show the screenshot to the user and ask: "Tweet is ready. Should I post it?"
-5. Wait for user confirmation before proceeding (manual mode only)
+3. **Pipeline mode** (called from `/pipeline-run`): proceed to posting automatically — do NOT ask for confirmation
+4. **Manual mode**: Show the screenshot to the user and ask: "Tweet is ready. Should I post it?" Wait for user confirmation.
 
 ### Step 5: Post the Tweet
 

@@ -30,7 +30,9 @@ For detection logic, full tool mapping table, and Playwright prerequisites, read
 
 ### Step 1: Validate Post Text
 
-- If no text provided, ask the user for the post content
+- If no text provided:
+  - **Pipeline mode** (called from `/pipeline-run`): STOP and return error — post text is required
+  - **Manual mode**: ask the user for the post content
 - LinkedIn posts can be up to 3,000 characters
 - Recommended length: 150-300 words for engagement
 - Store the final post text
@@ -42,7 +44,9 @@ For detection logic, full tool mapping table, and Playwright prerequisites, read
 3. Navigate to `https://www.linkedin.com/feed/`
 4. Wait 3 seconds for page load
 5. Take a screenshot to verify login state
-6. **If not logged in** (login/signup page visible): STOP and tell the user "You're not logged into LinkedIn. Please log in manually and try again."
+6. **If not logged in** (login/signup page visible):
+   - **Pipeline mode**: return `{ success: false, error: "Not logged into LinkedIn" }` — do NOT stop the pipeline, let the caller skip to finalize
+   - **Manual mode**: STOP and tell the user "You're not logged into LinkedIn. Please log in manually and try again."
 
 ### Step 3: Open Post Composer
 
@@ -68,9 +72,8 @@ For detection logic, full tool mapping table, and Playwright prerequisites, read
 
 1. Take a screenshot
 2. Verify the post text appears correctly in the composer
-3. **If running in pipeline mode** (called from `/pipeline-run`): proceed to posting automatically
-4. **If running manually**: Show the screenshot to the user and ask: "LinkedIn post is ready. Should I post it?"
-5. Wait for user confirmation before proceeding (manual mode only)
+3. **Pipeline mode** (called from `/pipeline-run`): proceed to posting automatically — do NOT ask for confirmation
+4. **Manual mode**: Show the screenshot to the user and ask: "LinkedIn post is ready. Should I post it?" Wait for user confirmation.
 
 ### Step 6: Post to LinkedIn
 
