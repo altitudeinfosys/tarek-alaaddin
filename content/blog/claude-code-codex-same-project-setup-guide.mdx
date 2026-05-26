@@ -1,0 +1,373 @@
+---
+title: "Claude Code + Codex: One Project, Both Tools Configured"
+description: "Every config file mapped side by side. Set up one project for both Claude Code and Codex, share context, and port skills using the Agent Skills standard."
+date: "2026-05-26"
+category: "ai-tools"
+tags: ["claude-code", "codex-cli", "agent-skills", "configuration", "ai-coding-agents", "developer-productivity", "openai", "anthropic", "workflow", "skills"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Two tools. Same repo. Different config files. Different directory structures. Different formats.
+
+You installed Claude Code and Codex. Both work great on their own. Then you open the same project in both and realize: Claude Code reads `CLAUDE.md`, Codex reads `AGENTS.md`. Claude uses `.claude/settings.json`, Codex uses `.codex/config.toml`. Skills live in different directories. Hooks use different formats. Nothing is shared by default.
+
+This post maps every configuration file both tools use, shows three ways to wire them together, and walks through porting skills using the Agent Skills standard that both tools now support.
+
+## What Each Tool Actually Reads
+
+Both tools read instruction files, settings, hooks, and skills. They use different file names and directory structures for essentially the same concepts. Here's the complete mapping.
+
+### Instruction Files (The Main Config)
+
+This is the most important file for each tool — the markdown document that tells the AI how your project works.
+
+| Concept | Claude Code | Codex CLI |
+|---------|------------|-----------|
+| Project instructions | `CLAUDE.md` (project root) | `AGENTS.md` (project root) |
+| User-level instructions | `~/.claude/CLAUDE.md` | `~/.codex/AGENTS.md` |
+| Override file | Not applicable | `AGENTS.override.md` (same directory) |
+| Discovery | Walks up from CWD to repo root | Walks down from repo root to CWD |
+| Size guidance | Keep concise (Anthropic recommends brevity) | 32 KiB default (`project_doc_max_bytes`) |
+| Fallback names | None | Configurable via `project_doc_fallback_filenames` |
+
+The critical difference: Claude Code reads instruction files from your current directory upward to the repo root. Codex reads from the repo root downward to your current directory. Same content, opposite traversal. The practical impact is that Codex concatenates files root-first, so subdirectory instructions override root-level ones because they appear later in the prompt.
+
+<Callout type="info">
+**Both tools read plain markdown.** The content of `CLAUDE.md` and `AGENTS.md` is identical in format — project overview, build commands, coding conventions, architecture notes. The only difference is the filename. You can literally copy one to create the other.
+</Callout>
+
+### Settings and Runtime Configuration
+
+| Concept | Claude Code | Codex CLI |
+|---------|------------|-----------|
+| User settings | `~/.claude/settings.json` | `~/.codex/config.toml` |
+| Project settings | `.claude/settings.json` | `.codex/config.toml` |
+| Local overrides | `.claude/settings.local.json` | Profile system (`--profile`) |
+| Format | JSON | TOML |
+| Managed/enterprise | MDM plist, registry, or server-managed | `requirements.toml` |
+
+Claude Code uses JSON. Codex uses TOML. Both support user-level and project-level configuration. Both allow local overrides that don't get committed to git.
+
+### Skills and Reusable Workflows
+
+This is where things get interesting — and portable.
+
+| Concept | Claude Code | Codex CLI |
+|---------|------------|-----------|
+| Skill format | `SKILL.md` with YAML frontmatter | `SKILL.md` with YAML frontmatter |
+| Project skills | `.claude/skills/<name>/SKILL.md` | `.codex/skills/<name>/SKILL.md` |
+| User skills | `~/.claude/skills/<name>/SKILL.md` | `~/.codex/skills/<name>/SKILL.md` |
+| Legacy format | `.claude/commands/<name>.md` | Not applicable |
+| Standard | Agent Skills (agentskills.io) | Agent Skills (agentskills.io) |
+
+Both tools adopted the Agent Skills open standard. A skill directory with a `SKILL.md` file works in both tools without modification — as long as you stick to the core specification.
+
+### Hooks (Lifecycle Event Handlers)
+
+| Concept | Claude Code | Codex CLI |
+|---------|------------|-----------|
+| Configuration | `hooks` key in `settings.json` | `hooks.json` or `[[hooks.*]]` in `config.toml` |
+| Project hooks | `.claude/settings.json` | `.codex/hooks.json` or `.codex/config.toml` |
+| User hooks | `~/.claude/settings.json` | `~/.codex/hooks.json` or `~/.codex/config.toml` |
+| Events | PreToolUse, PostToolUse, Stop, Notification | PreToolUse, PostToolUse, SessionStart, Stop, and more |
+| Trust model | Workspace trust dialog | Explicit `/hooks` trust per hash |
+
+Both tools support lifecycle hooks that run scripts when events occur. The event names are similar but not identical, and the configuration format differs (JSON vs TOML/JSON).
+
+### MCP Servers
+
+| Concept | Claude Code | Codex CLI |
+|---------|------------|-----------|
+| Configuration | `.claude/settings.json` under `mcpServers` | `config.toml` under `[mcp_servers]` |
+| Per-tool control | `allowedMcpServers` / `deniedMcpServers` | `enabled_tools` / `disabled_tools` per server |
+| Auto-approval | Via permission rules | `default_tools_approval_mode` |
+
+### Subagents and Multi-Agent
+
+| Concept | Claude Code | Codex CLI |
+|---------|------------|-----------|
+| Custom agents | `.claude/agents/<name>.md` | Not applicable (uses `agents.max_threads`) |
+| Parallel execution | Agent tool with worktree isolation | `features.multi_agent` with thread limits |
+| Skill delegation | `context: fork` in SKILL.md frontmatter | Not directly equivalent |
+
+## Setting Up One Project for Both Tools
+
+Here is the practical setup that works. Three approaches, from simplest to most robust.
+
+### Approach 1: The Symlink (Quick and Dirty)
+
+Create one file and symlink the other:
+
+```bash
+# Write your instructions in AGENTS.md
+# (Codex doesn't support fallback to CLAUDE.md by default)
+ln -s AGENTS.md CLAUDE.md
+```
+
+Both tools now read the same file. Changes to one appear in the other. The downside: you cannot include tool-specific instructions without the other tool reading them too.
+
+### Approach 2: Shared Core with Tool-Specific Sections
+
+Keep separate files but share content through a common reference:
+
+```
+project/
+├── CLAUDE.md          # Imports shared + Claude-specific
+├── AGENTS.md          # Imports shared + Codex-specific
+└── docs/
+    └── PROJECT.md     # Shared project context
+```
+
+In `CLAUDE.md`:
+```markdown
+# Project Context
+See docs/PROJECT.md for architecture, conventions, and build commands.
+
+# Claude Code Specific
+- Use /review before committing
+- Run skills with context: fork for isolation
+```
+
+In `AGENTS.md`:
+```markdown
+# Project Context
+See docs/PROJECT.md for architecture, conventions, and build commands.
+
+# Codex Specific
+- Default sandbox: workspace-write
+- Use profile "deep-review" for thorough analysis
+```
+
+This gives both tools the shared context while letting you include tool-specific instructions each one can actually act on.
+
+### Approach 3: Codex Fallback Configuration
+
+Configure Codex to also read `CLAUDE.md` as a fallback:
+
+```toml
+# ~/.codex/config.toml
+project_doc_fallback_filenames = ["CLAUDE.md", "TEAM_GUIDE.md"]
+```
+
+Now Codex checks each directory for `AGENTS.override.md`, then `AGENTS.md`, then `CLAUDE.md`. If you only have a `CLAUDE.md`, Codex picks it up automatically. This is the lowest-friction approach for teams already using Claude Code.
+
+<Callout type="warning">
+**The fallback order matters.** Codex checks files in the order listed in `project_doc_fallback_filenames`. If both `AGENTS.md` and `CLAUDE.md` exist in the same directory, only `AGENTS.md` is read (it comes first in the hierarchy). The fallback only kicks in when earlier files are missing or empty.
+</Callout>
+
+## Porting Skills Between Claude Code and Codex
+
+Skills are the most portable piece of the puzzle. The Agent Skills open standard — published at agentskills.io and adopted by over thirty tools by spring 2026 — means a well-written skill works in both tools without modification.
+
+### What Ports Cleanly
+
+A skill that uses only core Agent Skills features works identically in both tools:
+
+```yaml
+# .claude/skills/lint-check/SKILL.md (or .codex/skills/lint-check/SKILL.md)
+---
+name: lint-check
+description: Run linting and report issues in a structured format
+---
+
+Run the project linter and report results:
+
+1. Execute the lint command from package.json
+2. Parse the output for errors and warnings
+3. Group issues by file
+4. Suggest fixes for the top 3 most common issues
+```
+
+This skill works in Claude Code, Codex, Gemini CLI, Cursor, and any other tool supporting the standard. The frontmatter uses only `name` and `description`. The instructions are plain markdown. No tool-specific features.
+
+### What Doesn't Port
+
+Claude Code extends the Agent Skills standard with features that Codex doesn't support (and vice versa). Know which features are tool-specific:
+
+**Claude Code-only features:**
+- `context: fork` — Runs skill in an isolated subagent
+- `agent: Explore` — Specifies which subagent type to use
+- `` !`command` `` — Dynamic context injection (runs shell commands before loading)
+- `allowed-tools` — Pre-approves tools without permission prompts
+- `model` and `effort` — Overrides session model when skill activates
+- `paths` — Restricts skill to specific file glob patterns
+- `user-invocable: false` — Hides from user menu, Claude-only invocation
+- `disable-model-invocation: true` — Prevents automatic invocation
+- `${CLAUDE_SKILL_DIR}` and `${CLAUDE_SESSION_ID}` — Variable substitutions
+
+**Codex-only features:**
+- Inherits sandbox configuration from `config.toml`
+- Hooks can use `PreToolUse` matchers with regex patterns
+- Network proxy rules apply to skill execution
+- Trust model requires explicit `/hooks` approval for project skills
+
+### The Porting Workflow
+
+To make a Claude Code skill work in Codex:
+
+1. **Copy the skill directory** from `.claude/skills/<name>/` to `.codex/skills/<name>/`
+2. **Strip Claude-specific frontmatter**: Remove `context`, `agent`, `allowed-tools`, `model`, `effort`, `paths`, and invocation control fields
+3. **Replace dynamic injection**: Convert `` !`command` `` lines to regular instructions telling the agent to run those commands
+4. **Test**: Run `codex "/skill-name"` and verify behavior
+
+To make a Codex skill work in Claude Code:
+
+1. **Copy the skill directory** from `.codex/skills/<name>/` to `.claude/skills/<name>/`
+2. **Optionally add Claude features**: Add `context: fork` for isolation, `allowed-tools` for permission pre-approval, or `` !`command` `` for dynamic context
+3. **Test**: Run `/skill-name` in Claude Code and verify behavior
+
+<Callout type="info">
+**The direction matters.** Going from Claude Code to Codex usually means removing features. Going from Codex to Claude Code usually means you can add features to enhance the skill. The core instructions work in both directions without changes.
+</Callout>
+
+### Sharing Skills Across Both Tools
+
+For projects that use both tools, maintain skills in one location and reference them:
+
+```bash
+# Option 1: Symlink the skills directory
+ln -s .claude/skills .codex/skills
+
+# Option 2: Keep portable skills in a shared location
+mkdir -p .skills
+ln -s ../.skills .claude/skills
+ln -s ../.skills .codex/skills
+```
+
+Or use the `--add-dir` feature in Claude Code to load skills from the Codex directory:
+
+```bash
+claude --add-dir .codex
+```
+
+This loads `.codex/skills/` into Claude Code's skill registry without copying files.
+
+## Hooks: The Translation Table
+
+Hooks don't share a format, but the concepts map directly. Here is how to translate between the two.
+
+### Claude Code Hook (settings.json)
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .hooks/validate-bash.py"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Same Hook in Codex (config.toml)
+
+```toml
+[features]
+hooks = true
+
+[[hooks.PreToolUse]]
+matcher = "^Bash$"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = 'python3 .hooks/validate-bash.py'
+timeout = 30
+```
+
+The hook script itself (`validate-bash.py`) can be identical. Both tools pass JSON to stdin with the tool name, input, and session context. Both expect JSON on stdout with approval/denial decisions. Write the script once, configure it in both tools' formats.
+
+### Event Name Mapping
+
+| Claude Code | Codex CLI | Notes |
+|-------------|-----------|-------|
+| PreToolUse | PreToolUse | Same name, similar input format |
+| PostToolUse | PostToolUse | Same name, similar input format |
+| Stop | Stop | Both support continue/block decisions |
+| Notification | Not available | Claude Code only |
+| Not available | SessionStart | Codex only — runs on session init/resume |
+| Not available | SubagentStart | Codex only — initializes subagent context |
+| Not available | PreCompact | Codex only — intercepts context compaction |
+| Not available | UserPromptSubmit | Codex only — inspects user input |
+| Not available | PermissionRequest | Codex only — auto-approve/deny permissions |
+
+## The Directory Structure That Works
+
+Here is what a project configured for both tools looks like:
+
+```
+my-project/
+├── CLAUDE.md                    # Claude Code instructions
+├── AGENTS.md                    # Codex instructions
+├── .claude/
+│   ├── settings.json            # Claude Code permissions, hooks, MCP
+│   ├── settings.local.json      # Local overrides (gitignored)
+│   ├── skills/
+│   │   ├── deploy/SKILL.md      # Portable skill
+│   │   └── review/SKILL.md      # Portable skill
+│   └── agents/
+│       └── reviewer.md          # Claude Code custom subagent
+├── .codex/
+│   ├── config.toml              # Codex settings, sandbox, model
+│   ├── hooks.json               # Codex lifecycle hooks
+│   └── skills/ → ../.claude/skills/  # Symlink to shared skills
+├── .hooks/
+│   └── validate-bash.py         # Shared hook scripts
+└── docs/
+    └── PROJECT.md               # Shared project context
+```
+
+Key decisions in this structure:
+
+- **Skills are symlinked** so both tools read from the same directory
+- **Hook scripts live in `.hooks/`** and are referenced by both tools' configurations
+- **Project context goes in `docs/PROJECT.md`** and is referenced by both instruction files
+- **Tool-specific configuration stays separate** because the formats are incompatible (JSON vs TOML)
+
+## The Agent Skills Standard: Why Portability Works Now
+
+A year ago, porting a workflow between AI coding tools meant rewriting everything from scratch. Each tool had its own proprietary format for instructions, its own directory structure, its own way of defining reusable workflows.
+
+That changed in December 2025 when Anthropic published the Agent Skills specification as an open standard at agentskills.io. The format is straightforward: a directory containing a `SKILL.md` file with YAML frontmatter (`name` and `description`) followed by markdown instructions. Supporting files — scripts, templates, reference docs — live alongside it.
+
+What made the standard stick was adoption speed. Google adopted it for Gemini CLI. OpenAI adopted it for Codex. JetBrains adopted it for Junie. Sourcegraph, Block, Snowflake, Databricks, and others followed. By spring 2026, the specification listed over thirty adopters.
+
+The practical impact: a skill built for Claude Code works in Codex, Gemini CLI, Cursor, and any other adopter — as long as you stick to core specification features. Tool-specific extensions (Claude Code's dynamic context injection, Codex's sandbox inheritance) add power but reduce portability. The core format is the common denominator.
+
+<Callout type="tip">
+**Write skills for portability first, then add tool-specific features.** Start with a SKILL.md using only `name` and `description` in the frontmatter and plain markdown instructions. Test it in both tools. Then layer on Claude Code's `context: fork` or `allowed-tools` features in a separate copy if you need them.
+</Callout>
+
+## Common Mistakes to Avoid
+
+**Duplicating instructions across both files.** When `CLAUDE.md` and `AGENTS.md` contain identical content that needs updating, you will forget to update one. Use a shared reference file or symlinks.
+
+**Using Claude-specific skill features and expecting them to work in Codex.** Dynamic context injection (`` !`command` ``), subagent delegation (`context: fork`), and tool pre-approval (`allowed-tools`) are Claude Code extensions. Strip them for portability or maintain separate skill versions.
+
+**Ignoring the sandbox difference.** Claude Code runs on your machine by default. Codex runs in a sandbox by default. A skill that writes to `/tmp/output` works differently when one tool has real filesystem access and the other is sandboxed. Test skills in both environments.
+
+**Overcomplicating the setup.** For most projects, the symlink approach works perfectly. Both instruction files point to the same content, skills live in one directory with a symlink, and tool-specific settings stay in their respective config files. Don't build an elaborate shared infrastructure unless your project actually needs it.
+
+## What This Setup Unlocks
+
+Once the configuration is wired up, the workflow unlocks naturally.
+
+Both tools read the same project context. Both tools access the same skills. A pre-commit hook script written once runs in both environments because both tools pipe JSON to stdin and read JSON from stdout. The only thing that stays separate is the settings format — JSON for Claude Code, TOML for Codex — and that's fine because settings are inherently tool-specific.
+
+The real payoff is that you stop thinking about configuration and start thinking about the work. Ask Claude Code to plan an approach. Hand the plan to Codex for autonomous execution. Or do it the other way around — let Codex generate a first pass, then bring Claude Code in for interactive review. The shared context means neither tool starts cold.
+
+One project. Two tools. Zero duplication. The configuration takes ten minutes. Everything after that is shipping code.
+
+---
+
+*Want to see these tools in action? Check out my previous deep dives on [using Codex and Claude Code together](/blog/why-i-use-codex-and-claude-code-together) and the [complete commands and skills comparison](/blog/codex-cli-vs-claude-code-commands-skills-mcp).*
+
+*Subscribe for weekly workflows covering Claude Code, Codex, and the tools that actually ship code.*
