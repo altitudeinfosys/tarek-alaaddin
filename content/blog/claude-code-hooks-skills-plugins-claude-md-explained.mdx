@@ -1,0 +1,239 @@
+---
+title: "Claude Code Explained: Hooks, Skills, Plugins, CLAUDE.md, and AGENTS.md"
+description: "Claude Code has six overlapping extensibility concepts and three special markdown files. Here's what each one actually does, where it lives, and when to use it — without the jargon fog."
+date: "2026-05-26"
+category: "ai-tools"
+tags: ["claude-code", "skills", "hooks", "plugins", "CLAUDE.md", "AGENTS.md", "SKILL.md", "extensibility", "developer-productivity", "anthropic", "ai-coding-agents"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Six concepts. Three markdown files. One job each. And yet every developer forum has the same thread: "Can someone explain the real difference between Hooks, Skills, Plugins, SKILL.md, CLAUDE.md, and AGENTS.md?"
+
+The replies are always a mess. Skills get conflated with plugins. CLAUDE.md and AGENTS.md get treated as interchangeable. Hooks get ignored entirely. Claude Code's extensibility system has grown fast, and the naming overlaps in ways that trip up even experienced users.
+
+This post is the decoder ring. One concept at a time, plainly explained, with a decision framework at the end so you know exactly which piece to reach for in any situation.
+
+## CLAUDE.md, AGENTS.md, and SKILL.md — What Each File Actually Does
+
+Let's start with the source of most confusion — the three special markdown files that configure how Claude Code behaves.
+
+### CLAUDE.md — Your Project's Always-On Instructions
+
+CLAUDE.md is a markdown file that Claude Code reads at the start of every single session. You put it in your project root, and whatever you write in it, Claude just knows. Every conversation. No need to paste it, reference it, or invoke it.
+
+Think of it as the briefing document you'd hand a new team member before they touch any code. It contains the facts that are impossible to know unless someone tells you: which build commands to run, what naming conventions the team uses, which directories matter, and which architectural decisions are non-negotiable.
+
+CLAUDE.md uses a layered loading system. Claude walks up the directory tree from your working directory, collecting every CLAUDE.md it finds. A global `~/.claude/CLAUDE.md` sets your personal defaults across all projects. A project-root `CLAUDE.md` sets team-wide standards. A `CLAUDE.local.md` (gitignored) adds your personal overrides. And `.claude/rules/` files let you scope instructions to specific file types or directories.
+
+Anthropic recommends keeping each CLAUDE.md file under 200 lines. Longer files consume more context and reduce how reliably Claude follows the instructions. If your CLAUDE.md is growing past that threshold, the extra content probably belongs in a skill or a path-scoped rule instead.
+
+<Callout type="info">
+**The key principle:** CLAUDE.md is for facts that should be true in every session. If something is a multi-step procedure or only matters for a specific task, it belongs in a Skill instead. CLAUDE.md is context. Skills are instructions.
+</Callout>
+
+### AGENTS.md — The Cross-Tool Standard
+
+AGENTS.md serves the same purpose as CLAUDE.md — persistent project context loaded at session start — but it's designed to work across every AI coding tool, not just Claude Code.
+
+Codex CLI reads AGENTS.md. Cursor reads it. GitHub Copilot, Gemini CLI, and others all recognize it. If you work with multiple AI tools (or your team does), AGENTS.md is the single file that configures all of them without duplicating instructions.
+
+Claude Code reads CLAUDE.md, not AGENTS.md directly. But Claude Code supports importing AGENTS.md into your CLAUDE.md with a single line:
+
+```markdown
+@AGENTS.md
+```
+
+This gives you the best of both worlds: one canonical set of instructions for all tools, plus the ability to add Claude-specific guidance below the import. A symlink (`ln -s AGENTS.md CLAUDE.md`) also works if you don't need Claude-specific additions.
+
+The most consequential difference between the two formats is discovery direction. Claude Code walks *up* the directory tree to find parent context. Codex walks *down* from the root to build a layered instruction chain. If you're in a monorepo, this difference matters for how your instructions compose.
+
+### SKILL.md — Task-Specific Instructions On Demand
+
+SKILL.md is not a project configuration file. It's the instruction file inside a skill directory — and understanding that distinction clears up most of the confusion.
+
+A skill is a folder. Inside that folder lives a single file called SKILL.md. That file has two parts: a short YAML frontmatter block (name and description) at the top, and a markdown body underneath with the instructions Claude follows when the skill is triggered.
+
+The critical difference from CLAUDE.md: SKILL.md content loads only when Claude determines the skill is relevant to your current task, or when you invoke it explicitly with `/skill-name`. Claude scans skill names and descriptions at session start — only a handful of tokens per skill — and the full SKILL.md body loads only on demand.
+
+This is called progressive disclosure, and it's the reason you can have dozens of skills installed without slowing down unrelated work. A 500-line deployment skill costs you almost nothing when you're debugging a CSS issue.
+
+```text
+your-project/
+├── .claude/
+│   └── skills/
+│       └── deploy/
+│           └── SKILL.md    ← Instructions for the /deploy skill
+├── CLAUDE.md               ← Always loaded, every session
+└── AGENTS.md               ← Cross-tool, always loaded
+```
+
+## Skills, Hooks, and Plugins — How They Actually Work
+
+Now let's cover the runtime concepts — the things that actually *do stuff* when Claude Code is running.
+
+### Skills — Reusable Workflows Claude Can Follow
+
+A skill is a packaged set of instructions that teaches Claude how to do something specific. Deploy to production. Review a PR. Run a migration. Generate a changelog. Any multi-step procedure you'd otherwise paste into chat repeatedly is a candidate for a skill.
+
+Skills can be invoked two ways. You can type `/skill-name` to trigger one explicitly, or Claude can load one automatically when it detects that your request matches a skill's description. The `disable-model-invocation: true` frontmatter flag restricts a skill to manual invocation only — useful for destructive operations where you want human intent.
+
+Skills follow the Agent Skills open standard from agentskills.io. This means a skill you write for Claude Code is designed to work across Codex CLI, Cursor, Gemini CLI, and GitHub Copilot — the core format is portable, though each tool may extend the standard with its own features. Claude Code extends the standard with additional features like subagent execution and dynamic context injection, but the core format is portable.
+
+Skills can also bundle supporting files — reference docs, scripts, templates — in their directory alongside SKILL.md. These load only when the skill runs, keeping your context clean.
+
+<Callout type="warning">
+**Skills vs. CLAUDE.md — the most common mistake:** Developers stuff multi-step procedures into CLAUDE.md, bloating it past 200 lines and degrading performance on every session. If the content is a procedure rather than a fact, extract it into a skill. CLAUDE.md should contain things like "use pnpm, not npm" and "API handlers live in src/api/". The step-by-step deploy checklist belongs in a `/deploy` skill.
+</Callout>
+
+### Hooks — Deterministic Code That Can't Hallucinate
+
+Hooks are the enforcement layer. They're shell commands, HTTP endpoints, LLM prompts, or agents that execute automatically at specific points in Claude Code's lifecycle. Unlike skills and CLAUDE.md instructions (which rely on Claude's interpretation), hooks execute deterministic code that runs exactly as written.
+
+This is the fundamental distinction: skills tell Claude *how* to do something. Hooks *enforce* that something always happens — or never happens. Claude can't forget to run a hook, can't misinterpret it, and can't skip it.
+
+Hooks are configured in JSON settings files (`.claude/settings.json`, `~/.claude/settings.json`, or `.claude/settings.local.json`) and fire at predefined lifecycle events:
+
+- **Session events:** `SessionStart`, `SessionEnd`
+- **Turn events:** `UserPromptSubmit`, `Stop`
+- **Tool events:** `PreToolUse`, `PostToolUse`
+- **File events:** `FileChanged`, `ConfigChange`
+- **Agent events:** `SubagentStart`, `SubagentStop`, `TaskCreated`
+
+Claude Code supports five handler types for hooks: command handlers run shell scripts, HTTP handlers call external endpoints, MCP tool handlers invoke connected MCP servers, prompt handlers send yes/no evaluations to a fast Claude model, and agent handlers spawn subagents for multi-step verification.
+
+The most common use case: a `PostToolUse` hook on `Write|Edit` that auto-formats files after Claude edits them. Or a `PreToolUse` hook on `Bash` that blocks destructive commands like `rm -rf`. These patterns are impossible to implement reliably with CLAUDE.md instructions alone — Claude might follow them, or might not. Hooks always run.
+
+### Plugins — The Distribution Format
+
+A plugin is a package that bundles one or more skills, along with optional hooks, agents, MCP server configurations, LSP server configurations, and background monitors. When you install a plugin, you get everything it contains. Plugins are the distribution mechanism; skills are the content.
+
+This is the relationship that trips people up: you don't install skills. You install plugins, which contain skills. A plugin named `my-tools` with a `deploy` skill creates the command `/my-tools:deploy` — namespaced to prevent conflicts when multiple plugins define skills with the same name.
+
+Plugins live in directories with a `.claude-plugin/plugin.json` manifest file:
+
+```text
+my-plugin/
+├── .claude-plugin/
+│   └── plugin.json       ← Name, description, version
+├── skills/
+│   └── deploy/
+│       └── SKILL.md      ← /my-plugin:deploy
+├── hooks/
+│   └── hooks.json        ← Event handlers
+├── agents/               ← Custom agent definitions
+├── .mcp.json             ← MCP server configs
+├── .lsp.json             ← LSP server configs
+├── monitors/             ← Background watchers
+├── bin/                   ← Executables added to PATH
+└── settings.json         ← Default settings
+```
+
+The plugin ecosystem has a marketplace model. Anthropic maintains an official curated marketplace and a community marketplace where developers submit plugins for review. You can also create private team marketplaces hosted in Git repositories.
+
+<Callout type="info">
+**Start standalone, convert later.** Anthropic's recommendation is to build skills and hooks directly in your `.claude/` directory first. Once they're stable and you want to share them, convert to a plugin format. The conversion is straightforward — the file formats are identical, you just add a manifest and restructure the directories.
+</Callout>
+
+## The Decision Framework
+
+Here's the cheat sheet. When you're staring at a new automation need, run through this:
+
+| I need to... | Use this |
+|---|---|
+| Set project-wide coding standards | **CLAUDE.md** |
+| Share instructions across AI tools | **AGENTS.md** (imported into CLAUDE.md) |
+| Teach Claude a repeatable procedure | **Skill** (SKILL.md) |
+| Enforce a rule that can't be skipped | **Hook** |
+| Share skills + hooks with my team | **Plugin** |
+| Auto-format after every file edit | **Hook** (PostToolUse on Write\|Edit) |
+| Run a deploy checklist | **Skill** (/deploy) |
+| Block dangerous bash commands | **Hook** (PreToolUse on Bash) |
+| Add context that applies to *.tsx files only | **.claude/rules/** (path-scoped) |
+
+Or the even simpler version:
+
+**"Should Claude always know this?"** → CLAUDE.md
+
+**"Should Claude follow these steps when asked?"** → Skill
+
+**"Must this always happen, no exceptions?"** → Hook
+
+**"Do I want to share this with others?"** → Plugin
+
+## How They Work Together
+
+The real power is in composition. These aren't competing systems — they're layers that handle different responsibilities.
+
+A production deployment workflow might use all of them:
+
+1. **CLAUDE.md** tells Claude about the project architecture, the staging URL, and the deployment target
+2. A **Skill** (`/deploy`) contains the step-by-step deployment procedure: run tests, build, deploy to staging, verify, promote to production
+3. A **Hook** (PreToolUse on Bash) blocks any `git push --force` to `main` — an enforcement rule that can't be skipped even if the skill tries it
+4. The whole thing is packaged as a **Plugin** so every developer on the team gets the same setup with one install command
+5. **AGENTS.md** contains the subset of project context that also needs to work with Cursor and Copilot
+
+Each layer handles what it's best at. CLAUDE.md provides the context. The skill provides the workflow intelligence. The hook provides the guardrail. The plugin provides the distribution.
+
+## The Loading Model Matters
+
+Understanding *when* each piece loads clarifies why they exist as separate concepts:
+
+| Component | When it loads | Context cost |
+|---|---|---|
+| CLAUDE.md | Every session start | Full file, every time |
+| AGENTS.md | Every session start (via import) | Full file, every time |
+| Skill description | Every session start | ~30-50 tokens per skill |
+| Skill body (SKILL.md) | On demand (task match or /invoke) | Full file, only when used |
+| Hooks config | Every session start | Zero context (runs as code) |
+| Plugin manifest | When plugin enabled | Minimal metadata |
+| .claude/rules/ | On demand (path match) | Only matching rules |
+
+This is why you don't stuff everything into CLAUDE.md. Every line in CLAUDE.md is loaded into every session, consuming context tokens whether you need it or not. Skills load their full instructions only when relevant. Hooks consume zero context because they execute as code outside Claude's context window. Path-scoped rules load only when Claude touches matching files.
+
+The architecture is designed around a simple principle: load what you need, when you need it, and keep everything else out of the way.
+
+## Common Mistakes and How to Avoid Them
+
+**Putting procedures in CLAUDE.md instead of skills.** If your CLAUDE.md has numbered steps, conditional logic, or multi-paragraph instructions for a specific task, extract it into a skill. CLAUDE.md should read like a reference card, not a manual.
+
+**Trying to enforce rules with CLAUDE.md.** CLAUDE.md is context, not enforcement. Claude reads it and tries to follow it, but there's no guarantee. If a rule absolutely must be followed — like never pushing to main without tests passing — use a hook. Hooks execute deterministically.
+
+**Confusing plugins with skills.** You use skills. You install plugins. A plugin without skills is an empty container. A skill without a plugin is a standalone `.claude/skills/` directory entry that works fine — it just can't be easily shared.
+
+**Maintaining both CLAUDE.md and AGENTS.md with duplicate content.** Import one into the other. Write your canonical instructions in AGENTS.md (for cross-tool compatibility), then create a CLAUDE.md that imports it with `@AGENTS.md` and adds any Claude-specific additions below.
+
+**Ignoring path-scoped rules.** If your CLAUDE.md is growing past 200 lines, some of those instructions probably only matter for specific parts of the codebase. Move them to `.claude/rules/` files with `paths` frontmatter. They'll load only when Claude works with matching files, reducing context waste.
+
+## The Ecosystem Is Still Growing
+
+Claude Code shipped its plugin marketplace in early 2026, and the community marketplace is accepting submissions. The official marketplace is curated by Anthropic, while the community marketplace goes through a review pipeline with automated safety screening.
+
+The Agent Skills standard (agentskills.io) means skills written for Claude Code also work in Codex CLI, Cursor, Gemini CLI, and GitHub Copilot. This cross-tool compatibility is significant — it means the skill ecosystem isn't locked to a single vendor.
+
+Hooks have expanded from simple shell commands to five handler types: command, HTTP, MCP tool, prompt, and agent. The agent handler type spawns a full subagent with tool access for complex verification workflows.
+
+Plugins now support LSP servers for code intelligence, background monitors for watching logs and files, and `bin/` directories that add executables to Claude's PATH. The surface area is wide, but the core concepts haven't changed: context, instructions, enforcement, and distribution.
+
+## Bottom Line
+
+Six concepts, three files, one mental model:
+
+**CLAUDE.md** is your always-on project context. Keep it lean.
+
+**AGENTS.md** is the cross-tool version of the same thing. Import it into CLAUDE.md if you use both.
+
+**SKILL.md** is the instruction file inside a skill directory. It loads on demand, not at startup.
+
+**Skills** teach Claude how to do specific tasks. They're the workflows.
+
+**Hooks** enforce rules deterministically. They can't be hallucinated or forgotten.
+
+**Plugins** bundle everything for sharing. They're the distribution layer.
+
+Match the mechanism to the need. Context goes in CLAUDE.md. Procedures go in skills. Hard rules go in hooks. And when you want to share the whole setup, wrap it in a plugin.
+
+<Callout type="info">
+If you want to stay updated on Claude Code features and workflows like this, subscribe to the newsletter below. I cover new releases, practical guides, and workflow patterns as Anthropic ships them.
+</Callout>
