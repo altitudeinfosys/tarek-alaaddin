@@ -1,0 +1,209 @@
+---
+title: "Claude Opus 4.8 vs GPT 5.5 — The Real Difference Is the Harness"
+description: "Benchmarks, pricing, settings, and agentic capabilities compared — plus why the tooling matters more than the model."
+date: "2026-06-03"
+category: "ai-tools"
+tags: ["anthropic", "openai", "claude-opus", "gpt-5-5", "claude-code", "codex", "ai-models", "model-comparison", "llm-benchmark", "agentic-coding"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Everyone is asking the wrong question. "Which model is better — Opus 4.8 or GPT 5.5?" assumes the model is the thing that matters. But the more you dig into the benchmarks, the pricing, the developer experience, the clearer it becomes: the real gap isn't between the models. It's between the harnesses.
+
+Opus 4.8 dropped May 28. GPT 5.5 landed April 23. Both are the best their companies have ever shipped. And on raw benchmarks, they're closer than the internet discourse suggests — separated by single-digit percentages on most evaluations. But in practice, the experience of using them diverges dramatically. That divergence comes from everything wrapped around the model: the tools, the context management, the permission systems, the multi-agent orchestration, the extensibility layer.
+
+That's the harness. And that's what this post is about.
+
+## The Raw Numbers: Closer Than You Think
+
+Let's get the specs out of the way. Here's where these models actually stand as of June 2026:
+
+| Spec | Claude Opus 4.8 | GPT 5.5 |
+|------|-----------------|---------|
+| **Release date** | May 28, 2026 | April 23, 2026 |
+| **Input price / MTok** | $5.00 | $5.00 |
+| **Output price / MTok** | $25.00 | $30.00 |
+| **Context window** | 1M tokens | 1.05M tokens |
+| **Max output** | 128K tokens | 128K tokens |
+| **Knowledge cutoff** | January 2026 | December 2025 |
+| **Batch API discount** | 50% ($2.50/$12.50) | 50% ($2.50/$15.00) |
+
+The pricing tells an interesting story. Input costs are identical. Opus 4.8 is cheaper on output — $25 per million tokens versus $30. But GPT 5.5 reportedly uses fewer tokens to complete equivalent tasks, which can offset that gap depending on your workload. GPT 5.5 also has a long-context surcharge: above 272K input tokens, you pay 2x on input and 1.5x on output for the entire session, not just the overflow.
+
+Context windows are practically identical at a million tokens each. Both cap output at 128K. Neither model has a meaningful edge on raw specs.
+
+## Benchmarks: Each Model Owns Different Territory
+
+The benchmark picture is nuanced. Neither model sweeps the board.
+
+### Where Opus 4.8 Leads
+
+| Benchmark | Opus 4.8 | GPT 5.5 | Gap |
+|-----------|----------|---------|-----|
+| SWE-bench Pro | 69.2% | 58.6% | +10.6 |
+| OSWorld-Verified | 83.4% | 78.7% | +4.7 |
+| HLE (with tools) | 57.9% | 52.2% | +5.7 |
+| MCP-Atlas tool use | 82.2% | 75.3% | +6.9 |
+| USAMO 2026 Math | 96.7%* | — | — |
+
+*The USAMO score comes from a single source and hasn't been independently cross-verified.
+
+The SWE-bench Pro gap is the headline. A 10.6-point lead on the harder version of the most-cited coding benchmark is significant. This measures the ability to solve real, production-grade software engineering tasks — not toy problems.
+
+### Where GPT 5.5 Leads
+
+| Benchmark | GPT 5.5 | Opus 4.8 | Gap |
+|-----------|---------|----------|-----|
+| Terminal-Bench 2.1 | 78.2% | 74.6% | +3.6 |
+| FrontierMath T1-3 | 51.7% | — | — |
+| BrowseComp | 84.4% | — | — |
+| CyberGym | 81.8% | — | — |
+
+GPT 5.5 is better at shell/terminal tasks and certain browsing evaluations. It also edges ahead on some pure math benchmarks.
+
+### The Overall Picture
+
+The Artificial Analysis Intelligence Index puts Opus 4.8 at 61.4 and GPT 5.5 at 60.0 — a slim margin. BenchLM ranks Opus 4.8 third overall (95/100) and GPT 5.5 fifth (91/100). The category breakdown is telling: Opus 4.8 leads coding by 17.8 points, but GPT 5.5 has a narrow 1.4-point edge in agentic tasks.
+
+<Callout type="info">
+**The benchmark caveat nobody talks about:** OpenAI themselves retired SWE-bench Verified because "improvements no longer reflect meaningful improvements in models' real-world software development abilities." The same model can score 69% standalone or 81% with sophisticated retry logic and iterative file exploration. System engineering now conflates with model capability. That's the harness effect in action.
+</Callout>
+
+## The Harness Thesis
+
+Here's the claim I'm making: **a decent model with a great harness beats a great model with a bad harness.**
+
+This isn't an original observation. Addy Osmani framed it as: "Agent = Model + Harness. If you're not the model, you're the harness." And the data backing this claim has gotten much stronger in 2026.
+
+A research paper analyzing Claude Code's architecture (arXiv 2604.14228v1) found that only about 1.6% of the codebase constitutes AI decision logic. The remaining 98.4% is operational infrastructure — the harness. Permission systems, context management, tool orchestration, memory layers, multi-agent coordination, extensibility hooks. That's where the actual engineering lives.
+
+And the top coding agents — Claude Code, Cursor, Codex, Aider, Cline — have started to visually and architecturally resemble each other more than their underlying models do. The industry has converged on fundamental patterns that are load-bearing regardless of which model sits underneath.
+
+## Claude Code: The Tool-Based Harness
+
+Claude Code runs locally on your machine. It reads your codebase, plans an approach, executes changes across multiple files, runs tests, handles failures, and iterates. It's available as a terminal CLI, VS Code extension, JetBrains plugin, desktop app, and web app.
+
+What makes it distinctive is the depth of its harness architecture. There are six distinct layers:
+
+**The Knowledge Layer** is where Claude Code separates itself most. CLAUDE.md files reload after every context compaction, so the model never loses project-specific instructions. Auto-memory persists learnings across conversations. Skills (SKILL.md files) provide reusable workflows.
+
+**The Execution Layer** has dozens of built-in tools spanning file operations, code execution, web search, and more. Read-only tools run in parallel; mutating tools run sequentially. Prompt caching delivers significant savings on stable prefixes — Anthropic's pricing page lists cache reads at 10% of base input cost. File checkpoints provide per-prompt snapshots you can roll back to.
+
+**The Multi-Agent Layer** is where things get ambitious. Dynamic Workflows, launched alongside Opus 4.8, let you orchestrate up to 16 concurrent subagents with a ceiling of 1,000 agents per run. Agent Teams coordinate multiple Claude Code sessions with shared task lists and a lead agent. Worktree isolation keeps parallel agents on separate Git branches so they don't step on each other's changes.
+
+**The Extensibility Layer** connects to thousands of MCP servers — the protocol now sees over 97 million downloads per month. Hooks provide a rich set of lifecycle event types for automation. Plugins bundle skills, hooks, subagents, and MCP config into shareable packages.
+
+<Callout type="tip">
+**The context management pipeline** is a five-layer system: budget reduction caps individual tool results, snip does temporal trimming, microcompact handles fine-grained compression, context collapse replaces segments with summaries, and auto-compact triggers full model-generated semantic compression as a last resort. This is why million-token context windows actually work in practice instead of degrading into noise.
+</Callout>
+
+## Codex: The Environment-Based Harness
+
+OpenAI's approach with Codex is architecturally different. Where Claude Code gives the model a curated set of tools with permission gates, Codex gives the model a bounded environment to live in.
+
+Codex Cloud provisions fresh microVMs for each task. The agent gets its own filesystem, its own process space, deliberately restricted network access. Output comes back exclusively through pull requests or diffs. The philosophy is explicit: "Autonomy requires boundaries. The more you want an agent to do on its own, the tighter the environment needs to be."
+
+The Codex CLI runs locally in your terminal, built in Rust, with OS-level sandboxing. Three permission modes: read-only, workspace-write, and danger-full-access. It's open-source with roughly 74,000 GitHub stars and 14.5 million monthly npm downloads.
+
+The interaction pattern is fundamentally different too. Claude Code is supervised autonomy — think-out-loud-and-ship. You watch it work, intervene when needed, guide it in real time. Codex Cloud is unsupervised autonomy — delegate-and-verify. You submit a task, go do something else, and come back to review the pull request. As one developer put it: "The dominant interaction pattern resembles assigning tickets to a junior teammate."
+
+Codex's pull request acceptance rate sits at 64% in peer-reviewed evaluations, ahead of Devin at 49% and Copilot at 35%. That's impressive for an async workflow.
+
+| Dimension | Claude Code | Codex |
+|-----------|------------|-------|
+| **Execution model** | Local-first, on your machine | Cloud-first (microVMs) or local (CLI) |
+| **Interaction** | Supervised, real-time | Async, delegate-and-review |
+| **Safety** | ML classifier + permission tiers + hooks | OS-level sandbox + microVM isolation |
+| **Extensibility** | MCP + Plugins + Skills + Hooks | config.toml + setup scripts |
+| **Context window** | 1M tokens | 400K tokens (Codex app) |
+| **Multi-agent** | Agent Teams + worktrees + subagents | Parallel cloud tasks in separate sandboxes |
+| **Configuration** | CLAUDE.md hierarchy, Skills, Hooks | AGENTS.md, config.toml |
+
+## Settings: High, Extra, Ultra — What Actually Matters
+
+Both models offer granular control over reasoning depth, and the settings genuinely change the output quality.
+
+### Claude Opus 4.8 Effort Levels
+
+Opus 4.8 supports five effort levels: `low`, `medium`, `high`, `xhigh`, and `max`.
+
+| Level | What It Does | When to Use It |
+|-------|-------------|----------------|
+| `low` | Most efficient, significant token savings | Quick lookups, simple edits |
+| `medium` | Balanced | Standard development tasks |
+| `high` | Default for Opus 4.8 | Daily driver for most work |
+| `xhigh` | Extended capability for long-horizon work | Complex multi-step tasks |
+| `max` | Absolute maximum, no token constraints | Complex architectural decisions, thorny debugging |
+
+**Ultracode mode** in Claude Code isn't an API parameter — it's a harness-level setting. It sends `xhigh` to the model AND automatically orchestrates dynamic workflows for substantive tasks. When you type `/ultracode` in Claude Code, it doesn't just think harder — it parallelizes the work across multiple agents. That's a harness feature, not a model feature.
+
+### GPT 5.5 Reasoning Settings
+
+GPT 5.5 offers `low`, `medium` (default), `high`, and `xhigh` effort levels at the API level. In ChatGPT, this maps to Light, Standard, Extended, and Heavy thinking modes.
+
+The default for GPT 5.5 is `medium`, which is a tier below Opus 4.8's default of `high`. This is a deliberate choice — GPT 5.5 is designed to use fewer tokens per task, and the lower default reflects that efficiency orientation.
+
+<Callout type="warning">
+**The settings trap:** Running both models at their maximum settings and comparing results isn't a fair test. Each model is tuned for different default behavior. Opus 4.8 at `high` and GPT 5.5 at `medium` are both in their respective sweet spots. Cranking both to max mostly burns tokens without proportional quality gains for routine tasks.
+</Callout>
+
+## Agentic and Long-Running Tasks: Where the Harness Gap Widens
+
+This is where the difference between these ecosystems becomes most visible.
+
+### Claude Code's Agentic Stack
+
+**Dynamic Workflows** let you write a JavaScript script that orchestrates hundreds of subagents. The runtime manages concurrency (capped at 16 parallel agents), handles failures, and streams progress. Use cases include codebase-wide bug sweeps, multi-hundred-file migrations, cross-checked research, and adversarial code review.
+
+**Routines** run on Anthropic's infrastructure on a schedule, API call, or GitHub event — even when your machine is off. This is genuine autonomous operation, not just a long-running terminal session.
+
+**Remote Control** lets you start a session on your laptop and continue it from your phone. Sessions are persistent and transferable.
+
+### Codex's Agentic Stack
+
+**Codex Cloud** runs tasks asynchronously in sandboxed microVMs. Multiple engineers can submit tasks simultaneously, and results arrive as separate pull requests. The sandbox isolation means you can grant more autonomy with less risk.
+
+**Scheduled automations** wake existing threads for recurring tasks.
+
+**Computer use** on macOS lets Codex interact with GUIs, browsers, and desktop applications.
+
+### The Real Difference
+
+Claude Code gives you more knobs and deeper integration. Codex gives you better isolation and lower-friction delegation. For long-running autonomous tasks where you want to walk away and come back to results, Codex's async model is genuinely compelling. For complex tasks where you need to stay in the loop and guide the agent through ambiguous decisions, Claude Code's real-time supervised model gives you more control.
+
+There's a sobering data point worth sitting with: a METR study of 16 experienced developers across 246 tasks found that AI tools actually increased task completion time by 19%, even though the developers believed they were saving 20%. The tools are powerful, but the integration into real workflows — the harness — is what determines whether that power translates to actual productivity.
+
+The emerging pattern among experienced developers is to use both. As one analysis of 500+ Reddit comments found: the dominant workflow described is "Claude plans, Codex implements, Claude reviews." Neither harness alone covers every use case.
+
+## What the Developer Community Actually Thinks
+
+A Reddit analysis of 500+ comments from March 2026 found that direct preference split 65% Codex, 35% Claude Code. But when weighted by engagement (upvotes), it shifted to 80/20 in Codex's favor. The caveat: Claude Code generates significantly more discussion volume, suggesting a more active and engaged user base.
+
+In blind tool-vs-tool tests from the same analysis, Claude Code won 67% of rounds (8 out of 12) — a reminder that raw model benchmarks don't always predict the user experience.
+
+The cost complaints are real. Claude Code on a $20/month plan can exhaust its limits in one or two complex prompts. Codex on the same plan supports all-day coding without hitting limits. That's a meaningful practical difference, especially for developers doing heavy daily work.
+
+But the feature gap is also real. As one developer put it: "Claude Code has way more features than Codex. Hooks, Rewind, Claude in Chrome, plugins, Plan mode." The harness surface area is significantly larger.
+
+About 27% of comments described using both tools as complementary rather than competing. The multi-tool pattern — using two or three AI coding assistants together — is now the dominant approach among senior engineers.
+
+## My Take: The Harness Is the Moat
+
+Here's the bottom line.
+
+**The models are converging.** Opus 4.8 and GPT 5.5 are within spitting distance on most benchmarks. The 10.6-point SWE-bench Pro gap is real but narrowing with each release. In 12 months, raw model capability will probably be table stakes.
+
+**The harnesses are diverging.** Claude Code and Codex are making increasingly different architectural bets. Claude Code is going deep on tool-based agents with rich extensibility (MCP, hooks, skills, plugins). Codex is going deep on environment-based agents with sandbox isolation and async workflows. These are fundamentally different philosophies, and both have genuine strengths.
+
+**The harness is what you actually experience.** When someone says "Claude is better at coding," they usually mean "Claude Code is better at coding." When someone says "GPT 5.5 is better at agentic tasks," they usually mean "Codex's async workflow fits my style better." The model is the engine, but the harness is the car.
+
+**Settings matter more than most people realize.** Running Opus 4.8 at `high` with Claude Code's ultracode mode orchestrating dynamic workflows is a categorically different experience from running the same model at `medium` in a basic API call. The harness unlocks capabilities the model has but can't express without the right scaffolding.
+
+For complex, multi-file coding tasks that need real-time guidance: Claude Code with Opus 4.8 at `high` or `xhigh`. For well-defined tasks you want to delegate and forget about: Codex Cloud with GPT 5.5. For most developers: use both, and let the task dictate the tool.
+
+The question isn't which model is better. It's which harness fits the way you work.
+
+---
+
+*Want more breakdowns like this? I write about AI tools, developer workflows, and building with models every week. Subscribe below to get new posts in your inbox.*
