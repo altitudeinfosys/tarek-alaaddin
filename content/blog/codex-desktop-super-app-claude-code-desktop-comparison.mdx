@@ -1,0 +1,120 @@
+---
+title: "The Codex Desktop App Feels Like a Super App — Here's Why Claude Code's Desktop Never Clicked for Me"
+description: "A developer who lives in the CLI explains why the Codex desktop app won him over while Claude Code's desktop experience still can't replace the terminal."
+date: "2026-06-06"
+category: "ai-tools"
+tags: ["codex-desktop", "claude-code", "openai-codex", "ai-tools", "desktop-apps", "developer-workflow", "anthropic", "openai", "mobile-coding"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+A CLI-first developer just abandoned the Codex CLI for the Codex desktop app. That developer is me.
+
+Terminal windows, keyboard shortcuts, piped commands — that is my natural habitat. When AI coding agents launched, I gravitated toward the terminal-native tools first. Claude Code in the terminal felt like home. Codex CLI felt like home. Both were powerful. Both fit the way I think about code.
+
+Then the Codex desktop app pulled me away from the terminal. Claude Code's desktop app didn't.
+
+This is not a graded comparison or a benchmark shootout. This is a working developer's honest take on why one desktop experience feels like a super app and the other still can't match its own CLI.
+
+## I Barely Touch the Codex CLI Anymore
+
+Let me be clear about how surprising this is. I am extremely comfortable with the command line. I actively prefer terminal-first tools for most of my development work.
+
+And yet I hardly use the Codex CLI anymore. The desktop app has replaced it almost entirely.
+
+The reason is simple: the Codex desktop app doesn't feel like a compromise. Most desktop wrappers for CLI tools feel like training wheels — they add visual chrome but remove power. The Codex desktop app goes the other direction. It adds capabilities the CLI cannot match without taking anything meaningful away.
+
+Working on multiple projects simultaneously is effortless. Each project gets its own space, its own threads, its own terminal. I can have a frontend project, a backend service, and an infrastructure repo all active at once without juggling terminal windows or tmux panes. Everything stays organized.
+
+<Callout type="info">
+**The "super app" label is deliberate.** A super app doesn't just do one thing well — it consolidates workflows that previously required switching between separate tools. The Codex desktop app does this for coding, browsing, visual review, mobile access, and project management in a single window.
+</Callout>
+
+## The Features That Make Codex Desktop a Super App
+
+The features that sold me aren't the flashy headline ones. They're the everyday interactions that remove friction I didn't know I had.
+
+### The File Browser and Diff Pane
+
+The built-in diff pane shows a full Git diff of changes in your local project or worktree checkout. You can stage or revert specific chunks or entire files without leaving the app. Inline comments let you tell Codex exactly what to fix, pointing at specific lines rather than describing them in a prompt.
+
+This feels qualitatively different from reviewing diffs in the terminal. You see the full picture — what changed, what didn't, and where the agent's reasoning broke down — in one view. For multi-file changes, visual review catches problems that scrolling through terminal output misses.
+
+### The Annotate Feature
+
+This is the one that genuinely surprised me. When Codex opens a page in its in-app browser, you can annotate elements directly on the rendered page. Instead of writing a detailed instruction like "move the CTA button up and increase the heading font weight," you select the button and write "move this up." You click the heading and write "bolder."
+
+It sounds simple. In practice, it collapses an entire back-and-forth of describing visual changes into a single interaction. For frontend work — adjusting layouts, tweaking styles, fixing responsive issues — the annotate feature removes friction that I didn't realize was slowing me down.
+
+### Worktrees for Parallel Work
+
+Every new Codex thread can run in its own Git worktree. This means multiple agents can work on the same project simultaneously without conflicts. One thread refactors a module, another writes tests, a third fixes a bug — all in isolated branches, all running at the same time.
+
+The worktree concept isn't unique to Codex. Claude Code supports something similar. But in the Codex desktop app, worktrees feel native. You see them in the UI. You can browse between them. The isolation is visible, not just conceptual.
+
+## The Mobile App Changes Everything
+
+This is the feature I didn't know I needed until I had it. The Codex mobile experience — available through the ChatGPT app on both iOS and Android — lets me start tasks, review outputs, approve commands, and steer active threads from my phone.
+
+I can be at lunch, think of a task, fire it off from my phone, and by the time I'm back at my desk, the work is underway or finished. The mobile app connects to your desktop running Codex, pulling live state from your machine. Code and credentials stay on your computer — only real-time updates stream to your phone.
+
+As of May 2026, mobile access is in preview and available to all ChatGPT plans, including the free tier. OpenAI also added remote computer use, so Codex can keep working even after your Mac locks — with safeguards like short-lived authorization and automatic relock on local input.
+
+<Callout type="warning">
+**Claude Code has a mobile story too, but it works differently.** Dispatch, launched March 2026, lets you send tasks from your phone to a running Claude Desktop session. But Dispatch requires an active desktop session — if your Mac sleeps or the Claude app closes, Dispatch stops. Codex's remote computer use keeps working through lock screens. The reliability difference matters when you're genuinely trying to work from your phone.
+</Callout>
+
+## Why Claude Code's Desktop Never Clicked
+
+Here is the confession that surprises people: I still prefer Claude Code in the terminal. Not just marginally — significantly.
+
+Claude Code's CLI is outstanding. The interactive loop, the MCP integrations, the ability to pipe context in, the CLAUDE.md configuration system, hooks, skills, plugins — it is an incredibly capable tool in the terminal. I run it daily. It is central to my workflow.
+
+The desktop app, though? It has all the right features on paper. Parallel sessions with Git isolation. Drag-and-drop pane layout. Integrated terminal and file editor. Visual diff review. App previews. PR monitoring. Connectors for GitHub, Slack, and Linear.
+
+And yet it never replaced the CLI for me. The terminal version just feels faster and more direct. The desktop app adds visual structure that I don't find myself reaching for. When I need Claude Code, I open a terminal. Every time.
+
+I've tried to pinpoint why, and I think it comes down to interaction model. Claude Code's strength is the conversation — the interactive loop where you think together, redirect mid-stream, and build understanding incrementally. That loop works perfectly in a terminal. Adding a GUI around it doesn't make the conversation better. It just adds visual overhead.
+
+Codex, by contrast, is built for delegation. You describe a task, the agent works independently, and you review results. That workflow genuinely benefits from a visual interface — you need to see multiple threads, browse diffs, annotate pages, and monitor progress across projects. The desktop app isn't wrapping a CLI experience; it's enabling a workflow that couldn't exist in the terminal.
+
+## What Codex Desktop Still Misses
+
+The desktop app isn't perfect. The CLI status line — that compact bar showing live agent state at a glance — doesn't exist in the desktop app. I miss it. When you're running multiple threads across projects, a quick glance at a status line tells you exactly where things stand without clicking into each thread.
+
+Thread staleness can also be an issue. If a thread sits idle too long, reactivating it doesn't always work cleanly. This matters more on mobile — when you pick up your phone to check a task you started hours ago, you want to resume seamlessly, not troubleshoot a stale connection.
+
+These are minor complaints in the context of everything the app gets right, but they're the kind of polish gaps that the Codex team should close.
+
+## The June 2026 Updates Make It Even Better
+
+Both tools shipped significant updates in the past month. Codex added Goal mode — no longer experimental — which lets you set a high-level objective and have the agent drive toward it for hours or even days. They also launched Sites, a preview feature for creating and deploying websites directly from the app. Appshots let you press both Command keys to screenshot your current app window and send it directly to Codex with context.
+
+Claude Code responded with Dynamic Workflows for orchestrating large tasks across multiple background agents, plus Opus 4.8 as the new default model. The desktop app got an improved agents view with live status indicators and better terminal rendering.
+
+Both tools are shipping fast. The gap is narrowing in features. But the experience gap — how it feels to actually use these desktop apps day to day — still favors Codex.
+
+## One Is a Super App — One Is a Great CLI with a GUI
+
+This is not "Codex is better than Claude Code." That would be wrong. Claude Code's reasoning is better for complex tasks. Its MCP ecosystem is deeper. Its CLI is the best terminal-based coding agent available. For architecture decisions, multi-file refactoring, and deep code understanding, Claude Code wins.
+
+What I am saying is narrower: the Codex desktop app is a better desktop app. It feels like a unified workspace where browsing, coding, visual review, mobile access, and project management coalesce into something greater than the sum of its parts. The super app comparison is earned.
+
+Claude Code's desktop is a good GUI for a great CLI tool. The Codex desktop is a super app that happens to also have a CLI.
+
+If you spend most of your time in the terminal, Claude Code's CLI is still the move. If you want a single desktop environment that handles everything — and you value being able to start tasks from your phone — Codex desktop is the experience to beat right now.
+
+<Callout type="info">
+**The best setup in June 2026?** Use both. Claude Code CLI for deep reasoning, complex refactoring, and interactive problem-solving. Codex desktop for multi-project management, visual review, mobile access, and autonomous delegation. The tools complement each other — picking just one means leaving capability on the table.
+</Callout>
+
+## The Competition Is Moving Faster Than Either Team Expected
+
+The competition between these desktop experiences is pushing both tools forward faster than either would move alone. Anthropic's April desktop redesign likely came in response to Codex's momentum. OpenAI's mobile push arrived shortly after Claude's Dispatch feature shipped.
+
+The developers who benefit most from this competition are the ones who refuse to pick a side. Install both. Use the tool that fits the task. Let OpenAI and Anthropic fight for your attention by building better products. That's the outcome that serves developers best.
+
+---
+
+If you want more breakdowns like this — practical takes on the AI tools that actually affect your workflow — subscribe to the newsletter. No hype. No hot takes for engagement. Just the perspective of a developer who uses these tools every day and tells you what's actually worth your time.
