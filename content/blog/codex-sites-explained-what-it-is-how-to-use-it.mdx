@@ -1,0 +1,200 @@
+---
+title: "Codex Sites Explained — What It Is, How to Use It, and Whether You Should Care"
+description: "OpenAI launched Codex Sites on June 2, 2026. It builds and hosts internal web apps from prompts. Here's what it actually does, who it's for, and where it falls short."
+date: "2026-06-07"
+category: "ai-tools"
+tags: ["openai", "codex", "codex-sites", "ai-coding-agents", "developer-tools", "enterprise-ai", "internal-tools", "cloudflare-workers"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+On June 2, 2026, OpenAI shipped a feature that most developers will ignore and most enterprise teams will quietly adopt. It is called Codex Sites, and it lets you describe an internal tool in plain English, then deploys it to a live URL in minutes.
+
+No GitHub repo. No Vercel config. No CI/CD pipeline. You type what you want, and Codex builds a full-stack web app, hosts it on Cloudflare's edge network, and gives you a link to share with your team.
+
+This is not another AI website builder competing with Webflow or Wix. It is not trying to replace Vercel or Netlify. It is going after a very specific problem: the graveyard of internal tools every company has — the abandoned dashboard from 2023, the Google Sheet that became a monster, the internal app somebody built and nobody wants to maintain.
+
+## What Codex Sites Actually Is
+
+Codex Sites is a plugin within the Codex app that creates, deploys, and hosts interactive web applications from natural-language prompts. You describe what you need — a project tracker, a customer review workspace, a financial scenario planner — and Codex generates the frontend, backend, and data layer, then deploys it to OpenAI-managed hosting.
+
+The output is a shareable URL. Everyone who visits authenticates through "Sign in with ChatGPT," which means access is limited to people in your OpenAI workspace.
+
+Under the hood, Sites runs on Cloudflare Workers. The hosting infrastructure is not proprietary OpenAI tech — it is Cloudflare's edge network, with D1 (a SQLite-compatible relational database) for structured data and R2 (object storage) for files like images, documents, and uploads.
+
+<Callout type="info">
+Codex Sites launched in preview on June 2, 2026. It is currently available only to ChatGPT Business and Enterprise workspaces. There is no timeline for Plus or Pro access.
+</Callout>
+
+## How Sites Works: The Two-Stage Deploy
+
+Sites uses a two-stage publishing model that separates review from production:
+
+**Stage 1 — Save a version.** Codex builds the deployable application and ties it to a specific Git commit. This is your review checkpoint. You can inspect the build, test it, and verify it before anyone else sees it.
+
+**Stage 2 — Deploy a version.** You publish a saved version to production. The URL goes live immediately. Anyone with workspace access can reach it.
+
+This separation matters for enterprise teams. You are not accidentally pushing a half-built dashboard to your entire organization.
+
+## The Technical Stack
+
+Here is what Sites gives you out of the box:
+
+| Component | Technology | What It Does |
+|-----------|-----------|--------------|
+| Compute | Cloudflare Workers (ES modules) | Runs your application at the edge |
+| Database | D1 (SQLite-compatible) | Stores structured data — user records, scores, settings |
+| File Storage | R2 (object storage) | Handles images, documents, uploads |
+| Auth | Sign in with ChatGPT | Workspace-scoped authentication |
+| Config | `.openai/hosting.json` | Project metadata, storage bindings |
+| Secrets | Sites panel in Codex | Environment variables, API keys |
+
+The configuration lives in a `.openai/hosting.json` file at your project root:
+
+```json
+{
+  "project_id": "<your-project-id>",
+  "d1": "DB",
+  "r2": null
+}
+```
+
+Environment variables and secrets are managed through the Sites panel in the Codex sidebar — never committed to source code.
+
+## How to Use Codex Sites
+
+The workflow is straightforward:
+
+1. **Open Codex** (standalone app or within ChatGPT)
+2. **Activate the Sites plugin** by mentioning `@Sites` or describing what you want to build
+3. **Describe your application** — "Build a sales pipeline dashboard that pulls from our CRM data"
+4. **Let Codex generate** the frontend, backend, and database schema
+5. **Review the build** in Codex's review pane
+6. **Deploy** to get your production URL
+7. **Share the URL** with your team
+
+You can iterate in the same thread. Ask for layout changes, add new data fields, fix mobile responsiveness — Codex retains the full project context.
+
+<Callout type="tip">
+Open Sites in the Codex sidebar to manage your deployed projects. From there you can add environment variables, check deployment status, and update access controls.
+</Callout>
+
+## Access Control: Three Modes
+
+Every Site has one of three sharing settings:
+
+- **Admins only** — just you (the owner) and workspace administrators
+- **Workspace all** — every active user in your OpenAI workspace
+- **Custom** — specific users or groups (the owner always retains access)
+
+There is no public mode. Every visitor must be a workspace member or authenticate through a connected identity provider. This is by design — Sites is built for internal tools, not public-facing websites.
+
+## The Six New Plugins That Ship Alongside Sites
+
+Sites did not launch alone. OpenAI announced six role-specific plugins on the same day, targeting knowledge workers across the organization:
+
+| Plugin | Target Role | What It Does |
+|--------|------------|--------------|
+| Data Analytics | Analysts, data teams | Explores datasets, generates dashboards, explains metric changes |
+| Creative Production | Marketers, content teams | Campaign planning, creative concepts, asset generation |
+| Product Design | Designers, PMs | Prototypes, UX reviews, design iteration |
+| Sales | Account executives, BDRs | Meeting prep, deal reviews, follow-up actions |
+| Investing | Equity researchers | Market research, company comparisons, due diligence |
+| Banking | Financial professionals | Specialized financial modeling and analysis |
+
+These plugins aggregate 62 business applications — including Snowflake, Figma, and Salesforce — with 110 automated skills built in.
+
+The strategic signal is clear: non-developers now make up about 20% of Codex users and are growing more than three times faster than developers. OpenAI is building for the knowledge worker, not just the engineer.
+
+## Real Use Cases
+
+Here is where Sites makes sense today:
+
+**Customer review workspaces.** Ask Codex to create a site for an upcoming customer meeting. It generates an interactive page with product updates, open questions, usage trends, and next steps — all shareable via a single URL.
+
+**Financial scenario planners.** Turn a financial model into an interactive tool where leadership can adjust assumptions and compare scenarios instead of scrolling through spreadsheet tabs.
+
+**Launch coordination hubs.** Convert launch materials into a living workspace where teams can find the latest messaging, milestones, owners, and decisions.
+
+**Internal knowledge bases.** Build searchable documentation portals that pull from Google Drive or internal sources with OAuth-based integrations.
+
+**Project and sprint trackers.** Replace your team's overloaded Notion board with a purpose-built tracker that shows exactly what matters.
+
+## What Sites Cannot Do
+
+The limitations are significant and worth understanding clearly:
+
+**No custom domains.** Your site lives on an OpenAI-managed URL you do not control. You cannot point `tools.yourcompany.com` at it.
+
+**No public access.** There is no "anyone with the link" option. Every visitor needs workspace credentials. If you need to share with an external partner or customer, Sites is not the right tool.
+
+**No code portability.** Unlike Lovable, Bolt, or Replit — which let you export your code and deploy anywhere — Sites is locked to OpenAI's infrastructure. If you leave, your apps stay behind.
+
+**No regulated data.** OpenAI explicitly prohibits payment card data (PCI DSS), protected health information (HIPAA), content involving children under 13, and financial transactions on Sites.
+
+**Preview stability.** Sites is in preview. OpenAI's terms reserve the right to "remove, unpublish, delete, or disable ChatGPT Sites" without notice. Do not build mission-critical systems on it yet.
+
+<Callout type="warning">
+Codex Sites is in preview with no GA date announced. OpenAI can remove or disable deployed sites without notice. Treat it as a productivity tool for internal use, not a production platform for critical systems.
+</Callout>
+
+## How Sites Compares to Existing Tools
+
+Sites occupies a specific niche. Here is how it stacks up:
+
+| Factor | Codex Sites | Vercel / Netlify | Retool / Internal.io | Lovable / Bolt |
+|--------|-------------|------------------|----------------------|----------------|
+| **Target** | Internal enterprise tools | Public web apps | Internal tools | MVPs, prototypes |
+| **Auth** | ChatGPT workspace only | Flexible | Flexible | Custom auth |
+| **Custom domains** | No | Yes | Yes | Yes |
+| **Code export** | No | Full control | Varies | Yes |
+| **Public access** | No | Yes | Optional | Yes |
+| **Setup required** | None | Config, CI/CD | Integration work | Minimal |
+| **Database built in** | Yes (D1) | No (bring your own) | Yes | Varies |
+
+The key insight: Sites is not competing with Vercel. It is competing with the two-week junior developer project that builds an internal dashboard nobody maintains after the developer leaves.
+
+## Annotations: The Other Feature That Matters
+
+Alongside Sites, OpenAI launched Annotations — a feature that makes Codex useful after the first draft. Previously, editing Codex output meant regenerating the entire thing. Now you can select specific text, charts, website components, or presentation slides and request targeted improvements.
+
+This matters for Sites because it means you can iterate on a deployed application component by component instead of rebuilding from scratch every time something needs to change.
+
+## The Bigger Picture
+
+Codex now has over 5 million weekly active users. The Sites launch is part of a deliberate shift from "AI coding tool" to "AI workspace builder." OpenAI is positioning Codex as the platform where anyone in an organization — not just developers — can turn ideas into functional applications.
+
+The bet is clear: if you make it trivial to build internal tools, companies will build hundreds of them. Every team gets their own dashboard, their own tracker, their own review workspace. The internal tool problem stops being "we need to hire a developer" and starts being "just describe what you need."
+
+Whether that bet pays off depends on how quickly OpenAI addresses the portability and public access limitations. Right now, Sites is a powerful prototyping and internal tool platform trapped behind enterprise-only access and workspace-scoped authentication.
+
+## Who Should Use Codex Sites Today
+
+**Use it if:**
+- You are on ChatGPT Business or Enterprise
+- You need internal dashboards, trackers, or coordination tools
+- Your audience is exclusively within your organization
+- Speed matters more than customization
+- You are comfortable with preview-stage stability
+
+**Skip it if:**
+- You need public-facing websites
+- You want custom domains or your own hosting
+- You need to own and export your code
+- You are on ChatGPT Plus, Pro, or Free (not available yet)
+- You are building anything that handles sensitive regulated data
+
+## The Bottom Line
+
+Codex Sites solves a real problem — the internal tool gap that every company has. The technical execution is solid, running on Cloudflare's proven infrastructure with sensible defaults for storage, auth, and deployment.
+
+But the walled-garden approach is a deliberate choice. No custom domains, no public access, no code portability, no individual plan support. OpenAI is betting that enterprise teams will accept those constraints because the alternative — hiring developers, maintaining infrastructure, managing deployments — is more expensive.
+
+If you are building something real today, something public, something you can put on your own domain and send to a customer, Codex Sites is not the answer. Reach for Claude Code, wire up GitHub and Vercel, and own your stack.
+
+But if you need an internal tool by Friday and your only other option is a Google Sheet with too many tabs, Codex Sites might be exactly what you need.
+
+---
+
+If you want breakdowns like this on every major AI tool launch — with the real limitations, not just the press release — [subscribe to the newsletter](/newsletter). One email per week, no fluff.
