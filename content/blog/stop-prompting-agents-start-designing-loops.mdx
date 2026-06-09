@@ -1,0 +1,185 @@
+---
+title: "Stop Prompting Your Agents — Start Designing Loops That Prompt Them"
+description: "The best developers in 2026 aren't writing better prompts. They're designing systems that prompt agents autonomously. Here's what loop engineering looks like."
+date: "2026-06-09"
+category: "ai"
+tags: ["ai-agents", "loop-engineering", "claude-code", "automation", "developer-productivity", "anthropic", "openai", "codex", "agent-workflows"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Boris Cherny, the creator of Claude Code, said something in a recent interview that should make every developer stop and think: "I don't prompt Claude anymore. I have loops running that prompt Claude and figuring out what to do. My job is to write loops."
+
+That's not a productivity tip. That's a paradigm shift. And if you're still sitting in your terminal, manually typing prompts to your AI agent, you're doing 2025 work in 2026.
+
+## The Four Stages of AI Coding
+
+We've been through this progression faster than anyone predicted:
+
+**Stage 1 — Autocomplete (2023).** You wrote code. The AI finished your lines. GitHub Copilot made this mainstream and everyone thought it was the ceiling.
+
+**Stage 2 — Prompting (2024).** You described what you wanted. The AI wrote the code. Cursor, Claude, and ChatGPT turned every developer into a prompt engineer.
+
+**Stage 3 — Multi-agent (2025).** You ran multiple agent windows in parallel, prompting each one individually. Five terminal tabs, five different tasks, you as the bottleneck switching between them.
+
+**Stage 4 — Loops (2026).** You design the system that prompts the agents. You define the trigger, the action, the verification, and the exit condition. Then you walk away.
+
+Most developers are stuck at Stage 3. They're good at prompting. They run several Claude Code or Codex sessions in parallel. But they're still the ones doing the prompting, reviewing the output, deciding what's next, and typing the follow-up. They are the loop.
+
+The developers shipping the most code right now have removed themselves from that loop entirely.
+
+<Callout type="info">
+**The shift in one sentence:** You are no longer the person who prompts the agent. You are the person who designs the system that prompts the agent.
+</Callout>
+
+## What a Loop Actually Looks Like
+
+A loop isn't complicated. At its core, it's four steps running in a cycle:
+
+1. **Observe** — Check current state (new Sentry errors, open issues, competitor changelog updates, test results)
+2. **Plan** — Decide what action to take based on observations
+3. **Act** — Execute the change (write code, open PR, update documentation)
+4. **Verify** — Check whether the action worked (tests pass, build succeeds, metric improved)
+
+If verification fails, the loop iterates. If it succeeds, the loop moves to the next item or exits.
+
+Here's a concrete example already running in production teams. A loop fires every 24 hours and does this:
+
+- Checks Sentry for issues affecting more than 20 users
+- Reads the stack trace and codebase context
+- Writes a fix
+- Runs the test suite
+- Opens a PR with the fix and links the Sentry issue
+
+No human touched a keyboard. The engineer reviews the PR in the morning with coffee. That's a loop.
+
+## The Tools That Make This Possible
+
+Three categories of tools power loops today, and they're all shipping fast.
+
+### Claude Code: /loop, Routines, and Scheduled Tasks
+
+Claude Code has the deepest loop toolkit right now. The `/loop` command runs a prompt on a recurring interval inside your session — useful for monitoring deployments, polling CI, or running periodic checks. But it dies when your session ends.
+
+Routines, which Anthropic launched in April 2026, are the durable version. You configure a prompt, connect a repository and tools, and set a trigger — scheduled (hourly, daily, weekly), API-triggered, or webhook-based via GitHub events. The routine runs on Anthropic's cloud infrastructure. No local machine needed. No always-on server.
+
+Teams are already using routines for automated issue triage, deployment verification, documentation drift detection, and cross-language SDK synchronization. One example: a merged Python SDK change automatically triggers a routine that ports the changes to Go and opens a corresponding PR.
+
+### OpenAI Codex: /goal
+
+Codex's `/goal` command is the autonomous looping equivalent. You define an objective, and Codex works through it independently — planning, executing, testing, iterating — until the goal is met or it needs human input. It's the same loop architecture with a different interface.
+
+### Karpathy's AutoResearch
+
+Andrej Karpathy released AutoResearch on March 7, 2026, and it hit 66,000 GitHub stars in under a month. The concept is pure loop engineering: an agent reads training code, proposes a change, runs a training job, measures whether the result improved, commits if it did, rolls back if it didn't, and repeats.
+
+In a two-day extended run, AutoResearch produced 700 experiments. Twenty of those improvements stacked additively, dropping the "Time to GPT-2" benchmark from 2.02 hours to 1.80 hours. No human intervention between experiments.
+
+<Callout type="warning">
+**The result that matters:** AutoResearch didn't find one big breakthrough. It found 20 small improvements through systematic iteration. That's the power of loops — they're exhaustive where humans are selective.
+</Callout>
+
+## Inner Loops and Outer Loops
+
+The real leverage comes from nesting loops.
+
+An **inner loop** handles a single unit of work. It takes a spec, implements it, tests it, and either ships it or iterates until it passes.
+
+An **outer loop** manages the inner loop. It discovers work, prioritizes it, generates specs, and feeds them to the inner loop one at a time.
+
+Here's a practical example of how this plays out:
+
+**Outer loop** (runs daily): Monitors three competitors' changelogs and LinkedIn pages. When it spots a new feature announcement, it writes a spec for implementing a comparable feature in your product. A human approves the spec (or doesn't).
+
+**Inner loop** (triggered by outer loop): Takes the approved spec, implements it, writes tests, runs the test suite, does a code review via a sub-agent, fixes issues, and opens a PR.
+
+Another example from ML engineering:
+
+**Outer loop**: Monitors arXiv for new papers relevant to your model architecture. When it finds a promising technique, it writes an experiment spec.
+
+**Inner loop**: Runs the AutoResearch pattern — implement the technique, train, measure, keep or revert.
+
+The outer loop finds what to try. The inner loop tries it. Neither requires a human in the middle.
+
+## Memory: The Missing Piece
+
+Every loop iteration is stateless. The agent doesn't remember what it did last time. That's a problem when your loop needs to avoid duplicating work, build on previous results, or track progress across runs.
+
+You need a memory layer. Three patterns work:
+
+**File system.** A markdown file or JSON log that the loop reads at the start of each iteration and updates at the end. Simple, version-controlled, and it works with any agent that can read files.
+
+**External database.** Airtable, Notion, Linear, or a simple SQLite file. The loop checks the database before acting — "has this Sentry issue already been fixed?" — and updates it after.
+
+**Slack as memory and decision surface.** This is the pattern worth paying attention to. A dedicated Slack channel where the loop posts its findings, analysis, and recommendations. The human adds a reaction (thumbs up, a number, a specific emoji) to tell the loop what to do on its next run. The loop reads its own previous messages to track state and reads reactions to get instructions.
+
+That's both memory and a human-in-the-loop interface without anyone writing a prompt. The loop checks Slack, sees a thumbs-up on suggestion #3, implements it, and posts the result.
+
+## The Entropy Problem
+
+Here's the part nobody wants to talk about: loops compound errors.
+
+When you prompt an agent manually, you catch mistakes in real time. You see the wrong approach, correct it, and move on. Each interaction has a human filter.
+
+When a loop runs autonomously for hours, small errors stack. A slightly wrong assumption in iteration 12 becomes a fundamentally broken approach by iteration 50. The agent doesn't know it's drifting — it just keeps optimizing for the metric you gave it.
+
+This is what happened when Shopify ran an AutoResearch fork and claimed a 53% speed improvement — later flagged as overfit, according to TechTimes reporting. The loop found a "solution" that gamed the benchmark without generalizing.
+
+Three strategies help manage entropy:
+
+**External oracles.** Don't let the loop grade its own homework. Use a verification signal that the loop can't manipulate — real test suites, production error rates, Stripe revenue, actual user behavior. If the only judge is the model itself, entropy wins.
+
+**Adversarial sub-agents.** Split the maker from the checker. One agent writes the code, a different agent (with different instructions) reviews it. The review agent's job is to find problems, not confirm the solution works. This is the same principle behind peer code review, automated for loops.
+
+**Human checkpoints.** Not every step needs human approval, but the loop should surface decisions at critical junctures. "I found 5 optimization opportunities. Here they are ranked. React with the number to approve." You stay in control of strategy while the loop handles execution.
+
+<Callout type="tip">
+**The rule of thumb:** The longer the loop runs, the stronger your verification needs to be. A 5-minute loop with a test suite is fine. A 24-hour loop needs production metrics, adversarial review, and a human checkpoint before deployment.
+</Callout>
+
+## What This Means for Your Job
+
+Let's be direct about what's happening.
+
+According to Anthropic's own reporting, engineers using loop-based workflows are shipping 8x more code daily than traditional methods. Claude Code now accounts for 4% of all public GitHub commits, with projections of 20% by end of 2026. Boris Cherny says Claude Code is entirely self-generated — the tool builds itself.
+
+This doesn't mean developers are getting replaced. It means the job is changing. The skills that matter now:
+
+**System design over code fluency.** Knowing how to structure a loop — what triggers it, how it verifies success, where it stores memory, when it escalates to a human — is more valuable than knowing syntax.
+
+**Specification writing.** The input to a loop is a spec. If the spec is vague, the loop produces garbage. If the spec is precise, the loop produces results. Writing clear, testable specifications is becoming the core developer skill.
+
+**Verification architecture.** How do you know the loop's output is correct? Designing the test suite, the benchmark, the production metric that serves as the external oracle — that's where engineering judgment lives.
+
+**Knowing when not to loop.** Creative work, ambiguous problems, high-risk architectural decisions, and anything requiring judgment about tradeoffs — these still need a human in the seat. Not everything should be automated. The best loop engineers know where the boundary is.
+
+## Getting Started: Your First Loop
+
+You don't need to redesign your entire workflow. Start with one loop that handles one repetitive task.
+
+**The monitoring loop.** Pick something you check manually every day — deployment status, error rates, open PRs, test coverage. Set up a `/loop` or scheduled task that checks it and posts a summary to Slack.
+
+**The triage loop.** Connect your issue tracker to a routine that reads new issues, categorizes them by severity, adds labels, and assigns them to the right team.
+
+**The review loop.** Set up a routine triggered by GitHub PR events. When a PR is opened, the routine runs a code review, checks for common issues, and posts comments.
+
+Each of these takes under an hour to configure, and none of them replace a developer.
+
+All of them free up hours of repetitive work that you're currently doing manually.
+
+## The Uncomfortable Truth
+
+The developers who will thrive in the next two years aren't the ones writing the best prompts. They're the ones designing the best systems. The abstraction layer is moving up again — from code to prompts to loops — and each time it moves up, the people who adapt early get disproportionate leverage.
+
+You've seen this before. Rails didn't replace programmers — it made individual developers 10x more productive. React didn't kill frontend engineering — it raised the abstraction and let smaller teams build bigger products.
+
+Loops are the same shift. The code is still there. The prompts are still there. But the human is one layer higher, designing the system instead of operating it.
+
+Boris Cherny is writing loops, not prompts. Karpathy is running 700 experiments overnight while he sleeps. The engineers who adopted loop workflows early are shipping at a pace that would have been impossible a year ago — not because they write more code, but because their loops never stop.
+
+The question isn't whether this will become standard practice. It's whether you'll start now or wait until you're behind.
+
+---
+
+*Want more breakdowns on AI-powered development workflows? Subscribe to the newsletter for weekly deep dives on the tools and techniques that are actually moving the needle.*
