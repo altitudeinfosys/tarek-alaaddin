@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Homepage Redesign — 3 Directions</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<script>
+  tailwind.config = { theme: { extend: {
+    fontFamily: { display:['Sora','sans-serif'], sans:['Inter','sans-serif'] },
+    colors: { primary:{50:'#f0f9ff',100:'#e0f2fe',200:'#bae6fd',300:'#7dd3fc',400:'#38bdf8',500:'#0ea5e9',600:'#0284c7',700:'#0369a1',800:'#075985',900:'#0c4a6e'} }
+  }}};
+</script>
+<style>body{background:#0b1018}</style>
+</head>
+<body class="font-sans text-slate-300 min-h-screen">
+<div class="max-w-5xl mx-auto px-6 py-16">
+  <header class="mb-12">
+    <p class="font-mono text-primary-400 text-sm mb-3">homepage redesign · pick a direction</p>
+    <h1 class="font-display font-extrabold text-4xl sm:text-5xl text-white tracking-tight mb-3">Three directions for tarekalaaddin.com</h1>
+    <p class="text-slate-400 text-lg max-w-2xl">All three are full homepages using your real photo, the sky-blue brand, and a balanced layout (you + writing + products). Open each, compare, and tell me which one to build for real.</p>
+  </header>
+
+  <div class="grid sm:grid-cols-3 gap-6">
+    <a href="bold-modern.html" class="group rounded-2xl bg-white border border-white/10 overflow-hidden hover:-translate-y-1 transition shadow-xl">
+      <div class="h-32 bg-gradient-to-br from-slate-100 to-primary-100 flex items-center justify-center">
+        <span class="font-display font-extrabold text-2xl text-slate-900">Aa</span>
+      </div>
+      <div class="p-5 text-slate-800 bg-white">
+        <div class="text-xs font-semibold uppercase tracking-widest text-primary-600 mb-1">Option 1</div>
+        <h2 class="font-display font-bold text-xl mb-1">Bold &amp; Modern</h2>
+        <p class="text-sm text-slate-500">Split hero, oversized type, high-contrast, confident. Light theme.</p>
+        <span class="inline-flex mt-3 text-sm font-semibold text-primary-600 group-hover:gap-2 transition-all">Open preview →</span>
+      </div>
+    </a>
+
+    <a href="vibrant-playful.html" class="group rounded-2xl border border-white/10 overflow-hidden hover:-translate-y-1 transition shadow-xl">
+      <div class="h-32 flex items-center justify-center" style="background:radial-gradient(circle at 30% 30%,#bae6fd,#0284c7)">
+        <span class="font-display font-extrabold text-2xl text-white" style="font-family:Fraunces,serif">Aa</span>
+      </div>
+      <div class="p-5 bg-white text-slate-800">
+        <div class="text-xs font-semibold uppercase tracking-widest text-primary-600 mb-1">Option 2</div>
+        <h2 class="font-display font-bold text-xl mb-1">Vibrant &amp; Playful</h2>
+        <p class="text-sm text-slate-500">Glassmorphism, gradients, floating accents, soft serif. Max pop.</p>
+        <span class="inline-flex mt-3 text-sm font-semibold text-primary-600 group-hover:gap-2 transition-all">Open preview →</span>
+      </div>
+    </a>
+
+    <a href="sleek-techy.html" class="group rounded-2xl border border-primary-500/30 overflow-hidden hover:-translate-y-1 transition shadow-xl">
+      <div class="h-32 flex items-center justify-center bg-[#070a0f]" style="background-image:linear-gradient(rgba(56,189,248,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,.12) 1px,transparent 1px);background-size:20px 20px,20px 20px;background-color:#070a0f">
+        <span class="font-display font-extrabold text-2xl text-primary-400" style="text-shadow:0 0 20px rgba(56,189,248,.6)">&lt;Aa/&gt;</span>
+      </div>
+      <div class="p-5 bg-panel text-slate-200" style="background:#0d131c">
+        <div class="text-xs font-mono uppercase tracking-widest text-primary-400 mb-1">Option 3</div>
+        <h2 class="font-display font-bold text-xl mb-1 text-white">Sleek &amp; Techy</h2>
+        <p class="text-sm text-slate-400">Dark, neon-cyan, terminal touches. Strong AI-engineer signal.</p>
+        <span class="inline-flex mt-3 text-sm font-semibold text-primary-400 group-hover:gap-2 transition-all">Open preview →</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="mt-12 rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-slate-400">
+    <p class="mb-2"><span class="text-white font-semibold">How to review:</span> open each preview, then scroll through the full page. Try resizing your browser narrow to see mobile. These are throwaway HTML mocks — nothing here touches your live site.</p>
+    <p>Once you pick a winner (or a mix — "hero from #1, products from #3"), I'll build it into your real Next.js components on a feature branch.</p>
+  </div>
+</div>
+</body>
+</html>
