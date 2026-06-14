@@ -50,3 +50,7 @@ public/search-index.json
 
 # Screenshots (use logs/pipeline/screenshots/ for pipeline screenshots)
 /*.png
+
+# Claude Code local state (machine-specific permissions/locks — never commit)
+.claude/settings.local.json
+.claude/*.lock
