@@ -1,4 +1,5 @@
 import LandingHero from '@/components/home/LandingHero'
+import Highlights from '@/components/home/Highlights'
 import ProductShowcase from '@/components/products/ProductShowcase'
 import AboutSection from '@/components/home/AboutSection'
 import NewsletterCTA from '@/components/home/NewsletterCTA'
@@ -22,6 +23,9 @@ export default function Home() {
     <main className="bg-white dark:bg-gray-900">
       {/* Hero Section */}
       <LandingHero />
+
+      {/* Highlights — skill marquee + stat cards */}
+      <Highlights />
 
       {/* Newsletter CTA */}
       <NewsletterCTA />
