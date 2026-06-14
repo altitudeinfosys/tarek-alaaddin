@@ -60,4 +60,10 @@
     opacity: 1 !important;
     transform: none !important;
   }
+
+  /* Hide the pulsing ring overlay; the static status dot beneath it remains */
+  .animate-ping {
+    animation: none !important;
+    opacity: 0 !important;
+  }
 }
