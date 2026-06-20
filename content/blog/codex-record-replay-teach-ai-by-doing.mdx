@@ -1,0 +1,137 @@
+---
+title: "Codex Record & Replay — Teach AI by Doing, Not Describing"
+description: "OpenAI's Record & Replay turns a single macOS demo into a reusable Codex skill. How it works, when it matters, and what it means for automation."
+date: "2026-06-19"
+category: "ai-tools"
+tags: ["codex", "openai", "ai-automation", "workflow-automation", "record-replay", "ai-agents", "developer-productivity", "macos"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Most automation fails at the description step, not the execution step. You know exactly how to file an expense report, upload a video to YouTube, or format a pull request to your team's standards. But translating those muscle-memory sequences into written instructions that an AI can follow? That's where most automation dreams quietly die — not because the task is hard, but because explaining it is harder than just doing it again.
+
+OpenAI just shipped a feature that sidesteps the problem entirely. Record & Replay, launched with Codex app version 26.616 on June 18, 2026, lets you demonstrate a workflow once on your Mac while Codex watches. It captures the sequence, understands the logic, and packages everything into a reusable skill you can run again with different inputs.
+
+No prompt engineering. No step-by-step documentation. Just do the thing once, and the AI learns it. That changes who gets to build automation — and how fast it happens.
+
+## How Record & Replay Actually Works
+
+The process is straightforward, which is the entire point.
+
+Open the Codex desktop app, navigate to Plugins, hit the + menu, and select "Record a skill." Codex asks you to review a suggested prompt and provide context — variable inputs like file names, dates, or specific IDs that might change between runs.
+
+Then you perform the task. File an expense report. Upload a video. Book a parking spot. Whatever the workflow is, you execute it exactly as you normally would on your Mac. Codex observes the actions and window content as you work.
+
+When you're done, stop the recording through the menu bar, the overlay, or even a verbal instruction. Codex analyzes what it captured and drafts a skill document that includes when to apply the workflow, what inputs it needs, step-by-step execution instructions, and how to verify success.
+
+<Callout type="info">
+Record & Replay requires Computer Use to be enabled in Codex settings, along with Screen Recording and Accessibility permissions on macOS. The feature launched on June 18, 2026 and is initially unavailable in the EEA, UK, and Switzerland.
+</Callout>
+
+## Skills: The Output Format That Makes This Useful
+
+What Codex produces isn't a fragile macro or a rigid script. It's a SKILL.md file — a human-readable, editable document that follows the open Agent Skills standard. The format is simple: YAML frontmatter with a name and description, followed by markdown instructions that tell the AI how to execute the workflow.
+
+```text
+my-skill/
+├── SKILL.md        (the instructions)
+├── scripts/        (optional automation scripts)
+├── references/     (optional reference docs)
+└── assets/         (optional supporting files)
+```
+
+The critical part: these skills accept variable inputs. Record yourself uploading a video to YouTube once, and the resulting skill can handle different video files, titles, descriptions, thumbnails, and privacy settings on subsequent runs. Codex doesn't just replay clicks — it learns the underlying logic and decision-making involved in the workflow.
+
+One developer demonstrated this by recording a complete YouTube upload workflow: file selection, metadata entry, thumbnail upload, subtitle processing, and privacy configuration. The resulting skill understood when to select "Private" versus "Unlisted" for video visibility and could handle associated file types like .mp4 and .srt files.
+
+## The Four Workflow Types This Actually Solves
+
+The use cases that emerged immediately after launch tell you where the real value sits — and they're not the flashy ones.
+
+**Repetitive administrative tasks.** Filing expense reports, submitting time-off requests, booking conference rooms. The tasks that eat your day in small bites, happening dozens of times a month. Record once, replay forever.
+
+**Team-specific formatting standards.** Every team has its own way of formatting pull requests, writing commit messages, structuring calendar invites. Record your preferred format once, share the skill with the team, and stop having the same formatting conversation in code review. The institutional knowledge that used to live in one person's head becomes a runnable asset.
+
+**Multi-app workflows.** Testing an onboarding flow across multiple applications, updating dashboards that pull from several sources, publishing content across platforms. Codex's Computer Use capability means a single skill can span multiple applications in one execution. This is the category that traditional automation tools struggle with most — the workflow that touches four different apps and has no single API to call.
+
+**Onboarding new team members.** Instead of writing lengthy documentation on "how we do things here," record the actual workflows. New hires can run the skills immediately while they're still learning the processes. The documentation stays current because it's generated from real execution, not written by hand and forgotten.
+
+<Callout type="tip">
+Keep recordings focused and brief. Demonstrate one complete workflow per recording, use realistic but non-sensitive sample data, and communicate variable inputs before you start. End the recording when the workflow completes — extra steps become part of the skill.
+</Callout>
+
+## Your Skills Work Outside Codex — That's Not an Accident
+
+Here's what makes this more than a single-product feature: SKILL.md is an open standard. Originally developed by Anthropic and released in December 2025, the Agent Skills specification is now supported by over 30 platforms including Claude Code, Gemini CLI, GitHub Copilot, Cursor, VS Code, and many more.
+
+A skill you create through Record & Replay in Codex can, in principle, be understood by any agent that supports the standard. The SKILL.md file is the common denominator — identical regardless of which AI agent reads it. The only differences are directory conventions and optional agent-specific metadata.
+
+<Callout type="tip">
+The portability angle is the strategically important part. Your investment in skill creation isn't locked to a single vendor. The workflow knowledge you capture today remains useful even if you switch AI tools tomorrow. That's rare in this ecosystem.
+</Callout>
+
+## Sharing Skills Across Teams
+
+Once a skill exists, distribution is straightforward.
+
+For personal use across repositories, drop the skill folder in `~/.agents/skills`. For repository-specific workflows, use `$REPO_ROOT/.agents/skills`. For organization-wide distribution, package skills as Codex plugins through the marketplace.
+
+The team-sharing angle is where organizations will see the most leverage. One operations person records how to properly file an expense report with all the correct cost centers and approval routing. That skill becomes available to the entire department. The tribal knowledge that usually lives in someone's head — or worse, in a rarely-updated wiki page — becomes executable automation.
+
+Enterprise administrators can disable Computer Use organization-wide through `requirements.toml` configuration by setting `computer_use = false`. The `allow_implicit_invocation` flag in skill metadata controls whether Codex can autonomously select a skill or if users must explicitly invoke it — useful for high-stakes workflows where you want explicit human triggers.
+
+## When Record & Replay Is the Wrong Tool
+
+Record & Replay excels at rapid skill creation for workflows you can demonstrate. But it has clear boundaries.
+
+Custom plugins are better when you need to distribute skills across a large team with installation metadata, bundle multiple related skills together, add app integrations or MCP server connections, or maintain version-controlled automation with CI/CD pipelines.
+
+Traditional scripting is better when the workflow is purely terminal-based with no GUI components, requires complex conditional logic that's hard to demonstrate in a single recording, or needs to handle error cases that don't naturally occur during a demo.
+
+API integrations are better when the target application has a well-documented API, the workflow involves processing large volumes of data, or you need guaranteed reliability for business-critical processes.
+
+Record & Replay sits in the sweet spot of tasks that are easy to do but hard to describe — the workflows where writing the automation would take longer than just doing the task manually for the next year.
+
+<Callout type="warning">
+Record & Replay currently requires macOS and is unavailable in the EEA, UK, and Switzerland. Windows support for Computer Use arrived in Codex v26.527 (May 29, 2026), but Record & Replay on Windows hasn't been announced yet. Close sensitive applications before recording unless they're needed for the workflow.
+</Callout>
+
+## From Prompts to Demos: How We Got Here
+
+Record & Replay fits into a larger shift in how we interact with AI tools. The evolution looks something like this:
+
+**2023-2024:** Write detailed text prompts describing exactly what you want. Spend more time explaining the task than doing it.
+**2025:** Use structured skill files and configuration to define reusable workflows. Better, but still requires writing ability.
+**2026:** Just demonstrate the workflow once and let the AI figure out the instructions. The description step disappears entirely.
+
+Each step reduces the translation cost — the gap between knowing how to do something and being able to teach an AI to do it. Record & Replay nearly eliminates that gap for GUI-based workflows.
+
+This also changes who can create automation. You don't need to be a developer to record a skill. Anyone who can perform the task can teach it to the AI. The operations manager who files expense reports perfectly every time? They just became an automation engineer. That's a fundamental shift in who gets to build automation in an organization — and it happened without anyone needing to learn a new tool.
+
+## Getting Started
+
+If you're on macOS with Codex desktop app v26.616 or later:
+
+1. Enable Computer Use in Codex settings
+2. Grant Screen Recording and Accessibility permissions
+3. Navigate to Plugins, hit +, and select "Record a skill"
+4. Provide context about variable inputs before recording
+5. Perform your workflow
+6. Stop recording and review the generated skill
+7. Refine the skill through conversation if needed
+8. Run the skill on a new thread with different parameters
+
+Start with something small — a weekly report you format the same way every time, a deployment checklist you run through manually, a data entry task you've been meaning to automate for months. Step 4 is where most people stall — don't overthink the variable inputs. Just mention what changes between runs and let Codex figure out the structure. The recording takes as long as doing the task once. The payoff is never doing it manually again.
+
+## What This Means Going Forward
+
+The teams that will benefit most from Record & Replay are the ones drowning in process — not because they lack engineering talent, but because so much of their daily work involves GUI-based tasks that never justified the cost of traditional automation.
+
+Record & Replay doesn't replace scripting or API integrations. It covers the long tail of workflows that were never worth automating the old way. And by producing portable SKILL.md files rather than proprietary macros, it ensures that the knowledge captured today remains useful regardless of how the AI tooling landscape evolves.
+
+The best automation is the kind you create by accident — by just doing your job while the AI pays attention. Record & Replay makes that literal.
+
+---
+
+*If you've been putting off automating something because writing the instructions felt harder than just doing it — that's exactly the problem Record & Replay was built for. Subscribe for weekly breakdowns of what's actually shipping in AI-assisted development.*
