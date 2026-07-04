@@ -1,0 +1,391 @@
+---
+title: "New Slash Commands in Claude Code and Codex — The Mid-2026 Update"
+description: "Both Claude Code and Codex shipped dozens of new slash commands in the last few months. Here's every command worth knowing, what it does, and when to use it."
+date: "2026-07-04"
+category: "ai-tools"
+tags: ["claude-code", "codex-cli", "slash-commands", "developer-productivity", "ai-coding-agents", "anthropic", "openai", "terminal-tools", "cli-reference"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Claude Code and Codex both ship updates weekly. New slash commands appear in changelogs that scroll past before most people read them. Three months of updates have piled up, and the command surface in both tools has grown significantly.
+
+This is the catch-up guide. Every notable new or updated slash command in Claude Code and Codex CLI from the last few months — including commands like `/advisor`, `/batch`, `/autofix-pr`, and dozens more — organized by what you'd actually use them for, with examples.
+
+## Claude Code — The New Commands That Matter
+
+Claude Code has grown to over 70 slash commands. Many of them landed in the v2.1.145–v2.1.200 range (roughly April through early July 2026). Here are the ones worth adding to your workflow.
+
+### /advisor — Consult a Second Model
+
+Added in v2.1.98 and expanded since. `/advisor` enables a second-opinion tool that consults a different model for guidance at key moments during a task. You can point it at Opus, Sonnet, Fable, or any full model ID.
+
+```
+/advisor opus
+/advisor sonnet
+/advisor off
+```
+
+Without an argument, it opens a picker. The advisor model chimes in at key decision points — architecture choices, debugging dead ends, ambiguous requirements. It doesn't take over the conversation; it provides a parallel perspective that you or Claude can act on. Turn it off with `/advisor off` when you don't need the overhead.
+
+### /cd — Move Your Session Without Losing Cache
+
+Added in v2.1.169. This one solves a real annoyance: you're deep into a session and need to work in a different directory, but starting a new session means losing your entire prompt cache and conversation context.
+
+```
+/cd ../other-project
+```
+
+The session relocates to the new directory. Your prompt cache stays intact — the new directory's `CLAUDE.md` is appended as a message instead of rebuilding the system prompt from scratch. The session is stored under the new directory's project storage, so `/resume` finds it from there.
+
+You can restrict which directories `/cd` can reach using permission rules, which is useful for org-managed setups where you don't want sessions hopping into sensitive repos.
+
+### /autofix-pr — Automated CI Fix Loop
+
+This one is a game-changer for anyone who pushes a PR and then spends the next hour fixing lint errors and type issues. `/autofix-pr` spawns a cloud session that watches your current branch's PR and pushes fixes whenever CI fails or reviewers leave comments.
+
+```
+/autofix-pr only fix lint and type errors
+```
+
+Without a prompt, it tries to fix everything — CI failures, review comments, the lot. Pass a prompt to scope it down. It detects the open PR from your checked-out branch using `gh pr view`, so make sure the `gh` CLI is authenticated.
+
+<Callout type="info">
+**This runs in the cloud, not locally.** The spawned session uses Claude Code on the web infrastructure. You need access to Claude Code on the web for this to work.
+</Callout>
+
+### /batch — Parallel Changes Across Your Codebase
+
+For large-scale refactors that touch dozens of files independently. `/batch` researches your codebase, decomposes the work into 5–30 independent units, presents a plan, and then spawns one background subagent per unit — each in its own git worktree.
+
+```
+/batch migrate all React class components to functional components
+```
+
+Each subagent implements its unit, runs tests, and opens a pull request. This turns a multi-day refactor into something that finishes while you get coffee. It requires a git repository and works best when the changes are truly independent — if units depend on each other, the worktree isolation becomes a problem.
+
+### /background — Detach and Keep Working
+
+Alias: `/bg`. Detaches the current session to run as a background agent, freeing your terminal for other work.
+
+```
+/background finish implementing the test suite
+```
+
+You can pass a final instruction before detaching. Monitor it with `claude agents`. This pairs well with `/batch` — start a large change, detach it, and open a new session for something else entirely.
+
+### /fork vs /branch — They're Different Now
+
+As of v2.1.161, these are no longer aliases. `/branch` creates a copy of the conversation that you switch into — you're now in the branch, and the original is preserved for `/resume`. `/fork` spawns a background subagent with the full conversation context while you keep working in the current thread.
+
+```
+/fork explore whether we should use Redis instead of in-memory cache
+/branch try the alternative auth approach
+```
+
+Use `/fork` when you want a side investigation that reports back. Use `/branch` when you want to try a different direction yourself.
+
+### /effort ultracode — Maximum Reasoning + Workflow Orchestration
+
+The `/effort` command now accepts `ultracode` as a level. It combines `xhigh` reasoning with automatic workflow orchestration — Claude will spin up multi-agent workflows when the task warrants it without you having to ask.
+
+```
+/effort ultracode
+```
+
+This is session-only (doesn't persist as your default) and burns through tokens fast. Use it for complex architectural changes where you want Claude to be thorough and parallelize aggressively.
+
+### /dataviz — Chart Design Guidance
+
+Added in v2.1.198. A bundled skill that guides chart, graph, and dashboard design. It picks the right chart form for your data, assigns colors by role, validates the palette for colorblind safety and contrast, and applies accessibility rules.
+
+```
+/dataviz design a dashboard for our API latency metrics
+```
+
+It uses a brand-neutral placeholder palette that you replace with your own. This is less about generating final charts and more about getting the design decisions right before you build.
+
+### /rewind — Undo That /clear
+
+The `/rewind` command existed before, but as of v2.1.191 it can restore conversation context from before a `/clear` ran. Previously it only rolled back code changes and conversation to checkpoints — now it can bring back context you thought was gone.
+
+```
+/rewind
+```
+
+This opens an interactive picker where you can select how far back to go. You can also use it to summarize from a selected message forward, which is useful for cleaning up a messy conversation without losing everything.
+
+<Callout type="tip">
+**Aliases matter.** `/rewind` also responds to `/checkpoint` and `/undo`. Use whichever sticks in your muscle memory.
+</Callout>
+
+### /run and /verify — See It Working, Not Just Passing
+
+Both added in v2.1.145. These are bundled skills that launch your actual app and drive it to confirm a change works — not just that tests pass.
+
+```
+/run
+/verify
+```
+
+`/run` launches the app using whatever start command your project uses. `/verify` goes further — it builds, launches, and observes the result to confirm the behavior matches what was intended. If you've ever had all tests green but the feature broken in the browser, these commands exist to catch that gap.
+
+Run `/run-skill-generator` first to teach these commands how your specific project builds and launches.
+
+### /schedule — Cloud Agents on a Cron
+
+Creates recurring cloud agents (called "routines") that execute on Anthropic-managed infrastructure. Claude walks you through the setup conversationally.
+
+```
+/schedule check our production error logs every morning at 9am
+```
+
+This is the command behind automated pipelines, daily reports, and recurring code maintenance tasks. It requires a connected GitHub account (run `/web-setup` first if needed).
+
+### /deep-research — Multi-Source Research Workflow
+
+A bundled workflow that fans out web searches, fetches and cross-checks sources, and synthesizes a cited report. This is a workflow, not just a command — it spawns multiple subagents that work in parallel.
+
+```
+/deep-research what are the current best practices for database connection pooling in Node.js
+```
+
+The output includes citations and source verification. It's genuinely useful for technology evaluations and architectural decisions where you need current, verified information rather than training-data-vintage answers.
+
+### /teleport — Pull a Web Session Into Your Terminal
+
+If you started something in Claude Code on the web and want to continue locally, `/teleport` (alias `/tp`) pulls the session into your terminal. It opens a picker, fetches the branch and conversation, and drops you right where the web session left off.
+
+```
+/teleport
+```
+
+This goes the other direction from `/remote-control`, which lets you control a local session from the web. Between the two, you can start work anywhere and finish it anywhere.
+
+### /simplify — Cleanup Without Bug Hunting
+
+Reworked in v2.1.154. Previously `/simplify` was equivalent to `/code-review --fix`. Now it runs a dedicated cleanup-only review with four parallel review agents covering: reuse of existing helpers, simplification, efficiency, and whether the change is at the right level of abstraction.
+
+```
+/simplify
+/simplify src/utils/
+```
+
+It does not look for correctness bugs — that's `/code-review`'s job. This separation means you can run `/simplify` after every feature without noise from false-positive bug reports.
+
+### /config key=value — Set Settings Without the UI
+
+From v2.1.181, you can set configuration directly from the prompt without opening the interactive settings dialog.
+
+```
+/config thinking=false
+/config theme=dark
+/config model=sonnet
+```
+
+This also works in non-interactive mode (`-p`) and from Remote Control, which makes it scriptable. Run `/config --help` to see every settable key.
+
+### Other Notable Claude Code Additions
+
+A few more worth mentioning briefly:
+
+| Command | What It Does |
+|---------|-------------|
+| `/ultraplan` | Draft a plan in a cloud session, review in browser, execute remotely or send back to terminal |
+| `/code-review ultra` | Deep multi-agent code review in a cloud sandbox (3 free runs on Pro/Max) |
+| `/design-sync` | Upload your React design system to Claude Design so it uses your real components |
+| `/insights` | Analyze your session history for patterns and friction points |
+| `/team-onboarding` | Generate an onboarding guide from your usage history |
+| `/powerup` | Interactive feature lessons with animated demos |
+| `/voice` | Toggle voice dictation (hold, tap, or off modes) |
+| `/reload-skills` | Re-scan skill directories without restarting the session |
+| `/security-review` | Deeper security-focused review of pending changes |
+| `/context` | Visualize context usage as a colored grid with optimization suggestions |
+| `/workflows` | Watch, pause, resume, or save running workflows |
+
+## Codex CLI — What's New
+
+Codex CLI has been shipping at a similar pace. Here are the notable new commands and features from recent months.
+
+### /import — Migrate From Claude Code
+
+This is a direct bridge. `/import` lets you selectively import your setup, project configuration, and recent chats from Claude Code into Codex. If you're running both tools on the same project (which many developers are), this eliminates the duplicate setup.
+
+```
+/import
+```
+
+It walks through what to import — you can pick and choose. This is a one-time setup per project, not a sync mechanism.
+
+### /usage — Token Budget Tracking
+
+Shows daily, weekly, and cumulative token activity. This goes beyond simple cost tracking — it includes rate-limit reset information and helps you understand your consumption patterns.
+
+```
+/usage
+/usage daily
+/usage weekly
+/usage cumulative
+```
+
+If you're on a team plan with token budgets, this tells you how close you are to limits before you hit them mid-task.
+
+### /delete — Clean Up Old Sessions
+
+Permanent session deletion with confirmation safeguards and subagent cleanup. Previously, old sessions just accumulated. Now you can remove them entirely.
+
+```
+/delete
+```
+
+This is irreversible — the session transcript and any associated subagent state are gone. The confirmation step prevents accidents.
+
+### /memories — Control What Codex Remembers
+
+Manages memory behavior across sessions. You can enable existing memories, generate new ones from the current conversation, or disable memory entirely.
+
+```
+/memories
+```
+
+This is particularly useful when you're working on multiple unrelated projects and don't want cross-contamination between contexts. Disable memory for a throwaway debugging session, enable it for your main project.
+
+### /skills — Task-Specific Context Loading
+
+Selects and applies task-specific skills that provide specialized context and behavior. This is Codex's answer to Claude Code's skill system.
+
+```
+/skills
+```
+
+It opens a picker of available skills. Skills modify how Codex approaches the task without you having to write a detailed prompt explaining the approach you want.
+
+### /archive — Store and Exit Cleanly
+
+Preserves the full session transcript and exits. Different from `/delete` (which removes it) and `/exit` (which may or may not preserve depending on context).
+
+```
+/archive
+```
+
+Use this when you're done with a session but might want to reference it later. The transcript is searchable and resumable.
+
+### /fork and /side — Conversation Branching
+
+These aren't brand new but have been significantly improved. `/fork` clones the current thread with a new ID for independent exploration. `/side` (alias `/btw`) starts an ephemeral conversation that doesn't pollute your main thread.
+
+```
+/fork
+/side check if there's a security issue with this approach
+```
+
+The `/side` conversation disappears when it's done. Your main thread continues as if the detour never happened.
+
+<Callout type="warning">
+**Codex's /fork is closer to Claude Code's /branch.** In Claude Code, `/fork` spawns a background subagent. In Codex, `/fork` branches the conversation and switches you into the branch. The naming is inverted between the tools — don't let muscle memory from one tool lead you astray in the other.
+</Callout>
+
+### /approve — Retry After a Denial
+
+When Codex's automatic reviewer denies an action and you know it's safe, `/approve` retries it once under the current session policy.
+
+```
+/approve
+```
+
+This is a single-shot override, not a permanent permission change. The next similar action still goes through the normal approval flow.
+
+### Other Notable Codex Additions
+
+| Command | What It Does |
+|---------|-------------|
+| `/experimental` | Toggle beta features like subagents |
+| `/hooks` | Trust, enable, or disable lifecycle handlers |
+| `/plugins` | Manage installed and discoverable plugins |
+| `/apps` | Browse and insert connector references |
+| `/keymap` | Customize TUI keybindings |
+| `/theme` | Preview and persist syntax highlighting themes |
+| `/statusline` | Toggle and reorder status bar indicators |
+| `/debug-config` | Inspect config layer precedence and policy details |
+| `/title` | Customize terminal window title fields |
+| `/ps` | Monitor background terminal tasks |
+
+## Side-by-Side: Shared Concepts, Different Commands
+
+Both tools now cover similar ground. Here's how the equivalent commands map:
+
+| Concept | Claude Code | Codex CLI |
+|---------|------------|-----------|
+| Switch model | `/model` | `/model` |
+| Plan mode | `/plan` | `/plan` |
+| Set goal | `/goal` | `/goal` |
+| Effort level | `/effort` | `/fast` (toggle only) |
+| Compact context | `/compact` | `/compact` |
+| Clear session | `/clear` | `/clear` |
+| View diff | `/diff` | `/diff` |
+| Code review | `/code-review` | `/review` |
+| Quick aside | `/btw` | `/side` or `/btw` |
+| Branch conversation | `/branch` | `/fork` |
+| Background subagent | `/fork` | N/A (no background subagent fork) |
+| Detach to background | `/background` | N/A |
+| Resume session | `/resume` | `/resume` |
+| Copy output | `/copy` | `/copy` |
+| Manage permissions | `/permissions` | `/permissions` |
+| MCP servers | `/mcp` | `/mcp` |
+| Memory/instructions | `/memory` | `/memories` |
+| Skills | `/skills` | `/skills` |
+| Hooks | `/hooks` | `/hooks` |
+| Plugins | `/plugin` | `/plugins` |
+| Usage tracking | `/usage` | `/usage` |
+| Voice input | `/voice` | N/A |
+| Config from prompt | `/config key=value` | N/A (use config file) |
+| Import from other tool | N/A | `/import` (from Claude Code) |
+| Cloud code review | `/code-review ultra` | N/A |
+| Batch parallel changes | `/batch` | N/A |
+| Auto-fix PR | `/autofix-pr` | N/A |
+| Web research | `/deep-research` | N/A |
+| Cloud scheduling | `/schedule` | N/A |
+| Move working directory | `/cd` | N/A |
+| Change personality | N/A | `/personality` |
+| Session archive | N/A | `/archive` |
+| Override denial | N/A | `/approve` |
+| Raw scrollback | N/A | `/raw` |
+
+## The Gap Analysis
+
+Claude Code has pulled ahead in orchestration — background agents, batch parallelism, cloud-based workflows, and auto-fix loops give it capabilities that Codex doesn't match yet. The `/autofix-pr` + `/schedule` combination alone creates an autonomous CI repair loop that eliminates an entire category of developer busywork.
+
+Codex has kept its edge in terminal ergonomics — `/personality`, `/keymap`, `/theme`, `/statusline`, and `/title` give you granular control over the development environment that Claude Code is only starting to match. The `/import` command also shows OpenAI is pragmatic about interoperability, explicitly supporting migration from Claude Code.
+
+Both tools now have skills, plugins, hooks, memory, and MCP server management. The command names differ slightly, but the concepts are converging. If you're using both tools on the same project, the commands you need to learn are mostly the same — it's the orchestration and automation commands where the real differences live.
+
+<Callout type="info">
+**The pace isn't slowing down.** Claude Code's latest version as of this writing is 2.1.200. Codex pushes updates at a similar cadence. Commands listed here as missing from one tool may appear next week. Bookmark both changelogs: [Claude Code changelog](https://code.claude.com/docs/en/changelog) and [Codex CLI changelog](https://developers.openai.com/codex/changelog?type=codex-cli).
+</Callout>
+
+## The Practical Takeaway
+
+You don't need to memorize all of these. Here's the minimum set that will meaningfully change how you work:
+
+**In Claude Code:**
+- `/batch` for large refactors
+- `/autofix-pr` for hands-off CI fixes
+- `/effort ultracode` for hard problems
+- `/cd` to move between projects mid-session
+- `/config key=value` for quick settings changes
+- `/fork` for background investigations
+
+**In Codex:**
+- `/import` if you're coming from Claude Code
+- `/usage` to track your token consumption
+- `/memories` to control cross-session context
+- `/side` for quick detours
+- `/approve` when the auto-reviewer is wrong
+- `/skills` to load task-specific behavior
+
+Both tools update weekly. Type `/` in either one and scroll through what's available — you'll probably find commands that landed since this post was published.
+
+---
+
+*Want more side-by-side comparisons of AI coding tools? Subscribe to the newsletter for weekly breakdowns of what's new and what matters.*
