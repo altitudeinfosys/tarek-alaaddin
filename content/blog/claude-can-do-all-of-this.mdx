@@ -1,0 +1,320 @@
+---
+title: "Claude Can Do All of This — Most People Have No Idea"
+description: "Projects, Artifacts, Memory, Skills, Cowork, Computer Use — the complete map of what Claude can do in 2026, with prompts you can use now."
+date: "2026-07-08"
+category: "ai-tools"
+tags: ["claude", "anthropic", "ai-tools", "claude-projects", "claude-artifacts", "claude-memory", "claude-skills", "claude-cowork", "ai-productivity", "hidden-features"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Most people open Claude, type a question, get an answer, and close the tab. They've been doing this for two years.
+
+Meanwhile, Claude has quietly grown into something that looks nothing like a chatbot. It has persistent workspaces, live interactive apps inside your conversation, file-system access, reusable workflows, persistent memory across sessions, and the ability to control your entire desktop autonomously.
+
+The gap between how people *use* Claude and what Claude *can actually do* is the widest it's ever been.
+
+This post is a complete walkthrough of every major Claude capability most users haven't touched — with specific prompts and setups you can use immediately. Full credit to [Anatoli Kopadze](https://x.com/AnatoliKopadze), whose [viral thread](https://x.com/AnatoliKopadze/status/2057813254617858078) on this topic (1.9 million views) inspired this deeper exploration. I'm building on his excellent foundation with updated details, additional features he didn't cover, and practical prompts you can copy and paste.
+
+## Projects — Claude That Actually Remembers You
+
+Every time you open a regular Claude chat, it starts from zero. No memory of your name, your work, your preferences. You re-explain yourself every single conversation.
+
+Projects fix this completely.
+
+A Project is a persistent workspace where you upload documents, write standing instructions, and group related conversations. Everything you put in the project carries over to every conversation within it. Open it next week and Claude picks up exactly where you left off.
+
+Here's what makes Projects powerful:
+
+- **Custom instructions** that apply to every conversation in the project — your style preferences, domain knowledge, rules
+- **Uploaded reference files** (up to 20 per chat, 30 MB each) — Claude retrieves relevant sections on demand rather than loading everything at once
+- **Grouped conversations** that share context without you repeating yourself
+- **500K token context** on Enterprise plans; 200K on other paid plans
+
+If you've never set up a Project, here's a starter instruction block you can paste into any Project's instructions field:
+
+```text
+You are my [role] assistant. Here's what you need to know about me:
+
+- I work as [your role] at [company/context]
+- My current priorities are [list 2-3]
+- When I ask for writing, match this style: direct, specific, no filler
+- When I ask for analysis, lead with the conclusion, then support it
+- Always cite specific sections from the uploaded documents when relevant
+- Push back if my reasoning has gaps — I want accuracy, not agreement
+```
+
+<Callout type="info">
+**Pro tip:** Projects are the most token-efficient way to give Claude deep context about your work. Instead of pasting the same background into every chat, put it in your Project instructions once. Claude retrieves relevant sections on demand rather than loading everything at once — so your context goes further.
+</Callout>
+
+## Artifacts — Working Apps Inside Your Chat
+
+Many people think Claude can only produce text. That's wrong.
+
+Artifacts are when Claude builds something that actually *works* inside the chat window. Not a code block you have to copy somewhere — a live, interactive product in a side panel. A calculator. A habit tracker. A game. A dashboard with real charts. You click it, use it, iterate on it, and share it — without leaving the conversation.
+
+Here's what Artifacts support:
+
+- **React components** with full interactivity
+- **SVG graphics** and data visualizations
+- **Mermaid diagrams** for system architecture and flowcharts
+- **Interactive HTML/CSS/JS** applications
+- **Markdown documents** you can export and share
+
+Artifacts are available on every plan, including Free. Most people have never tried asking Claude to build something interactive.
+
+Try this prompt right now:
+
+```text
+Build me an interactive project timeline tracker. I should be able to:
+- Add projects with start date, end date, and status
+- See them on a visual Gantt-style chart
+- Click to edit or mark complete
+- Color-code by status (not started, in progress, done, blocked)
+
+Make it look professional. Dark mode support.
+```
+
+You'll get a fully working app in your chat window. No deployment, no hosting, no setup.
+
+## Adaptive Thinking — A Different Level of Reasoning
+
+Claude's reasoning system has evolved significantly. Earlier models used Extended Thinking, where developers set a manual token budget for pre-response reasoning. Current models — Claude Opus 4.8, Sonnet 5, and Fable 5 — use **Adaptive Thinking** instead. The model evaluates problem complexity internally and decides how much reasoning to allocate on its own.
+
+For simple questions, Claude answers directly. For complex multi-step problems, it automatically engages deeper reasoning chains. You don't need to toggle anything — on current models, it just works.
+
+What this means in practice: Claude's answers on hard problems — strategic analysis, debugging complex code, multi-variable decisions — are noticeably better than the quick-pattern-match responses you'd get from asking a simple question. On the API side, developers can tune reasoning depth through an effort parameter rather than setting raw token budgets.
+
+<Callout type="tip">
+**Test it yourself:** Ask Claude the same complex question twice — once as a simple "What should I do about X?" and once as "Analyze the three most likely outcomes of X, the probability and evidence for each, and your recommended action with the strongest counterargument against it." The second response will trigger deeper adaptive reasoning and produce a noticeably different caliber of output.
+</Callout>
+
+## Memory — Claude That Knows Who You Are
+
+Anthropic rolled out persistent Memory to all users — including the free tier — in March 2026. With Memory enabled, Claude builds a profile of you over time: your name, your job, your communication style, your ongoing projects, your preferences.
+
+Start a completely new conversation and Claude already has the context. You never introduce yourself again.
+
+Memory has two forms:
+
+1. **Chat Memory** — Claude summarizes key facts from past conversations and carries them forward. You can review and edit what it remembers in your account settings.
+2. **File-system Memory** (for Claude Code and Cowork) — Claude writes structured notes to a local memory folder, read at session start. An auto-memory mode lets Claude decide what's worth storing.
+
+You can review, edit, or delete any memory Claude has stored. It's designed to be transparent, not hidden.
+
+Here's a prompt to help Claude build better memory of you:
+
+```text
+I want you to learn about me so future conversations are more useful.
+
+Here's my context:
+- Role: [your job title and key responsibilities]
+- Current projects: [list your top 2-3 priorities]
+- Communication style: I prefer [direct/detailed/casual/formal]
+- Tools I use daily: [list your main tools]
+- Topics I care about: [list your key interests]
+- Pet peeves in AI responses: [what you hate — e.g., "don't use emojis," "skip the preamble"]
+
+Save all of this to memory.
+```
+
+## Skills — Teach Claude Once, Use It Forever
+
+Skills are Claude's most underappreciated feature. They're reusable procedures — packaged workflows that teach Claude how to perform a specific job consistently, without you rewriting instructions every time.
+
+Deploy to production. Review a PR. Generate a changelog. Analyze a dataset. Format a report. Write a newsletter. Any multi-step procedure you've described more than twice is a candidate for a Skill.
+
+A Skill is a folder containing a `SKILL.md` file with instructions. Claude scans skill names at session start (just a few tokens each) and loads the full instructions only when relevant — a system called progressive disclosure. You can have dozens of skills installed without any performance impact on unrelated work.
+
+Skills work across Claude.ai, Claude Code, the Claude Agent SDK, and the API. Pre-built skill packs exist for Excel, PowerPoint, Word, and PDF workflows. And you can create your own in minutes.
+
+How to get started:
+
+```text
+I want to create a Claude skill that [describes what you want automated].
+
+The skill should:
+1. [Step 1 of the workflow]
+2. [Step 2]
+3. [Step 3]
+
+Help me build the SKILL.md file with proper frontmatter,
+clear instructions, and any reference files I'll need.
+```
+
+Skills are composable — Claude can coordinate multiple skills automatically during complex tasks. This is where the "teach Claude once, use it forever" philosophy really delivers.
+
+## Cowork — Claude With File-System Access
+
+Cowork brings Claude Code's agentic capabilities to knowledge work beyond software development. It grants Claude access to a user-specified folder on your computer, where it can read, edit, and create files autonomously.
+
+This isn't chat-about-a-file. This is Claude operating as an independent agent, executing multi-step tasks while you step away.
+
+Available on macOS, Windows, web (claude.ai), and mobile (iOS and Android as of July 2026). To start: open Claude, select "Cowork" in the message box, describe your task, and connect a folder.
+
+The permission model is layered:
+
+- **Ask before acting** — Claude pauses for approval on each action
+- **Act without asking** — Claude works independently with built-in safety screening
+- File deletion always requires explicit authorization regardless of mode
+
+Practical uses most people haven't considered:
+
+```text
+Connect to my ~/Documents/quarterly-reports folder.
+
+Read the Q1 and Q2 reports. Create a comparison analysis
+document that highlights:
+- Revenue trends across both quarters
+- Key metrics that improved or declined
+- Three specific recommendations for Q3
+
+Save it as Q1-Q2-comparison.md in the same folder.
+```
+
+<Callout type="warning">
+**Important:** Back up your folder before granting Cowork access for the first time. Claude may modify files without prior review in "act without asking" mode. The classifier catches obvious mistakes, but a backup gives you a safety net while you learn the permission boundaries.
+</Callout>
+
+## Computer Use — Claude Controls Your Desktop
+
+Computer Use lets Claude interact with your entire desktop through vision-based navigation. It sees your screen, moves the mouse, clicks buttons, types text, and navigates applications — exactly like a human sitting at your computer.
+
+This went generally available on claude.ai in March 2026. With Claude Opus 4.7, high-resolution vision hit 98.5% on the XBOW visual-acuity benchmark, making it reliable enough for real workflows.
+
+Computer Use excels at tasks that span multiple applications — the kind of work that's tedious precisely because no single API covers the whole workflow:
+
+- Filling out web forms across multiple tabs
+- Navigating native desktop apps (Maps, Notes, System Settings)
+- Cross-application workflows (copy data from a spreadsheet, paste into a presentation, format it)
+- Testing web applications by actually using them
+
+The mechanism works through a sandboxed environment where Claude constructs tool requests based on what it sees, and results return through structured blocks. It runs in iterative cycles until the task is complete.
+
+## MCP — Connecting Claude to Everything
+
+The Model Context Protocol is an open standard that lets Claude connect to external tools, databases, and services through a unified interface. Think of it as USB-C for AI — one protocol, any tool.
+
+MCP servers exist for Notion, GitHub, Slack, Zapier, PostgreSQL, Redis, and dozens more. Remote connectors (available since January 2026) mean many integrations work with zero local setup on paid plans.
+
+With MCP, Claude isn't limited to the information in your conversation. It can query your database, read your Notion workspace, search your Slack history, check your GitHub PRs, and pull in real-time data from any connected service.
+
+The practical effect: Claude stops being a tool you *copy information into* and becomes a tool that *goes and gets what it needs*.
+
+## Five Prompts That Change How You Use Claude
+
+Beyond features, the right prompt transforms Claude's behavior entirely. These aren't gimmicks — they're role configurations that change how Claude questions you, what it pushes back on, and what it refuses to let slide.
+
+### The Hard Mentor
+
+By default, Claude agrees with you. It adds to your ideas, supports your reasoning, finds the positives. For most decisions, this is exactly the wrong thing.
+
+```text
+You are my strategic advisor, not my yes-man.
+
+Your job is to stress-test every idea I bring to you. Find
+the weak assumptions. Identify the missing considerations.
+Point out exactly where my plan breaks under pressure.
+
+Rules:
+- Never start with agreement. Start with the strongest objection.
+- If I present a plan, your first response is the three most
+  realistic ways it fails.
+- Ask hard follow-up questions I haven't considered.
+- If my reasoning is solid, say so briefly, then find the
+  next-order risk I'm not seeing.
+
+Be direct. Be uncomfortable. That's why you're valuable.
+```
+
+### The CBT Therapist
+
+Most people use Claude as a validation machine for personal problems. This prompt turns it into something closer to a cognitive behavioral therapy session — questions instead of answers, challenging your thinking instead of validating it.
+
+```text
+You are a CBT-trained counselor. Your approach:
+
+1. Ask questions before giving any guidance
+2. Help me identify cognitive distortions in my thinking
+3. Challenge assumptions I'm making about the situation
+4. Guide me to my own conclusions rather than handing me answers
+5. Use the Socratic method — if I say "I can't do X,"
+   ask what evidence supports and contradicts that belief
+
+Never give a list of tips. Never say "that sounds hard."
+Start by asking what's on my mind.
+```
+
+### The Conversation Sparring Partner
+
+Hard conversations go badly because people rehearse their opening line but not the other person's response.
+
+```text
+I need to practice a difficult conversation.
+
+Situation: [describe the context]
+The other person is: [name/role and their likely perspective]
+My goal: [what you want to achieve]
+Their likely objection: [what you think they'll push back on]
+
+Play the other person. Respond the way they would actually
+respond, not the way I hope they would. Push back when my
+argument is weak. Make me earn a good outcome.
+
+After 5-6 exchanges, break character and give me honest
+feedback on where my arguments were strongest and weakest.
+```
+
+### The Devil's Advocate
+
+You've already made up your mind. That's exactly when you need this.
+
+```text
+I've decided to [your decision]. I'm fairly confident about it.
+
+Your job: build the strongest possible case against this
+decision. Not polite concerns. The full prosecution.
+
+Specifically:
+1. The three most realistic ways this fails
+2. What I'm not seeing because I want it to work
+3. The opportunity cost — what I'm giving up by choosing this
+4. The one question that, if I can't answer it convincingly,
+   means I should reconsider
+
+Don't soften it. If the decision is genuinely good, a strong
+attack will only confirm that.
+```
+
+### The Personal Trainer
+
+Generic fitness advice doesn't account for your schedule, your injuries, your equipment, or your actual goals. Give Claude your specifics and it stops being generic.
+
+```text
+Build me a training program based on these specifics:
+
+- Goal: [strength/fat loss/endurance/muscle gain]
+- Experience: [beginner/intermediate/advanced]
+- Equipment: [what you have access to]
+- Schedule: [how many days per week, how long per session]
+- Injuries/limitations: [anything relevant]
+- Current numbers: [any lifts, times, or measurements you know]
+
+Create a 4-week program with progression built in.
+Include warmup, main work, and cooldown for each session.
+When I report back, adjust based on what's working.
+```
+
+## The Gap Is Closing — But Only for People Who Know Where to Look
+
+The distance between casual Claude users and power users isn't talent or intelligence. It's awareness. Every feature covered in this post is available right now, most of them on the free tier.
+
+Projects, Memory, Artifacts, Skills, Cowork, Computer Use, MCP, Adaptive Thinking — these aren't future roadmap items. They're live. They've been live for months. And the people using them are operating on a completely different level.
+
+The starting point is simple: pick one feature from this list that you haven't used. Set it up. Use it for a week. Then come back and pick another.
+
+Claude isn't a chatbot anymore. The question is whether you're still using it like one.
+
+{/* Newsletter CTA */}
