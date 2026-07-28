@@ -1,0 +1,170 @@
+---
+title: "Are Your AI Skills Designed for Yesterday's Models?"
+description: "The skills and workflows you wrote six months ago encode assumptions about model limits that no longer exist. Some are wasteful. Some now return a 400 error."
+date: "2026-07-28"
+category: "ai-tools"
+tags: ["claude", "claude-code", "ai-skills", "prompt-engineering", "ai-workflows", "opus-5", "adaptive-thinking", "context-engineering"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Here is a thing worth sitting with for a second.
+
+If you wrote an agent workflow in late 2025 that set an explicit thinking budget — the `thinking: {type: "enabled", budget_tokens: 10000}` pattern that was, at the time, exactly the right way to do it — that workflow does not merely run less efficiently on today's models. On Claude Opus 4.7 and everything after it, [it returns a 400 error](https://platform.claude.com/docs/en/build-with-claude/extended-thinking). The API rejects it outright.
+
+That is the extreme end of the problem. But it points at something quieter and much more common: **the skills and workflows you wrote months ago are full of instructions written to compensate for limitations that no longer exist.** Nobody sends you a deprecation notice for those. They just quietly make your output worse and your token bill higher, forever, until you go back and look.
+
+Most people never go back and look.
+
+## Your Skills Have an Invisible Timestamp
+
+Every skill, every CLAUDE.md, every carefully tuned system prompt you have ever written was authored against a specific model at a specific moment. You were solving real problems: the model rambled, so you added "be concise." It skipped steps, so you numbered them. It didn't reason carefully enough, so you wrote "think step by step before answering." It formatted things inconsistently, so you stacked up a few more examples.
+
+Every one of those was a correct decision *at the time*.
+
+The problem is that instructions are sticky and models are not. The model underneath your skill has been replaced several times over. Your skill has not changed since the day you wrote it. It is still patching a hole that got filled two releases ago — and it is still charging you for the patch on every single run.
+
+<Callout type="info">
+This isn't a Claude-specific problem. Every prompt, rule file, and agent config you maintain against any frontier model has the same decay property. The models move; your instructions don't.
+</Callout>
+
+## The Cleanest Example: Thinking Budgets
+
+The thinking-budget migration is the clearest illustration because the breakage is unambiguous rather than a matter of taste.
+
+The old pattern gave you manual control over reasoning depth:
+
+```json
+{
+  "model": "claude-sonnet-4-6",
+  "max_tokens": 16000,
+  "thinking": { "type": "enabled", "budget_tokens": 10000 }
+}
+```
+
+The current pattern hands that decision to the model:
+
+```json
+{
+  "model": "claude-sonnet-4-6",
+  "max_tokens": 16000,
+  "thinking": { "type": "adaptive" },
+  "output_config": { "effort": "high" }
+}
+```
+
+Anthropic's own migration guidance is blunt about why this matters, and it isn't a syntax change:
+
+> "With a fixed budget, Claude thinks on every request. With adaptive thinking, Claude decides whether and how much to think on each request, and at lower effort settings it may skip thinking entirely on easy inputs."
+
+Read that again from the perspective of your six-month-old workflow. Your fixed budget forces reasoning on *every* request, including the trivial ones. The newer approach lets the model spend nothing on the easy cases and more on the hard ones. Your carefully tuned number is not a safeguard anymore. It's a tax.
+
+The same migration lets you delete the `interleaved-thinking-2025-05-14` beta header, because adaptive thinking interleaves automatically. That's another line of config that used to be load-bearing and is now just noise.
+
+`budget_tokens` is deprecated on the 4.6 generation and rejected outright on 4.7, 4.8, Opus 5, Sonnet 5, Fable 5, and Mythos 5. If you are still shipping it, you either already know or you're about to find out.
+
+## Every Line Is a Recurring Cost
+
+Here's the part that applies even when nothing is technically broken. From the [Claude Code skills documentation](https://code.claude.com/docs/en/skills.md):
+
+> "Keep the body itself concise. Once a skill loads, its content stays in context across turns, so every line is a recurring token cost. State what to do rather than narrating how or why, and apply the same conciseness test you would for CLAUDE.md content."
+
+*Recurring.* Not once. A skill isn't re-read on later turns — the rendered content enters the conversation and stays there. So that paragraph you wrote explaining *why* the model should validate inputs before processing them? It's still sitting in context on turn forty, taking up room, still being paid for.
+
+The docs recommend keeping `SKILL.md` under 500 lines and pushing detailed reference material into separate files that load only when needed. Skills usually blow past that limit not because the underlying procedure is genuinely complex, but because of accumulated explanation — justifications, caveats, and reassurances added one bad run at a time.
+
+There's a second, sharper cost most people never discover. When the conversation gets compacted, Claude Code re-attaches your invoked skills — but keeps only **the first 5,000 tokens of each**, against a **combined 25,000-token budget** across all of them, filled starting from the most recently invoked. Invoke enough skills in one session and the older ones can get dropped entirely.
+
+<Callout type="warning">
+If your skill is bloated, the part that survives compaction is the first 5,000 tokens — not the important part, just the *early* part. A long preamble of context-setting can literally push your actual instructions off the edge of what gets carried forward.
+</Callout>
+
+Conciseness isn't a style preference. It determines what survives.
+
+## The Scaffolding You No Longer Need
+
+Beyond the hard breakages, there's a whole category of instructions that were compensating for weaknesses the models grew out of.
+
+**Chain-of-thought scaffolding.** "Think step by step. Show your reasoning before answering." This was genuinely necessary on models without a reasoning mode. Now reasoning is a first-class capability that the model modulates on its own. Manually simulating it in the prompt is, at best, redundant.
+
+**Piles of examples.** Anthropic's [prompt engineering guidance](https://claude.com/blog/best-practices-for-prompt-engineering) now says to *"start with one example (one-shot). Only add more examples (few-shot) if the output still doesn't match your needs."* One. Then add more only if you have evidence you need them. If your skill opens with a stack of examples because that's what it took in 2025, you're spending tokens on redundancy and narrowing the model's output toward the surface form of those examples.
+
+**Rigid persona assignment.** The same guidance warns that *"overly specific roles can limit the AI's helpfulness."* The elaborate "You are a senior staff engineer who never makes mistakes and only speaks in technical terms" preamble does less than you think, and the constraints baked into it can actively fight the task.
+
+**Step-by-step procedures for things the model now handles.** This is the subtle one. Claude Opus 5, released July 24, 2026, is described by Anthropic as *"much stronger at verifying its work and iterating carefully until it succeeds"* — it *"thinks harder before it writes a single line, catches its own logical faults during planning."* In Anthropic's own write-up, it wrote a computer vision pipeline to pull geometry out of raw pixels on one task, and on a separate one built its own test harness to check that its code parsed an exchange's data correctly. Nobody asked it to do either.
+
+If your workflow contains a long numbered checklist instructing the model to write tests, run them, check the output, and iterate — you may be micromanaging a capability that is now native. Worse, prescriptive steps can *lower* the ceiling: the model follows your plan instead of the better one it would have found.
+
+<Callout type="tip">
+The test isn't "is this instruction good advice?" It's "would the model do this anyway?" If the answer is yes, the line is pure cost with a side of constrained judgment.
+</Callout>
+
+## What Anthropic Actually Recommends
+
+The official position is not subtle:
+
+> "The best prompt isn't the longest or most complex. It's the one that achieves your goals reliably with the minimum necessary structure."
+
+And on how to get there:
+
+> "Start simple and add complexity only when needed. Test each addition to see if it actually improves results."
+
+Almost nobody works this way. The natural workflow is additive — something goes wrong, you add a line. Nothing ever comes back out. Skills accumulate like sediment, and every layer is a fossil of a model limitation that may or may not still exist.
+
+Notice what "test each addition to see if it actually improves results" implies in reverse: **you should be able to remove a line and check whether anything gets worse.** If you can't tell the difference, the line was already dead weight.
+
+## A Practical Audit
+
+You don't need a formal process. You need to actually open the files.
+
+**1. Sort by age.** Anything untouched for six months or more is a candidate. Start with the ones you invoke most, since their cost is recurring.
+
+**2. Grep for deprecated config.** `budget_tokens`, `interleaved-thinking-2025-05-14`, hardcoded model IDs from a generation you no longer run. This is mechanical and it's where the actual breakage lives.
+
+**3. Mark every instruction with why it exists.** For each rule, ask what failure it was written to prevent. Then ask whether that failure still happens. Most of them you'll be unable to justify, which is its own answer.
+
+**4. Cut the narration.** Anything explaining *why* rather than stating *what to do* is a candidate. The docs say this explicitly. Your skill is a set of instructions, not a design document.
+
+**5. Trim the examples.** Cut back to what the guidance actually calls for — start at one, and keep more only where you can show it helps.
+
+**6. Check what survives compaction.** If your skill is long, make sure the first 5,000 tokens contain what actually matters.
+
+**7. Move reference material out.** Long tables, API schemas, edge-case catalogs — push them into supporting files that load on demand instead of riding in context on every turn.
+
+## Let the New Model Rewrite the Old Workflow
+
+The most efficient version of this audit isn't doing it by hand. It's handing the skill to a current frontier model — Opus 5, or Fable 5 for the genuinely gnarly ones — and asking it directly:
+
+> Here's a skill I wrote six months ago for an older model. Which instructions are compensating for limitations you don't have? What can be cut without changing the outcome? Rewrite it as short as it can be while still working.
+
+There's a pleasing symmetry to it: the thing that made your instructions obsolete is also the best tool for finding out which parts went stale. And a model that generates [26% fewer tokens than its predecessor at max reasoning](https://www.anthropic.com/news/claude-opus-5) while holding quality has a fairly credible opinion about what's redundant.
+
+Don't merge the rewrite blind. Run both versions on real tasks and compare. But the first draft of the diet is nearly free.
+
+## What Not to Delete
+
+Some caution, because "shorter is better" taken too far is its own failure mode.
+
+Better models make *generic* scaffolding unnecessary. They do not make **your specific context** unnecessary. The model does not know your deployment process, your team's conventions, which service owns which table, or that the staging database must never be seeded from production. That's not scaffolding — that's information that exists nowhere else.
+
+The distinction is clean:
+
+- **Cut** instructions that teach the model *how to think*. It's better at that than your instructions are.
+- **Keep** instructions that tell the model *what is true in your world*. It cannot infer those.
+
+Rules with real consequences — safety constraints, irreversible-action guards, compliance requirements — stay regardless of how capable the model gets. Those aren't compensating for weakness. They're encoding your judgment about risk.
+
+## Make It a Habit, Not a Project
+
+The models are shipping faster than anyone's maintenance habits. Sonnet 4.5, Opus 4.5, Haiku 4.5, the 4.6 generation, 4.7, 4.8, then Fable 5, Sonnet 5, and Opus 5 — that's a lot of capability change to absorb, and a lot of accumulated assumptions to leave unexamined.
+
+So put it on a cadence. Every few months, open the skills you use most and ask whether they still make sense against the model you're actually running. Not a rewrite — a review. Most of the time you'll cut a few lines and move on. Occasionally you'll find something that's been quietly degrading your output for a full model generation.
+
+This is just continuous improvement pointed at your tooling instead of your code. Same principle you'd apply to a dependency you haven't upgraded, a test suite that's gotten slow, or a process that made sense back when the team was half its size.
+
+The skills you wrote were good work. They solved real problems with the intelligence available at the time. That's exactly why they deserve a second look — because the intelligence available now is different, and the best version of that work looks different too.
+
+Go open the oldest skill you still use. Ask yourself, line by line, which of it is still doing a job. You'll be surprised how much isn't.
+
+{/* Newsletter CTA */}
