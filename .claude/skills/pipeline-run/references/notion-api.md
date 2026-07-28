@@ -17,7 +17,8 @@
 | Blog URL | url | Auto-filled by pipeline |
 | X Text | rich_text | Auto-generated tweet text |
 | LinkedIn Text | rich_text | Auto-generated LinkedIn text |
-| Notes | rich_text | Status updates and error messages |
+| Notes | rich_text | Status updates and error messages (overwritten during the run — never store dedup keys here) |
+| Source ID | rich_text | Origin of the row, e.g. `expandnote:<note uuid>`. Empty for rows added by hand in Notion. Used to keep ExpandNote imports idempotent. |
 
 **Page body**: Each topic entry can contain rich context in the note body — paragraphs, links, bullet points, images. This context is read during Phase 1 and passed to the blog generation phase for richer, more informed content.
 
@@ -76,6 +77,12 @@ curl -s "https://api.notion.com/v1/blocks/PAGE_ID/children" \
 > **Note**: If Notion MCP tools are available (`mcp__notion__*`), prefer using them directly (e.g., `mcp__notion__update-a-page`, `mcp__notion__query-data-source`). Fall back to curl commands if MCP tools are not available in the current session.
 
 ## Adding Topics to the Queue
+
+**Preferred: capture in ExpandNote.** Write a note, tag it `tarekalaaddin`, done — the next
+pipeline run creates the Notion row for you and marks the note `done`. This is far easier than
+typing a long idea into Notion. See `expandnote-inbox.md`.
+
+Adding a row directly in Notion still works and is unchanged:
 
 1. Open the Content Pipeline database in Notion
 2. Click "New" to add a row

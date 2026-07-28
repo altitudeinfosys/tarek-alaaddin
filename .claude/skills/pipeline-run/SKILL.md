@@ -1,13 +1,20 @@
 ---
 name: pipeline-run
-description: "Fully autonomous content pipeline - reads a topic from the Notion content queue, generates a blog post, creates social media copy, posts to X and LinkedIn, and updates the queue status. Runs unattended as a scheduled task."
+description: "Fully autonomous content pipeline - imports tagged ideas from ExpandNote into the Notion content queue, generates a blog post from the next queued topic, creates social media copy, posts to X and LinkedIn, and updates the queue status. Runs unattended as a scheduled task."
 user-invocable: true
 arguments: "optional: topic override to bypass queue, or dry-run to test without posting"
 ---
 
 # Content Pipeline Runner
 
-Master orchestrator for the blog-to-social-media pipeline. Reads topics from a Notion database queue, generates blog posts, creates social media copy, and posts to X and LinkedIn.
+Master orchestrator for the blog-to-social-media pipeline. Imports content ideas captured in
+ExpandNote into a Notion database queue, generates blog posts from that queue, creates social
+media copy, and posts to X and LinkedIn.
+
+**Idea capture happens in ExpandNote, not Notion.** Write a note in ExpandNote, tag it
+`tarekalaaddin`, and the next run imports it into Notion as a `queued` row and marks the note
+`done`. Notion stays the queue and the state store — every status, retry, and error still lives
+there, and topics added directly in Notion still work exactly as before.
 
 ## Autonomous Execution
 
@@ -29,6 +36,8 @@ Master orchestrator for the blog-to-social-media pipeline. Reads topics from a N
 ## Prerequisites
 
 - **Notion MCP server**: Must be configured with `NOTION_TOKEN`
+- **ExpandNote MCP server**: Provides the idea inbox (Phase 0.5). If unavailable, the pipeline
+  falls back to the existing Notion queue — it does not fail.
 - **Browser**: Chrome with Claude in Chrome extension active (preferred), OR Playwright MCP tools available (fallback) — only needed for social posting (Phases 5-6)
 - User must be logged into X (x.com) and LinkedIn (linkedin.com)
 - The project repo must be at `/Users/tarekalaaddin/Projects/code/tarek-alaaddin/`
@@ -39,6 +48,7 @@ Master orchestrator for the blog-to-social-media pipeline. Reads topics from a N
 
 Load these as needed during the relevant phase:
 
+- **`references/expandnote-inbox.md`** — ExpandNote tag IDs, query/import/tag-swap patterns, failure handling (needed for Phase 0.5)
 - **`references/browser-automation.md`** — Browser backend detection, tool mapping table, Playwright setup (needed for Phase 0, 5, 6)
 - **`references/notion-api.md`** — Database schema, API curl patterns, status flow, adding topics (needed for all phases)
 - **`references/critique-process.md`** — Full Phase 2.5 critique workflow with sub-agent dispatch (needed for Phase 2.5)
@@ -82,6 +92,55 @@ Load these as needed during the relevant phase:
    PIPELINE_LOG="logs/pipeline/$(date +%Y%m%d-%H%M%S)-run.log"
    ```
    All major actions should be logged with: `echo "[$(date +%H:%M:%S)] MESSAGE" >> "$PIPELINE_LOG"`
+
+### Phase 0.5: Import Ideas from ExpandNote
+
+Read `references/expandnote-inbox.md` for tag IDs, the exact query, the import payload, and the
+tag-swap rules. This phase moves ideas from the ExpandNote inbox into the Notion queue. It
+**never publishes** — publishing is still driven off the Notion queue in Phase 1.
+
+**This phase is best-effort. Any failure here is logged and skipped, never fatal** — the pipeline
+continues to Phase 1 and works the existing Notion backlog.
+
+1. **Load the ExpandNote MCP tools** with a single `ToolSearch` call (see the reference for the
+   exact `select:` string). If they fail to load, log
+   `ExpandNote unavailable — falling back to Notion queue` and skip to Phase 1.
+
+2. **Resolve tag IDs by name** via `list_tags` — get the UUIDs for `tarekalaaddin` and `done`.
+   If either tag does not exist, create it with `create_tag` and continue.
+
+3. **Query for tagged notes**: `search_notes(tag_ids=[<tarekalaaddin>], view="active", limit=100)`.
+   - If zero results: log `ExpandNote inbox empty` and skip to Phase 1.
+   - Drop any note with `is_locked: true` — log each one as skipped (see reference for why).
+   - Sort the remainder oldest-first by `updated_at`.
+
+4. **Import every tagged note** — all of them, not just one. Your ideas should never sit in the
+   inbox. For each note, in order:
+
+   a. `get_note(id)` for the full content and its current tag list (search results can truncate).
+
+   b. **Dedup check** — query Notion for an existing row with
+      `Source ID = "expandnote:<note uuid>"`. If one exists, skip to step (d): the row was
+      created on an earlier run whose tag swap failed.
+
+   c. **Create the Notion row**: Topic = note title (or derived from the first content line if
+      the title is null/empty/"Untitled"), Status = `queued`, Date Queued = today, Source ID =
+      `expandnote:<note uuid>`, and the note body as page-body paragraph blocks split into
+      2000-char chunks. Build the payload with a Python heredoc, not shell interpolation.
+      If this fails: log it, leave the note's tags untouched so it retries next run, continue
+      to the next note.
+
+   d. **Mark the note done**: `set_note_tags` with the note's existing tags minus
+      `tarekalaaddin` plus `done`. This is a full replacement — preserve the other tags. Respect
+      the 5-tag ceiling (see reference).
+
+5. **Log the import summary**:
+   ```bash
+   echo "[$(date +%H:%M:%S)] ExpandNote import: N imported, M skipped (locked/duplicate)" >> "$PIPELINE_LOG"
+   ```
+
+Only one topic gets published per run. Everything else imported here waits in Notion as `queued`
+and is picked up by the next scheduled run, oldest first.
 
 ### Phase 1: Read Queue from Notion
 
@@ -245,6 +304,10 @@ All failure actions are designed to self-resolve without user intervention:
 |-------|------|-------------------|
 | Notion API is accessible | Phase 0 | Log error and STOP (unrecoverable) |
 | Git repo is clean | Phase 0 | Auto-stash changes, continue |
+| ExpandNote MCP available | Phase 0.5 | Log, skip import, fall back to Notion queue |
+| ExpandNote note is locked | Phase 0.5 | Skip that note (cannot be marked done), log, continue |
+| Duplicate Source ID in Notion | Phase 0.5 | Skip row creation, retry the tag swap only |
+| Tag swap fails after row created | Phase 0.5 | Log loudly; Source ID guard prevents a duplicate next run |
 | No duplicate slug | Phase 2 | Auto-append date suffix to slug |
 | Build passes | Phase 2 | Auto-fix once, retry up to 3x, then mark `failed` |
 | PR merge succeeds | Phase 3 | Mark `failed`, log error, STOP |
@@ -256,6 +319,8 @@ All failure actions are designed to self-resolve without user intervention:
 ## Dry Run Mode
 
 When invoked with `dry-run`:
+- Phase 0.5 queries ExpandNote and logs what *would* be imported, but creates no Notion rows and
+  swaps no tags — a dry run must not consume ideas from the inbox
 - Phases 0-2.5 run normally (blog post generated, critiqued, branch + PR created)
 - Phase 3 skips PR wait
 - Phases 5-6 skip actual posting (screenshots still taken)
