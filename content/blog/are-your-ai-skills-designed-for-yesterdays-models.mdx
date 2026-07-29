@@ -62,7 +62,7 @@ Read that again from the perspective of your six-month-old workflow. Your fixed 
 
 The same migration lets you delete the `interleaved-thinking-2025-05-14` beta header, because adaptive thinking interleaves automatically. That's another line of config that used to be load-bearing and is now just noise.
 
-`budget_tokens` is deprecated on the 4.6 generation and rejected outright on 4.7, 4.8, Opus 5, Sonnet 5, Fable 5, and Mythos 5. If you are still shipping it, you either already know or you're about to find out.
+The `thinking: {type: "enabled"}` configuration that `budget_tokens` lives inside is deprecated on the 4.6 generation and rejected outright on 4.7, 4.8, Opus 5, Sonnet 5, Fable 5, and Mythos 5. If you are still shipping it, you either already know or you're about to find out.
 
 ## Every Line Is a Recurring Cost
 
@@ -92,7 +92,7 @@ Beyond the hard breakages, there's a whole category of instructions that were co
 
 **Rigid persona assignment.** The same guidance warns that *"overly specific roles can limit the AI's helpfulness."* The elaborate "You are a senior staff engineer who never makes mistakes and only speaks in technical terms" preamble does less than you think, and the constraints baked into it can actively fight the task.
 
-**Step-by-step procedures for things the model now handles.** This is the subtle one. Claude Opus 5, released July 24, 2026, is described by Anthropic as *"much stronger at verifying its work and iterating carefully until it succeeds"* — it *"thinks harder before it writes a single line, catches its own logical faults during planning."* In Anthropic's own write-up, it wrote a computer vision pipeline to pull geometry out of raw pixels on one task, and on a separate one built its own test harness to check that its code parsed an exchange's data correctly. Nobody asked it to do either.
+**Step-by-step procedures for things the model now handles.** This is the subtle one. Claude Opus 5, released July 24, 2026, is described by Anthropic as *"much stronger at verifying its work and iterating carefully until it succeeds"* — and one early-access customer quoted in that announcement says it *"thinks harder before it writes a single line, catches its own logical faults during planning."* In Anthropic's own write-up, it wrote a computer vision pipeline to pull geometry out of raw pixels on one task, and on a separate one built its own test harness to check that its code parsed an exchange's data correctly. Anthropic presents both as things it did on its own initiative.
 
 If your workflow contains a long numbered checklist instructing the model to write tests, run them, check the output, and iterate — you may be micromanaging a capability that is now native. Worse, prescriptive steps can *lower* the ceiling: the model follows your plan instead of the better one it would have found.
 
@@ -138,7 +138,7 @@ The most efficient version of this audit isn't doing it by hand. It's handing th
 
 > Here's a skill I wrote six months ago for an older model. Which instructions are compensating for limitations you don't have? What can be cut without changing the outcome? Rewrite it as short as it can be while still working.
 
-There's a pleasing symmetry to it: the thing that made your instructions obsolete is also the best tool for finding out which parts went stale. And a model that generates [26% fewer tokens than its predecessor at max reasoning](https://www.anthropic.com/news/claude-opus-5) while holding quality has a fairly credible opinion about what's redundant.
+There's a pleasing symmetry to it: the thing that made your instructions obsolete is also the best tool for finding out which parts went stale. And a model that one early-access team [measured generating 26% fewer tokens than Opus 4.8 at max reasoning](https://www.anthropic.com/news/claude-opus-5) while holding quality has a fairly credible opinion about what's redundant.
 
 Don't merge the rewrite blind. Run both versions on real tasks and compare. But the first draft of the diet is nearly free.
 
