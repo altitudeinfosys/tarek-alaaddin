@@ -120,7 +120,9 @@
       "mcp__f8fdc667-0703-4921-8f03-a883d97ac3bb__search_notes",
       "mcp__f8fdc667-0703-4921-8f03-a883d97ac3bb__list_notes",
       "mcp__f8fdc667-0703-4921-8f03-a883d97ac3bb__get_note",
-      "mcp__f8fdc667-0703-4921-8f03-a883d97ac3bb__set_note_tags"
+      "mcp__f8fdc667-0703-4921-8f03-a883d97ac3bb__set_note_tags",
+      "Bash(codex *)",
+      "Bash(gemini *)"
     ]
   }
 }

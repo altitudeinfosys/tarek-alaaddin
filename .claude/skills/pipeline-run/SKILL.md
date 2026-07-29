@@ -219,7 +219,7 @@ Before generating content, thoroughly research every product, tool, and technolo
 ### Phase 2.5: AI Content Critique
 
 Read `references/critique-process.md` and follow the complete critique workflow:
-- Dispatch parallel sub-agents (Sonnet + Gemini)
+- Dispatch parallel critics (Sonnet for voice/structure, Codex for factual accuracy)
 - Synthesize scores, auto-revise if needed (max 2 cycles)
 - Record results in Notion Notes property
 

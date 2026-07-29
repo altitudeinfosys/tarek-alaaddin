@@ -1,6 +1,12 @@
 # AI Content Critique Process
 
-Evaluate the generated blog post using parallel sub-agents (Sonnet + Gemini) before building and creating the PR. Auto-revises content if issues are found.
+Evaluate the generated blog post using two parallel critics — **Sonnet** for voice/structure/SEO
+and **Codex** for factual accuracy — before building and creating the PR. Auto-revises content if
+issues are found.
+
+The two critics run on **different model families on purpose**. Sonnet judges the writing; Codex
+independently checks the facts. Keeping the fact-checker off the Claude family is what makes the
+fabrication guard meaningful.
 
 **Critique file path**: `/tmp/pipeline-critique-SLUG.txt` (deterministic path using the blog slug — persists across tool invocations, no shell variable scoping issues).
 
@@ -104,51 +110,87 @@ prompt: |
   <paste full MDX content here>
 ```
 
-### Gemini — Factual Accuracy
+### Codex — Factual Accuracy
 
-Haiku orchestrates the Bash call; Gemini runs via CLI:
+The fact-checker deliberately runs on a **different model family than the writer**. Claude and
+GPT fabricate differently, so a non-Claude critic catches invented anecdotes and unsourced
+numbers that a Claude critic reading Claude's prose tends to wave through. Do not "simplify"
+this by replacing it with another Claude sub-agent — that defeats the entire purpose of the
+step. (Gemini filled this role previously; it was swapped out because its CLI sat
+unauthenticated for months and silently degraded the gate to a single critic.)
+
+Run the Bash command directly and capture the complete output. `codex exec -` reads the prompt
+and the post from stdin:
+
+```bash
+{
+cat <<'PROMPT'
+You are a fact-checker for an OPINION blog. The author is expected to argue, generalize,
+and state strong views. Your job is NOT to police opinion - it is to catch two things:
+wrong external facts, and invented experience.
+
+Check every VERIFIABLE EXTERNAL claim (prices, features, real-world dates, version numbers,
+statistics, benchmarks, product comparisons) against the research notes:
+- CRITICAL: contradicts the research notes, or misattributes a statistic
+- WARNING: a checkable external fact with no support in the research notes
+- INFO: correct but imprecise, e.g. needs attribution
+
+Fabrication scan - the two things that must never be invented:
+- First-person experience presented as real ("Last month I...", "I ran X tests",
+  "A client told me..."). Unsupported -> CRITICAL.
+- Specific quantitative claims about the real world. Unsupported -> CRITICAL.
+
+DO NOT FLAG (flagging these is an error):
+- Frontmatter metadata (title, description, date, category, tags, image, published, featured)
+- Rhetorical/hypothetical framing aimed at the reader ("the skill you wrote six months ago",
+  "if you wrote this in late 2025"), example code, sample prompts, hypothetical scenarios
+- Opinion, argument, prediction, advice, and rhetorical prevalence claims
+  ("most people never look", "almost nobody works this way") - these are the author's
+  viewpoint in an opinion piece, NOT factual claims requiring a citation
+- Section numbering, list counters, ordinal labels
+- Vague magnitudes ("dozens", "a handful", "noticeably faster") and round rhetorical
+  figures used as illustration ("turn forty")
+
+SCORING RUBRIC - score ONLY on factual accuracy and fabrication:
+- 10 = no factual errors, no fabrication, all statistics correctly attributed
+- 8-9 = factually sound; at most minor attribution/precision nits (INFO)
+- 6-7 = one or more checkable external facts unsupported (WARNING), nothing contradicted
+- 3-5 = a stated fact contradicts the sources, or a statistic is misattributed
+- 1-2 = fabricated personal experience, or invented numbers
+Opinion and rhetoric MUST NOT lower the score. A post that is entirely opinion with
+zero factual errors scores 10.
+End your reply with a final line of exactly: SCORE: <single integer 1-10>
+PROMPT
+cat "/tmp/pipeline-critique-SLUG.txt"
+} | codex exec --skip-git-repo-check - 2>&1 || echo "CODEX_FAILED: codex CLI returned non-zero exit code"
 ```
-Tool: Task
-subagent_type: "Bash"
-model: "haiku"
-max_turns: 2
-description: "Gemini factual accuracy check"
-prompt: |
-  Run this command and return the COMPLETE output:
 
-  gemini -p "You are a fact-checker. Review this blog post against the research notes provided.
-  Cross-reference EVERY specific claim (prices, features, dates, versions, stats, comparisons)
-  against the research notes. Flag:
-  - CRITICAL: Claims that contradict the research notes (wrong facts)
-  - WARNING: Claims not supported by research notes (unverified)
-  - INFO: Claims that could be more specific
+Replace `SLUG` with the actual blog slug.
 
-  ADDITIONALLY, run a fabrication scan. List EVERY first-person experience claim
-  (\"Last month I…\", \"I watched…\", \"I ran X tests\", \"A client told me…\")
-  and EVERY specific number (counts, percentages, durations, magnitudes) in the post.
-  For each, state whether the research notes contain supporting evidence.
-  - If a first-person claim has no support in research notes → CRITICAL: fabricated personal anecdote.
-  - If a specific number has no support in research notes → CRITICAL: unsourced specific number.
-  The bar is strict. Example: \"Last month I watched an AI agent run 700 experiments in two days\"
-  is CRITICAL on both counts unless the research notes explicitly contain that experience and number.
-  Vague magnitudes (\"dozens\", \"a handful\", \"noticeably faster\") are fine and do NOT need to be flagged.
+**Every one of those DO-NOT-FLAG exclusions and the rubric itself are load-bearing.** Without
+them the checker flags the frontmatter date and rhetorical framing as CRITICAL fabrications and
+scores an accurate opinion post at 5 — below the gate — sending every post into pointless
+revision cycles. This prompt was calibrated against a real post: it moved from 5 with false
+CRITICALs to 7 with a clean fabrication scan and no false positives.
 
-  Format: List each finding with the claim text and your assessment.
-  End with: SCORE: [1-10]" < "/tmp/pipeline-critique-SLUG.txt" || echo "GEMINI_FAILED: gemini CLI returned non-zero exit code"
+**Parsing the score**: `codex exec` echoes the prompt back and prints a `tokens used` footer, so
+`SCORE:` appears more than once in the output. Always take the **last** match of
+`SCORE:\s*(\d+)`. The echoed prompt line reads `SCORE: <single integer 1-10>`, which is
+non-numeric and will not match a digit-anchored regex.
 
-  Replace SLUG in the file path with the actual blog slug.
-  Return the full output. If the command fails, return the error message.
-```
+**Cost**: roughly 60k tokens per fact-check on a ~2,200-word post. Budget for it.
 
 ## Step 5: Collect Results and Synthesize Critique Report
 
-After both agents return, synthesize. Parse `SCORE:` from each agent's output as an integer. If a score is missing or non-numeric, default to 5.
+After both agents return, synthesize. Parse `SCORE:` from each agent's output as an integer —
+for Codex, take the **last** `SCORE:\s*(\d+)` match (see the parsing note above). If a score is
+missing or non-numeric, default to 5.
 
 ```
 CONTENT CRITIQUE REPORT
 ========================
 Sonnet Score: [N]/10
-Gemini Score: [N]/10
+Codex Score: [N]/10
 Overall Score: [average of both scores, rounded]
 Revision Required: [YES if either agent says YES or any CRITICAL issues]
 
