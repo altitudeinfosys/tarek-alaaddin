@@ -20,6 +20,25 @@ there, and topics added directly in Notion still work exactly as before.
 
 **This pipeline is designed to run fully autonomously as a scheduled task with no user present.** All required permissions are pre-configured in `.claude/settings.json`. Follow these rules at every phase:
 
+> ### Standing authorization from Tarek
+>
+> Granted explicitly on 2026-07-28, and it persists across sessions and conversations. Do not
+> re-ask for it, and do not treat a fresh session as a reason to seek it again:
+>
+> - **Merging the blog branch to `main` is pre-approved.** When the build and critique pass and
+>   the PR checks are green, merge it. This is the standing exception to the "never commit to
+>   main / ask before merging" rule in `CLAUDE.md`, which still applies to every other change.
+> - **Posting to X and LinkedIn is pre-approved** for pipeline-generated content, once the blog
+>   post is merged and live. Post the copy generated in Phase 4 without pausing to confirm.
+>
+> This authorization covers *pipeline-generated blog content and its social copy only*. It is not
+> a general licence to publish. Anything outside that — posting unrelated content, sending
+> messages, changing account settings, publishing on other platforms — still needs to be asked.
+>
+> **It does not extend to credentials.** If X or LinkedIn is logged out, never enter a username,
+> password, or 2FA code, and never complete a CAPTCHA. Log the phase as skipped and continue.
+> Only Tarek can restore a session (see the login-expiry row in Safety Checks).
+
 - **NEVER ask for user confirmation or approval** — make the best decision and proceed
 - **NEVER stop to ask clarifying questions** — use reasonable defaults
 - **NEVER wait for user input** — if information is missing, use what's available or skip that step
@@ -313,6 +332,12 @@ Read `references/social-copy-formats.md` for format rules.
 
 ### Phase 7: Finalize
 
+0. **Surface any expired login loudly.** Posting is automatic and unattended, so a logged-out
+   platform means a post silently never happens — the failure mode that hides for weeks.
+   If Phase 5 or 6 was skipped for login reasons, prefix the Notion Notes with
+   `ACTION NEEDED — LOGIN EXPIRED: <platform>` and set status to `posted-partial` rather than
+   `done`, so the row is visibly unfinished in the queue. Only Tarek can restore a session:
+   never enter credentials, 2FA codes, or solve CAPTCHAs.
 1. Update Notion status to `done` with completion timestamp
 2. **Write pipeline summary to log file**:
    ```bash
@@ -340,8 +365,8 @@ All failure actions are designed to self-resolve without user intervention:
 | No duplicate slug | Phase 2 | Auto-append date suffix to slug |
 | Build passes | Phase 2 | Auto-fix once, retry up to 3x, then mark `failed` |
 | PR merge succeeds | Phase 3 | Mark `failed`, log error, STOP |
-| Logged into X | Phase 5 | Skip X, log "skipped", continue to LinkedIn |
-| Logged into LinkedIn | Phase 6 | Skip LinkedIn, log "skipped", update status |
+| Logged into X | Phase 5 | Skip X, record `LOGIN EXPIRED: X` in Notion Notes, continue to LinkedIn |
+| Logged into LinkedIn | Phase 6 | Skip LinkedIn, record `LOGIN EXPIRED: LinkedIn` in Notion Notes, continue |
 | Critique score < 8 or CRITICAL issues | Phase 2.5 | Auto-revise up to 2x, then proceed regardless |
 | Browser backend unavailable | Phase 0 | Skip social posting phases (5-6), mark `generated` |
 
