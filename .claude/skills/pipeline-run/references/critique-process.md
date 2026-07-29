@@ -75,7 +75,8 @@ prompt: |
   - Frontmatter has all required fields (title, description, date, category, tags, image, published: true, featured: false)
   - 8-15 sections, 1500-3000 words, 2-3 Callout components with varied types
   - Code blocks have language annotations
-  - Ends with newsletter CTA
+  - Ends with a newsletter CTA, and that CTA links to `/subscribe` — flag any link to
+    `/newsletter` as CRITICAL, it is a 404. A post with no CTA link at all is also a defect.
 
   **c) SEO & Discoverability:**
   - Title 50-70 characters, includes primary keyword

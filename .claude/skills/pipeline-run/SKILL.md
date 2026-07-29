@@ -214,6 +214,7 @@ Before generating content, thoroughly research every product, tool, and technolo
    - Frontmatter: title, description, date, category, tags, image, published: true, featured: false
    - Voice: conversational, direct, bold opinions; **data-driven only with sourced numbers**. Do not invent first-person anecdotes or specific personal metrics — Tarek did not run "700 experiments last month." See Phase 1.5 step 7.
    - 1500-3000 words, 8-15 sections, 2-3 Callout components, newsletter CTA at end
+   - **The newsletter CTA must link to `/subscribe`** — write it as `[Subscribe to the newsletter](/subscribe)` or similar wording, but the path is always `/subscribe`. There is no `/newsletter` route; it 404s. Seven published posts shipped with that broken link before the path was pinned here.
    - Write to `content/blog/SLUG.mdx`
 
 ### Phase 2.5: AI Content Critique
