@@ -245,18 +245,46 @@ Read `references/critique-process.md` and follow the complete critique workflow:
 
 ### Phase 3: Merge PR
 
-**Auto-merge is enabled.** After the build passes and the PR is created, merge it automatically without waiting for manual review.
+**Auto-merge is enabled.** After the build passes and the PR is created, merge it automatically
+without waiting for manual review.
 
-1. Merge the PR:
+1. **Wait for required checks first.** The repo runs Vercel and `ai_review` on every PR, and they
+   take 1-2 minutes. Merging the instant the PR is created fails with
+   `Pull Request is not mergeable` because the checks are still pending — this is a race the
+   pipeline loses whenever Vercel is slow, and it must NOT be treated as a real failure.
+   Poll until no check is pending, up to ~10 minutes:
    ```bash
-   gh pr merge blog/SLUG --squash --delete-branch
+   n=0
+   until [ $n -ge 40 ]; do
+     pend=$(gh pr checks PR_NUMBER --json bucket 2>/dev/null \
+       | python3 -c "import json,sys
+try: d=json.load(sys.stdin)
+except: print(1); raise SystemExit
+print(sum(1 for c in d if c['bucket']=='pending'))")
+     [ "$pend" = "0" ] && break
+     n=$((n+1)); sleep 15
+   done
+   gh pr view PR_NUMBER --json mergeable,mergeStateStatus
    ```
-2. Update local main:
+
+2. Merge the PR:
+   ```bash
+   gh pr merge PR_NUMBER --squash --delete-branch
+   ```
+
+3. Update local main:
    ```bash
    git checkout main && git pull origin main
    ```
-3. If merge fails → mark status `failed` in Notion, STOP
-4. Continue to Phase 4
+
+4. **Failure handling — distinguish transient from real:**
+   - Checks still pending after the poll, or merge reports "not mergeable" → retry the merge
+     once after another 60s. Do NOT mark `failed` on the first attempt.
+   - A required check actually **failed** (Vercel build broken, `ai_review` failed) → mark
+     status `failed` in Notion with the failing check name, STOP.
+   - Merge conflict → mark `failed`, STOP.
+
+5. Continue to Phase 4
 
 ### Phase 4: Generate Social Media Copy
 
