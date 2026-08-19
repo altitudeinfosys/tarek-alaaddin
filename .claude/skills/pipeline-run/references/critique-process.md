@@ -121,7 +121,23 @@ step. (Gemini filled this role previously; it was swapped out because its CLI sa
 unauthenticated for months and silently degraded the gate to a single critic.)
 
 Run the Bash command directly and capture the complete output. `codex exec -` reads the prompt
-and the post from stdin:
+and the post from stdin.
+
+**Run it from a scratch directory, never from the repo.** Codex may write files of its own —
+on 2026-08-19 it dropped a `chatgpt-work-fact-check.html` report into the repo root, which an
+unattended run would have committed straight into the blog PR. Pin its working directory outside
+the repo first, and tell it not to create files:
+
+```bash
+CRITIQUE_WORKDIR="$(mktemp -d)"
+```
+
+The critique file lives in `/tmp` and is passed on stdin, so nothing the checker needs is in the
+repo anyway. After the run, confirm the tree is still clean before committing:
+
+```bash
+git status --porcelain   # must show only the intended content/blog/SLUG.mdx
+```
 
 ```bash
 {
@@ -160,10 +176,12 @@ SCORING RUBRIC - score ONLY on factual accuracy and fabrication:
 - 1-2 = fabricated personal experience, or invented numbers
 Opinion and rhetoric MUST NOT lower the score. A post that is entirely opinion with
 zero factual errors scores 10.
+Reply with prose only - do NOT create, write, or edit any files.
 End your reply with a final line of exactly: SCORE: <single integer 1-10>
 PROMPT
 cat "/tmp/pipeline-critique-SLUG.txt"
-} | codex exec --skip-git-repo-check - 2>&1 || echo "CODEX_FAILED: codex CLI returned non-zero exit code"
+} | (cd "$CRITIQUE_WORKDIR" && codex exec --skip-git-repo-check - 2>&1) \
+  || echo "CODEX_FAILED: codex CLI returned non-zero exit code"
 ```
 
 Replace `SLUG` with the actual blog slug.
