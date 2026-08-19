@@ -68,11 +68,30 @@ For detection logic, full tool mapping table, and Playwright prerequisites, read
 
 ### Step 5: Post the Tweet
 
-1. Find the Post button
-   - **Chrome Extension**: use `find` with query "Post button"
+1. Find the Post button and click it **by element reference, not by pixel coordinates**:
+   - **Chrome Extension**: use `find` with query "Post button", then
+     `computer` with `ref: <ref_N>` — never `coordinate: [x, y]`
    - **Playwright**: take a `browser_snapshot`, locate the button by text "Post", use its ref
+
+   > **Why refs, not coordinates.** The viewport can resize between a screenshot and the click
+   > that follows it. On 2026-08-19 an X post silently failed for exactly this reason: the
+   > screenshot was 1512x805, the window became 1568x784, and the click landed where the button
+   > used to be. Nothing errored — the modal just stayed open, and the miss was only caught
+   > because a "Leave site?" dialog fired on the next navigation. A ref survives reflow; a
+   > coordinate does not.
+   >
+   > **When `find` cannot see the button**, fall back to coordinates — but re-take the screenshot
+   > immediately before clicking so the frame is current, and always confirm afterward with
+   > Step 6. LinkedIn's compose modal is a known case: it is not exposed in the
+   > accessibility tree, so `find` returns "no composer modal" even while the modal is plainly
+   > open on screen. Trust the screenshot over `find` there.
+
 2. Click the Post button
-3. Wait 3 seconds for the post to submit
+3. Wait 3-5 seconds for the post to submit
+4. **Confirm it actually submitted before reporting success.** A click that missed leaves the
+   composer open with the text still in it, which looks identical to a slow network. Check that
+   the compose modal is gone (on X the URL leaves `/compose/post`); if it is still open, re-find
+   the button and click again rather than assuming it worked.
 
 ### Step 6: Verify Post Success
 
