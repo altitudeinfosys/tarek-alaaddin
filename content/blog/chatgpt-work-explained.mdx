@@ -1,0 +1,132 @@
+---
+title: "ChatGPT Work: What It Is, Where It Runs, and Why Voice Matters"
+description: "OpenAI's ChatGPT Work turns a goal into finished files. Here is what it actually is, how cloud and local execution differ, and why voice is the real unlock."
+date: "2026-08-19"
+category: "ai-tools"
+tags: ["chatgpt-work", "openai", "claude-cowork", "ai-agents", "gpt-live", "voice-ai", "chatgpt", "ai-tools"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+On July 9, 2026, OpenAI [shipped ChatGPT Work](https://www.foxbusiness.com/technology/openai-unveils-chatgpt-work-automate-workplace-tasks-ai-race-intensifies) — and on the same day, folded its Codex coding agent into it.
+
+Most AI products still hand you a conversation and leave the actual work to you. You ask, it answers, you copy the answer somewhere useful. ChatGPT Work is built on a different premise: you state a goal, and what comes back is a file.
+
+That sounds like a small distinction. It isn't. It changes where the tool sits in your day, what permissions it needs, and — the part almost nobody thinks about until it bites them — where your data physically goes while the work happens.
+
+## What ChatGPT Work Actually Is
+
+ChatGPT Work is an agent inside ChatGPT that completes multi-step tasks across your apps and files. It's powered by GPT-5.6, and analyst firm Futurum describes it as "built to convert a stated goal into finished output, spreadsheets, slides, documents, and interactive web apps, rather than a conversational reply."
+
+It pulls context from connected systems, works independently for extended stretches, and pauses for approval on decisions that matter. It connects through plugins to Slack, Microsoft Teams, Google Drive, SharePoint, email, calendars, CRM platforms, and project trackers.
+
+On the same day it launched, OpenAI merged it with Codex, its coding agent. Fortune reported that ChatGPT Work [reached 10 million users](https://fortune.com/2026/07/23/openai-launches-chatgpt-voice-desktop-programming/) following the Codex merger.
+
+Futurum's write-up describes a demo where it synthesized "a launch-readiness PDF, user-research interviews, a security review, and three open Chrome tabs into a slide deck" in roughly 90 seconds. Whether that reflects typical performance or a well-rehearsed demo is worth holding lightly — but the output format is the point. Not a summary of a slide deck. The deck.
+
+## Why It Exists Now
+
+The honest answer is competitive pressure. Anthropic shipped Claude Cowork. Microsoft has Copilot embedded in the Office surfaces where this work already lives. Everyone arrived at the same conclusion at roughly the same time: chat was never the product, it was the demo.
+
+The deeper reason is that agents finally became reliable enough to hand a multi-step job to. Once a model can hold a plan across dozens of steps, ask permission at the right moments, and produce a file at the end, the interface stops being a chat window and starts being a work queue.
+
+<Callout type="info">
+**There is no separate price for ChatGPT Work.** It's a capability inside ChatGPT, gated by which plan you're on. It rolled out to Pro, Enterprise, and Edu first, then Plus and Business. As of August 2026, Plus runs $20/month, the two Pro tiers are $100 and $200/month, and Business is $20 per seat on annual billing.
+</Callout>
+
+## Cloud or Local: The Distinction That Actually Matters
+
+This is the part worth slowing down for, because the same product behaves quite differently depending on where you open it.
+
+**On the desktop app, Work can touch your machine.** It can use local files and desktop apps with your permission — reading a folder directly rather than waiting for you to upload anything.
+
+**On web and mobile, Work runs in the cloud.** Per OpenAI's own documentation, you add files to the conversation or project instead of giving it access to a folder on your computer.
+
+That difference is not cosmetic. In one mode the agent reaches into your filesystem. In the other, your files leave your machine before anything happens. For anyone working under data-residency rules, that single distinction decides which surface is even usable.
+
+### The Sandbox Is the Real Safety Story
+
+Local access doesn't mean unrestricted access. OpenAI's [sandboxing documentation](https://learn.chatgpt.com/docs/sandboxing) describes a boundary that "defines what the agent can do on its own, such as which files it can modify and whether commands can use the network."
+
+There are three modes. The default, `workspace-write`, lets the agent read files, edit within the workspace, and run routine commands inside that boundary. `read-only` permits inspection but requires approval to change anything. And `danger-full-access` removes filesystem restrictions entirely — the name is doing deliberate work there.
+
+Network access is off by default. The agent asks before reaching the internet, and when public access is disabled, only approved hostnames are reachable through a managed allowlist. Enforcement is platform-native: macOS uses Apple's Seatbelt framework, Windows uses either the native Windows Sandbox under PowerShell or Linux sandboxing under WSL2, which requires the bubblewrap package.
+
+<Callout type="warning">
+**Read the mode names as warnings, not settings.** `danger-full-access` disables the boundary that keeps an autonomous agent from writing anywhere on your disk. If a workflow only runs with that flag on, the workflow is the thing that needs fixing.
+</Callout>
+
+## How It Differs From Claude Cowork
+
+In July, the split between these two products was clean. Futurum characterized Anthropic's tool as running "locally inside the Claude desktop app with direct file-system access," and framed the tradeoff as "cloud reach and shareability against local control and data residency." ChatGPT Work went wide and shareable. Cowork stayed close to your disk.
+
+A few weeks later that line has blurred considerably — from Anthropic's side.
+
+On August 12, [Cowork arrived in the Claude for Chrome extension](https://the-decoder.com/anthropic-brings-claude-cowork-to-its-chrome-extension-adding-skills-and-plugins-to-the-browser/), running in the browser side panel with skills, plugins, and connectors working there for the first time. The framing was neat: Claude in Chrome handles the research, and Cowork turns it into Excel files, PowerPoint slides, or reports.
+
+On August 18, Anthropic [posted that](https://9to5mac.com/2026/08/18/anthropic-says-claude-cowork-is-now-available-on-mobile-for-all-paid-plans/) "Claude Cowork is now available on mobile and web for all paid plans," having started on its most expensive tier in July. Anthropic's own [product page](https://claude.com/product/cowork) now lists macOS, Windows, ChromeOS, Linux, and web and mobile in beta, and promises tasks you "can steer from anywhere" — including the line "Close your laptop, it keeps going."
+
+So the useful comparison today is less "cloud versus local" and more about defaults. In July, Futurum described ChatGPT Work as cloud-hosted and Cowork as local with direct file-system access. Since then Cowork has added browser, web, and mobile surfaces, while ChatGPT Work reaches down into your filesystem on desktop. The two are converging, which means the interesting differences are increasingly about governance rather than architecture.
+
+Microsoft is the third party to this, and worth circling back to: Futurum's assessment is that "Copilot's governed, in-document integration, complete with track changes and Microsoft Graph context, remains a real advantage ChatGPT Work does not yet replicate.
+
+One example of that: Anthropic explicitly cautions against pointing Cowork at banking or health data, citing prompt injection risk. That is a notably candid warning to ship alongside your own product, and it applies just as much to any agent you give browser access — including this one.
+
+## The Voice Feature Is the Part People Underrate
+
+What changed about voice in mid-2026 is that it stopped being a chat interface and became a control surface for agents.
+
+The sequence matters. On June 26, OpenAI swapped in a new dictation model for everyone, including free users. On July 8, it replaced Advanced Voice Mode with GPT-Live — a rebuilt system with full-duplex audio, meaning it can listen and speak at the same time instead of the old take-turns pattern. Then on July 23, [voice came to the desktop app](https://fortune.com/2026/07/23/openai-launches-chatgpt-voice-desktop-programming/) and started working inside Work and Codex modes, with configurable hotkeys for reaching it from other applications.
+
+Read those three changes together and the picture is clear. OpenAI's own framing: "Talk through what you need, and ChatGPT can start moving multiple tasks forward at the speed of your thought."
+
+The unlock isn't that you can talk to your computer. It's that speech is a far better input format than typing for *dispatching* work — vague, exploratory, several things at once. Typing forces you to finish a thought before you can send it. Voice lets you start three jobs in the time it takes to describe one, then walk away while they run.
+
+<Callout type="tip">
+**Try this as your first voice workflow:** open the desktop app, hold the hotkey, and describe a few unrelated tasks in one breath without organizing them first. The full-duplex model doesn't need you to wait for it, and Work will fan them out as separate jobs. It feels wrong at first, then it feels like the obvious way to do it.
+</Callout>
+
+## Ten Ways to Actually Use It
+
+These map to documented capabilities — connectors, scheduled tasks, file output, and voice — rather than to anything exotic.
+
+**1. Competitive teardowns that end in a deck.** Virgin Atlantic used it to benchmark its customer journey against competitors, compressing what Futurum describes as a multi-week research cycle into hours.
+
+**2. Lead triage across disconnected systems.** Zapier built a system tracing prospects across its CRM, email, and call-recording tools into a weekly executive dashboard — the kind of join that normally justifies a whole tool purchase.
+
+**3. Standing reports on a schedule.** Scheduled Tasks run while you're offline, turning new messages into updated docs or slides and circulating the changes. Set it once for the Monday report you keep rebuilding by hand.
+
+**4. Meeting notes that become artifacts.** Dictate the recap immediately after the call and let it produce the follow-up email, the ticket, and the updated project doc as separate outputs.
+
+**5. Spreadsheet work you'd otherwise avoid.** Reconciliation, cleanup, pivots — described as a goal instead of assembled cell by cell.
+
+**6. Turning research into an interactive Site.** Work generates shareable interactive dashboards, not just static documents. Useful when the audience needs to poke at the data.
+
+**7. Inbox and calendar triage by voice.** It connects to email and calendars. Talking through your morning triage while making coffee is a genuinely different workflow than typing it.
+
+**8. Codebase work in the same session.** Since the Codex merger, code isn't a separate product. The same voice session that dispatches a research task can dispatch a refactor.
+
+**9. Local file organization on desktop.** With permission, it works against a real folder — the one thing the cloud version structurally cannot do.
+
+**10. Drafting while your hands are busy.** Full-duplex voice plus a rebuilt dictation model makes hands-free drafting practical for site visits, commutes, and anywhere a keyboard isn't.
+
+## The Part Worth Being Careful About
+
+Two things deserve more caution than the launch coverage gave them.
+
+The first is permission creep. An agent that can read your filesystem, reach your CRM, and browse the web is one prompt injection away from doing something you did not intend. Anthropic said this out loud about its own product. The advice generalizes: keep the sandbox at its default, leave network access off until a task genuinely needs it, and treat `danger-full-access` as a thing you turn on for one job and turn back off.
+
+The second is that the surface you pick silently decides your data posture. Opening the same product on your phone rather than your laptop moves your files from your disk into someone else's infrastructure. Nothing in the interface makes that consequential-feeling. It is worth deciding deliberately rather than by whichever device is nearest.
+
+## Where This Leaves Things
+
+The chat window is being demoted, and that is the actual news. OpenAI and Anthropic have both concluded that the valuable output is a file, a deck, a dashboard — something that survives the conversation. Microsoft approaches the same goal from inside the documents themselves.
+
+What separates these tools now is not raw capability. It's governance, defaults, and how honestly each one tells you what it's about to touch. Voice is the sleeper feature in that story, because the faster it becomes to dispatch work, the less you'll pause to think about what you just authorized.
+
+Both products are moving quickly enough that anything specific here has a short shelf life. The structural question — where does this run, and what can it reach — is the one that stays useful.
+
+---
+
+*If you found this useful, [subscribe to the newsletter](/subscribe) for weekly breakdowns of AI tools that actually change how the work gets done.*
