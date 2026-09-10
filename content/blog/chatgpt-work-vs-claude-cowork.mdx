@@ -1,0 +1,151 @@
+---
+title: "ChatGPT Work vs Claude Cowork — When to Use Each and Why It Matters"
+description: "What ChatGPT Work and Claude Cowork actually do, how they differ from Claude Code and Codex, and when to use each."
+date: "2026-09-10"
+category: "ai-tools"
+tags: ["chatgpt-work", "claude-cowork", "ai-agents", "openai", "anthropic", "productivity", "automation", "ai-tools"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Two products shipped within six months of each other, aimed at the same promise: stop chatting with AI and start handing it real work. OpenAI's ChatGPT Work landed on July 9, 2026. Anthropic's Claude Cowork has been doing live business tasks since its macOS beta in January 2026, then went generally available on April 9.
+
+On the surface, they look identical. Tell the agent what you need. Walk away. Come back to a finished deliverable.
+
+Underneath, the architecture, execution model, and sweet spots diverge enough that picking the wrong one means you either fight the tool or waste hours on something the other would have nailed in minutes.
+
+## What ChatGPT Work Actually Is
+
+ChatGPT Work is an agent mode inside ChatGPT. You describe a goal — "build me a competitive analysis deck from these three reports" — and it produces finished files: spreadsheets, slide decks, documents, and lightweight hosted web apps OpenAI calls [Sites](https://learn.chatgpt.com/docs/automations).
+
+It runs on GPT-5.6 and plugs into over 1,400 connected apps including Google Drive, Slack, Microsoft Teams, Salesforce, and email. On the desktop app it can touch your local filesystem. On web and mobile it works entirely in the cloud.
+
+The key mental model: Work stays inside the ChatGPT thread you already know. You hand it a task, it operates in the background, and when it is done you get an editable office file or a hosted mini-app. No new interface to learn.
+
+## What Claude Cowork Actually Is
+
+Claude Cowork is a dedicated tab inside the Claude Desktop app, alongside Chat and Code. Where Chat answers questions and Code writes software, Cowork reads your files and folders, works across your applications, and delivers finished work.
+
+It runs on Anthropic's latest models and executes tasks in an isolated cloud sandbox by default. Sessions continue after you close your laptop. Files and session state sync across devices on paid plans, and as of September 2026 it runs on web and mobile in addition to desktop.
+
+The key mental model: Cowork shows you a running trace of every file it opens and every tool it calls. You see the reasoning, not just the result. For larger jobs it can split into sub-agents that work in parallel and report back.
+
+<Callout type="info">
+**Neither tool has a separate price tag.** ChatGPT Work is included with Plus ($20/month), Pro ($100 or $200/month), and Business plans. Claude Cowork is included with Pro ($20/month) and Max ($100 or $200/month). In both cases, the agent mode draws from the same usage pool as chat.
+</Callout>
+
+## The Architecture Split That Decides Everything
+
+This is where the two products stop looking similar.
+
+**ChatGPT Work defaults to the browser.** Its natural habitat is the web. On desktop it can access local files, but the bread and butter is reaching out across the internet — browsing, filling forms, pulling data from connected SaaS tools. When OpenAI merged Codex into ChatGPT on launch day, Work inherited access to code sandboxes too, but the center of gravity is web-first tasks.
+
+**Claude Cowork defaults to your files.** Its natural habitat is folders on your machine and the desktop app. It reads spreadsheets, organizes documents, builds presentations from local data, and writes results back to disk. It connects to external services through Connectors, MCP (Model Context Protocol), and Microsoft 365 add-ins, but the center of gravity is local-first work.
+
+This single difference ripples through everything:
+
+| Dimension | ChatGPT Work | Claude Cowork |
+|-----------|-------------|---------------|
+| **Strongest at** | Web-based workflows, multi-site research, SaaS actions | Local file pipelines, document processing, data analysis |
+| **Execution** | Cloud sandbox (web/mobile), local access (desktop) | Isolated cloud sandbox, local access (desktop) |
+| **Connectors** | 1,400+ app integrations | Connectors + MCP + Microsoft 365 add-ins |
+| **Output format** | Editable office files, Sites (hosted web apps) | Editable files, Live Artifacts (data-connected dashboards) |
+| **Transparency** | Task runs in background, result delivered | Running trace shows each step and tool call |
+| **Sub-agents** | Multi-agent via GPT-5.6 capabilities | Explicit sub-agent splitting for parallel work |
+
+## How They Differ From Claude Code and Codex
+
+This is where the confusion gets thick, because both OpenAI and Anthropic ship separate coding agents that overlap but are not the same product.
+
+### Claude Code vs Claude Cowork
+
+Claude Code is Anthropic's developer agent. It lives in your terminal and IDE, reads your codebase, edits files, runs tests, creates commits, and opens pull requests. It is built for people who write software.
+
+Cowork lives in the desktop app, requires no terminal, and is built for knowledge workers — people who process documents, build reports, organize files, and analyze data. As [Forte Labs describes it](https://fortelabs.com/blog/the-difference-between-claude-code-and-cowork/), Cowork is the easy option — no setup, no terminal. Code is the power option.
+
+Both run on the same model family. The practical difference: Code gives you full visibility and direct terminal access. Cowork gives you a simpler interface with guardrails and an isolated sandbox. Code burns tokens more efficiently because Cowork has overhead from screenshots and image processing behind the scenes.
+
+### Codex vs ChatGPT Work
+
+Codex is OpenAI's coding agent — the equivalent of Claude Code. It spins up a cloud sandbox, connects to your GitHub repo, and works asynchronously on code tasks. On launch day (July 9, 2026) OpenAI folded Codex into ChatGPT, so you access both from the same interface.
+
+Work is the non-coding agent mode. It handles the business tasks: research, document creation, SaaS workflows. The two share a usage pool on Plus and Pro plans.
+
+<Callout type="tip">
+**The simple rule:** If the task involves a codebase, use Claude Code or Codex. If the task involves documents, data, or web workflows, use Cowork or Work. The coding agents and the knowledge-work agents solve fundamentally different problems.
+</Callout>
+
+## When to Use ChatGPT Work
+
+Work excels when the job requires reaching across the internet or orchestrating multiple web services.
+
+**Research and synthesis.** "Read these five competitor websites, pull their pricing pages, and build a comparison spreadsheet." Work can browse, extract structured data, and assemble files across multiple sites in one session.
+
+**SaaS-connected workflows.** Need to pull CRM data, cross-reference it with a Google Sheet, and draft follow-up emails? Work's 1,400+ integrations mean fewer manual steps between systems.
+
+**Quick web apps.** Work can produce Sites — lightweight hosted applications — from a single prompt. Useful for internal dashboards, calculators, or landing page prototypes that need to be shareable via URL immediately.
+
+**Scheduled monitoring.** ChatGPT's scheduled tasks can watch an inbox, summarize daily activity, or generate a weekly report on a recurring cadence. The limitation: tasks are capped at roughly once per hour and cannot use files, voice, or Custom GPTs inside the automation.
+
+## When to Use Claude Cowork
+
+Cowork excels when the job lives on your machine or requires deep, multi-step document processing.
+
+**Local file pipelines.** "Take this folder of vendor invoices, extract the totals, categorize by expense type, and build a summary spreadsheet." Cowork reads local files directly without uploading them anywhere.
+
+**Tax and financial analysis.** Point Cowork at your income spreadsheets, bank statements, and expense categories. It can read, cross-reference, and produce categorized breakdowns or preliminary reports — all without your financial data leaving a controlled sandbox.
+
+**Live dashboards.** Cowork's Live Artifacts are small applications that stay connected to your data and update as the numbers change. Unlike a static spreadsheet export, a Live Artifact re-executes its code when you reopen it. Useful for income tracking, project status boards, or any view you revisit weekly.
+
+**Recurring automation.** Cowork's scheduled tasks run in the cloud, continue when your laptop is closed, and work with your local files. Unlike ChatGPT's scheduled tasks, Cowork tasks can handle files and complex multi-step operations on recurring schedules.
+
+**Document-heavy knowledge work.** Analyzing contracts, summarizing meeting transcripts, reorganizing a folder of research papers — these local-first tasks are Cowork's wheelhouse.
+
+<Callout type="warning">
+**Neither tool triggers itself from an external event.** Unlike Zapier or Make, both Work and Cowork wait on you or a schedule — not a webhook. If you need event-driven automation (a new email triggers a workflow automatically), you still need a dedicated automation platform feeding tasks to either tool.
+</Callout>
+
+## A Practical Example: The Income Dashboard
+
+Say you want to build a dashboard that tracks income across multiple sources and flags tax obligations quarterly.
+
+**With ChatGPT Work**, you would connect your bank and accounting SaaS tools, ask Work to pull transaction data, categorize it, and produce a hosted Site you can share with your accountant. The strength: it can reach into multiple web services in one flow.
+
+**With Claude Cowork**, you would point it at your local spreadsheets (bank exports, invoice records, contract PDFs), and ask it to build a Live Artifact — an interactive dashboard that recalculates when you drop in new monthly exports. The strength: your financial data never leaves your machine, and the dashboard stays alive across sessions.
+
+Neither approach is wrong. The question is where your data lives and who else needs to see the output.
+
+## The Real Decision Framework
+
+After months of these tools being in the wild, a pattern has emerged in how professionals are using them:
+
+**Use ChatGPT Work when:**
+- Your context already lives in ChatGPT (prior conversations, projects)
+- The task requires web browsing or multi-service orchestration
+- You need the output as traditional office files to forward to others
+- The connected app catalog matters (1,400+ integrations)
+
+**Use Claude Cowork when:**
+- You want to see every step the agent takes (transparency matters)
+- The task involves local files you do not want to upload to a cloud service
+- You need Live Artifacts or data-connected dashboards
+- You want deeper Microsoft 365 integration (mail, calendar, OneDrive, SharePoint)
+- You prefer scheduled tasks that can handle complex, file-based operations
+
+**Use both when:**
+Many professionals are arriving at a split: ChatGPT for brainstorming, images, and quick web lookups; Cowork for the heavy lifting — files, reports, automation, recurring pipelines. The tools are not mutually exclusive, and the most productive setup may be one where each handles what it is architecturally best at.
+
+## What to Watch
+
+Both products are iterating fast. ChatGPT Work launched in July 2026 and is still maturing — its scheduled tasks have notable limitations (hourly cap, no file access). Cowork has a longer track record but started desktop-only and only recently reached web and mobile.
+
+The convergence is obvious: both will add what the other has. Work will get better local file handling. Cowork will expand its connector catalog. The question is not which will eventually do everything — both will. The question is which does the thing you need *today*, with the data you have, in the place you need the output.
+
+Pick based on where the work already lives. If it is on the web, Work gets it done. If it is on your machine, Cowork gets it done. When both claims are true, try both and keep whichever one finishes first with fewer hallucinations.
+
+That is the only benchmark that matters.
+
+---
+
+*Want more comparisons like this? [Subscribe to the newsletter](/subscribe) for weekly breakdowns of the tools that are actually changing how people work.*
