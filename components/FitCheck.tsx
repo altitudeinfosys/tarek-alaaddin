@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { track } from '@vercel/analytics'
 
 interface FitCheckResult {
   score: number
@@ -23,6 +24,7 @@ export default function FitCheck() {
     setIsLoading(true)
     setError(null)
     setResult(null)
+    track('fit_check_submit')
 
     try {
       const response = await fetch('/api/fit-check', {

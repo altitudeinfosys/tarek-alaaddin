@@ -1,20 +1,25 @@
 const SKILLS = [
-  'Java / Spring',
+  'AI Agents',
+  'Automation',
+  'App Builder',
+  'Java / Spring Boot',
   'React & Next.js',
-  'Azure & Cloud',
-  'AI Engineering',
   'Team Leadership',
-  'SaaS Products',
 ]
 
-const STATS = [
-  { value: '20+', label: 'Years experience' },
-  { value: '2', label: 'Products shipped' },
-  { value: 'AI', label: 'Focused & shipping' },
-  { value: '∞', label: 'Always learning' },
-]
+interface HighlightsProps {
+  postCount: number
+  appCount: number
+}
 
-export default function Highlights() {
+export default function Highlights({ postCount, appCount }: HighlightsProps) {
+  const STATS = [
+    { value: '20+', label: 'Years in production software' },
+    { value: String(postCount), label: 'Articles on AI & engineering' },
+    { value: String(appCount), label: 'Apps shipped solo, end to end' },
+    { value: 'AI', label: 'Agents, MCP & automations in production' },
+  ]
+
   return (
     <>
       {/* Skill marquee */}

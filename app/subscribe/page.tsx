@@ -4,13 +4,13 @@ import { absoluteUrl } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: 'Subscribe | Tarek Alaaddin',
-  description: 'Get my free guide on becoming innovative and productive. Learn productivity tips, AI tools, and strategies I use to build products.',
+  description: 'Get new posts by email — practical notes on AI tooling, automation, and building software that ships.',
   alternates: {
     canonical: absoluteUrl('/subscribe'),
   },
   openGraph: {
     title: 'Subscribe to Newsletter | Tarek Alaaddin',
-    description: 'Get my free guide on becoming innovative and productive.',
+    description: 'Get new posts by email — AI tooling, automation, and building software that ships.',
     url: absoluteUrl('/subscribe'),
     siteName: 'Tarek Alaaddin',
     locale: 'en_US',
@@ -28,16 +28,16 @@ export default function SubscribePage() {
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            Free Guide
+            Newsletter
           </div>
 
           <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-6">
-            How to Become Innovative and Productive
+            Get new posts by email
           </h1>
 
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-            Get my comprehensive guide packed with productivity tips, AI tools, and strategies
-            I use to build products like Taskitos and ExpandNote.
+            Practical notes on AI tooling, automation, and building software that ships —
+            straight from what I learn shipping Taskitos, ExpandNote, SayCopy, and PropertyPulse360.
           </p>
 
           {/* What You'll Get */}
@@ -51,7 +51,7 @@ export default function SubscribePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 <span className="text-gray-700 dark:text-gray-300">
-                  <strong>Productivity Stack Guide:</strong> My complete system for staying productive and never missing what matters
+                  <strong>Every new post, as it publishes:</strong> AI engineering, automation, and productivity — no digests, no filler
                 </span>
               </li>
               <li className="flex items-start">
@@ -59,7 +59,7 @@ export default function SubscribePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 <span className="text-gray-700 dark:text-gray-300">
-                  <strong>AI Tools I Use Daily:</strong> Practical AI integrations for developers and product builders
+                  <strong>Tools I actually use:</strong> Claude, agents, MCP, n8n — what works and what only demos well
                 </span>
               </li>
               <li className="flex items-start">
@@ -67,7 +67,7 @@ export default function SubscribePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 <span className="text-gray-700 dark:text-gray-300">
-                  <strong>Exclusive Tips:</strong> Occasional insights on software engineering, product development, and building SaaS
+                  <strong>Build notes:</strong> What it takes to ship apps solo, from idea to the App Store
                 </span>
               </li>
             </ul>

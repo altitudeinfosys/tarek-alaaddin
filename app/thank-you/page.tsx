@@ -4,7 +4,7 @@ import { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Thank You for Subscribing | Tarek Alaaddin',
-  description: 'Thanks for subscribing to my newsletter. Check your inbox for your free productivity guide!',
+  description: 'Thanks for subscribing to my newsletter. Check your inbox for a welcome email.',
   robots: {
     index: false,
     follow: false,
@@ -43,7 +43,7 @@ export default function ThankYouPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
               <span className="text-gray-700 dark:text-gray-300">
-                <strong>Check your inbox</strong> for a confirmation email with your free guide
+                <strong>Check your inbox</strong> for a welcome email
               </span>
             </li>
             <li className="flex items-start">
