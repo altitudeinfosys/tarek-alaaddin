@@ -7,7 +7,8 @@ const DISMISSED_KEY = 'newsletter-popup-dismissed'
 const SUBSCRIBED_KEY = 'newsletter-popup-subscribed'
 const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 const SCROLL_THRESHOLD = 0.5
-const EXCLUDED_PATHS = ['/subscribe', '/thank-you']
+// Homepage has its own footer signup; don't stack the popup on top of it.
+const EXCLUDED_PATHS = ['/', '/subscribe', '/thank-you']
 
 type PopupState = 'hidden' | 'visible' | 'submitting' | 'success'
 

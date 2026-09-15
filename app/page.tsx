@@ -1,43 +1,35 @@
 import LandingHero from '@/components/home/LandingHero'
 import Highlights from '@/components/home/Highlights'
-import ProductShowcase from '@/components/products/ProductShowcase'
-import AboutSection from '@/components/home/AboutSection'
-import NewsletterCTA from '@/components/home/NewsletterCTA'
+import WhatIBring from '@/components/home/WhatIBring'
+import FitCheckSection from '@/components/home/FitCheckSection'
 import BlogPostsSection from '@/components/home/BlogPostsSection'
-import { getAllPosts, getFeaturedPosts } from '@/lib/mdx'
+import AppsGrid from '@/components/home/AppsGrid'
+import AboutSection from '@/components/home/AboutSection'
+import ContactCTA from '@/components/home/ContactCTA'
+import { getAllPosts } from '@/lib/mdx'
+import { apps } from '@/data/apps'
 import { BlogPostMeta } from '@/types/blog'
 
 export default function Home() {
   let allPosts: BlogPostMeta[] = []
-  let featuredPosts: BlogPostMeta[] = []
 
   try {
     allPosts = getAllPosts()
-    featuredPosts = getFeaturedPosts().slice(0, 2)
   } catch (error) {
     console.error('Failed to load blog posts:', error)
-    // Fall back to empty arrays - page will still render without blog section
+    // Fall back to an empty list - page still renders without the writing section
   }
 
   return (
-    <main className="bg-white dark:bg-gray-900">
-      {/* Hero Section */}
+    <div className="bg-white dark:bg-gray-900">
       <LandingHero />
-
-      {/* Highlights — skill marquee + stat cards */}
-      <Highlights />
-
-      {/* Newsletter CTA */}
-      <NewsletterCTA />
-
-      {/* Blog Posts Section */}
-      <BlogPostsSection allPosts={allPosts} featuredPosts={featuredPosts} />
-
-      {/* Products Showcase */}
-      <ProductShowcase />
-
-      {/* About Section */}
+      <Highlights postCount={allPosts.length} appCount={apps.length} />
+      <WhatIBring />
+      <FitCheckSection />
+      <BlogPostsSection posts={allPosts.slice(0, 3)} totalCount={allPosts.length} />
+      <AppsGrid />
       <AboutSection />
-    </main>
+      <ContactCTA />
+    </div>
   )
 }

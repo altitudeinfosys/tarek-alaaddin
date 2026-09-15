@@ -1,52 +1,41 @@
 import { BlogPostMeta } from '@/types/blog'
 import BlogCard from '@/components/blog/BlogCard'
 import Button from '@/components/ui/Button'
-import Link from 'next/link'
-import CategoryFilter from './CategoryFilter'
 
 interface BlogPostsSectionProps {
-  allPosts: BlogPostMeta[]
-  featuredPosts: BlogPostMeta[]
+  posts: BlogPostMeta[]
+  totalCount: number
 }
 
-export default function BlogPostsSection({ allPosts, featuredPosts }: BlogPostsSectionProps) {
+// One row of the latest posts. Its job is to show the writing is current,
+// not to be a full index — that's /blog.
+export default function BlogPostsSection({ posts, totalCount }: BlogPostsSectionProps) {
+  if (posts.length === 0) return null
+
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto">
-        {/* Featured Posts — Server-rendered for AI crawler visibility */}
-        {featuredPosts.length > 0 && (
-          <div className="mb-16">
-            <div className="flex items-center gap-3 mb-8">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Featured</h3>
-              <span className="px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm font-medium">
-                Editor's Pick
-              </span>
+    <section id="writing" className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex flex-wrap items-end justify-between gap-4 mb-10">
+          <div>
+            <div className="text-sm font-semibold uppercase tracking-widest text-primary-600 dark:text-primary-400 mb-2">
+              Recent thinking
             </div>
-            <div className="grid md:grid-cols-2 gap-6">
-              {featuredPosts.map(post => (
-                <BlogCard key={post.slug} post={post} />
-              ))}
-            </div>
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white text-balance">
+              Writing in public, every week.
+            </h2>
+            <p className="mt-3 text-gray-500 dark:text-gray-400 max-w-2xl">
+              Practical notes on AI tooling, engineering judgment, and building software that lasts.
+            </p>
           </div>
-        )}
+          <Button href="/blog" variant="outline" size="md">
+            All {totalCount} articles
+          </Button>
+        </div>
 
-        {/* Recent Posts */}
-        <div>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-8">
-            Latest Posts
-          </h2>
-
-          {/* Category filter is client-side for interactivity */}
-          <CategoryFilter posts={allPosts} />
-
-          {/* View All CTA */}
-          <div className="text-center">
-            <Link href="/blog">
-              <Button size="lg" variant="outline">
-                View All Posts
-              </Button>
-            </Link>
-          </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {posts.map((post) => (
+            <BlogCard key={post.slug} post={post} />
+          ))}
         </div>
       </div>
     </section>

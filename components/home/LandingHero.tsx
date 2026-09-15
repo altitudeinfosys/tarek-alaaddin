@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import TrackedLink from './TrackedLink'
 
 const SOCIAL_LINKS = [
   {
@@ -33,7 +34,7 @@ export default function LandingHero() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
             </span>
-            Building &amp; writing in public
+            Open to senior engineering, AI &amp; automation roles
           </div>
 
           <h1 className="animate-rise reveal-2 font-display font-extrabold tracking-[-0.03em] leading-[0.95] text-6xl sm:text-7xl lg:text-[5.25rem] text-gray-900 dark:text-white">
@@ -41,30 +42,51 @@ export default function LandingHero() {
           </h1>
 
           <p className="animate-rise reveal-3 mt-6 text-xl sm:text-2xl font-display font-semibold text-gray-700 dark:text-gray-200 max-w-xl leading-snug">
-            I build AI products and{' '}
-            <span className="text-primary-600 dark:text-primary-400">write about</span> what I learn shipping them.
+            Senior engineer who builds{' '}
+            <span className="text-primary-600 dark:text-primary-400">AI automations</span> and ships{' '}
+            <span className="text-primary-600 dark:text-primary-400">apps</span> end to end — backed by 20+ years of enterprise Java and React.
           </p>
 
           <p className="animate-rise reveal-4 mt-5 text-lg text-gray-500 dark:text-gray-400 max-w-lg leading-relaxed">
-            20+ years engineering large-scale systems in Java/Spring, React, and the cloud. Creator of Taskitos &amp; ExpandNote.
+            Claude-powered agents, n8n pipelines, and MCP servers by day; four products shipped solo — Taskitos, ExpandNote, SayCopy, PropertyPulse360. I write about all of it here.
           </p>
 
-          <div className="animate-rise reveal-5 mt-9 flex flex-wrap gap-3">
-            <Link
-              href="/blog"
+          <div className="animate-rise reveal-5 mt-9 flex flex-wrap items-center gap-3">
+            <TrackedLink
+              href="/resume"
+              event="resume_click_hero"
               className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-gray-900 dark:bg-primary-600 text-white font-semibold hover:bg-primary-600 dark:hover:bg-primary-500 transition shadow-lg shadow-gray-900/10"
             >
-              Read my writing
+              View resume
               <svg className="w-4 h-4 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
-            </Link>
-            <Link
-              href="/products"
+            </TrackedLink>
+            <TrackedLink
+              href="/contact"
+              event="contact_click_hero"
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white font-semibold hover:border-primary-600 hover:text-primary-600 dark:hover:border-primary-400 dark:hover:text-primary-400 transition"
             >
-              See my products
+              Get in touch
+            </TrackedLink>
+            <Link href="/blog" className="ml-1 text-sm font-semibold text-primary-600 dark:text-primary-400 hover:underline">
+              Read my writing →
             </Link>
+          </div>
+
+          <div className="animate-rise reveal-5 mt-6 flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-500 dark:text-gray-400">
+            <span className="inline-flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
+              Round Rock, TX · Austin metro
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></svg>
+              Remote-friendly
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" viewBox="0 0 24 24"><path d="M4 7h16v12H4zM4 7l8 6 8-6" /></svg>
+              Replies within a day
+            </span>
           </div>
 
           <div className="animate-rise reveal-6 mt-9 flex items-center gap-5 text-gray-400 dark:text-gray-500">

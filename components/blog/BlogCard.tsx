@@ -1,16 +1,20 @@
 import Link from 'next/link'
 import { BlogPostMeta } from '@/types/blog'
 import Badge from '@/components/ui/Badge'
+import { categoryLabel } from '@/lib/categories'
 
 interface BlogCardProps {
   post: BlogPostMeta
 }
 
 export default function BlogCard({ post }: BlogCardProps) {
-  const categoryColors = {
-    ai: 'info' as const,
-    productivity: 'success' as const,
-    development: 'default' as const,
+  // Frontmatter categories aren't limited to the three in the type; anything
+  // else falls through to the default badge.
+  const categoryColors: Record<string, 'info' | 'success' | 'default'> = {
+    ai: 'info',
+    'ai-tools': 'info',
+    productivity: 'success',
+    development: 'default',
   }
 
   const formattedDate = new Date(post.date).toLocaleDateString('en-US', {
@@ -25,8 +29,8 @@ export default function BlogCard({ post }: BlogCardProps) {
       <article className="h-full bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary-500 dark:hover:border-primary-400 transition-all hover:shadow-lg p-6">
         {/* Category & Date */}
         <div className="flex items-center justify-between mb-4">
-          <Badge variant={categoryColors[post.category]}>
-            {post.category}
+          <Badge variant={categoryColors[String(post.category).toLowerCase()] ?? 'default'}>
+            {categoryLabel(post.category)}
           </Badge>
           <time className="text-sm text-gray-500 dark:text-gray-400">
             {formattedDate}
