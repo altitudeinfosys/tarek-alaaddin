@@ -141,7 +141,7 @@ export default function NewsletterForm() {
             </svg>
           </span>
         ) : (
-          'Get the Free Guide'
+          'Subscribe'
         )}
       </Button>
 
