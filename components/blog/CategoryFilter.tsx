@@ -14,19 +14,19 @@ const categories = [
 
 export default function CategoryFilter({ currentCategory, onCategoryChange }: CategoryFilterProps) {
   return (
-    <div className="flex flex-wrap gap-3 mb-8">
+    <div className="flex flex-wrap gap-2">
       {categories.map((category) => (
         <button
           key={category.id}
           type="button"
           onClick={() => onCategoryChange(category.id)}
-          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+          aria-pressed={currentCategory === category.id}
+          className={`px-3.5 py-2 rounded-md border text-sm font-medium transition-colors ${
             currentCategory === category.id
-              ? 'bg-primary-600 text-white dark:bg-primary-500'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+              ? 'border-primary-600 bg-primary-600 text-white dark:border-primary-400 dark:bg-primary-400 dark:text-gray-950'
+              : 'border-gray-300 bg-white text-gray-700 hover:border-primary-600 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-primary-400 dark:hover:text-primary-400'
           }`}
         >
-          <span className="mr-2">{category.icon}</span>
           {category.name}
         </button>
       ))}

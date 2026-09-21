@@ -27,20 +27,21 @@ export default function ProductsPage() {
   return (
     <div className="bg-white dark:bg-gray-900">
       {/* Hero Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-6">
-          My Products
+      <section className="pt-14 md:pt-[4.5rem] pb-10 px-4 sm:px-6 lg:px-8 max-w-[76rem] mx-auto">
+        <div className="eyebrow eyebrow-accent mb-3">Apps</div>
+        <h1 className="font-display font-bold tracking-[-0.035em] leading-[1.02] text-[2.5rem] sm:text-6xl text-gray-900 dark:text-white mb-4">
+          My products
         </h1>
-        <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8">
+        <p className="text-[1.15rem] text-gray-700 dark:text-gray-300 max-w-3xl mb-8">
           AI-powered SaaS applications built to solve real productivity problems.
           Each product combines modern technology with practical features to help you work smarter.
         </p>
-        <div className="flex flex-wrap justify-center gap-4">
+        <div className="flex flex-wrap gap-2">
           {products.map((product) => (
             <a
               key={product.id}
               href={`#${product.id}`}
-              className="px-6 py-3 bg-primary-100 hover:bg-primary-200 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 text-primary-700 dark:text-primary-300 font-medium rounded-lg transition-colors"
+              className="btn-flat btn-flat-ghost"
             >
               {product.name}
             </a>
@@ -49,34 +50,28 @@ export default function ProductsPage() {
       </section>
 
       {/* Product Details */}
-      <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-[76rem] mx-auto">
         {products.map((product, index) => (
           <div key={product.id}>
             <ProductDetail product={product} />
             {index < products.length - 1 && (
-              <div className="my-16 border-t border-gray-200 dark:border-gray-700"></div>
+              <div className="my-16 border-t border-gray-300 dark:border-gray-800"></div>
             )}
           </div>
         ))}
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-700 dark:to-primary-800 rounded-2xl p-12 text-center text-white">
-          <h2 className="text-3xl font-bold mb-4">
-            Interested in Building Something Similar?
-          </h2>
-          <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
+      <section className="band band-grey text-center mt-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="eyebrow eyebrow-accent mb-2.5">Let&apos;s talk</div>
+          <h2 className="h-section">Interested in building something similar?</h2>
+          <p className="mt-4 text-[1.05rem] text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
             I help entrepreneurs and businesses build AI-powered SaaS products from idea to production.
           </p>
-          <Link
-            href="/contact"
-            className="inline-flex items-center px-8 py-4 bg-white text-primary-700 font-bold rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            Get in Touch
-            <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
+          <Link href="/contact" className="btn-flat btn-flat-primary mt-8">
+            Get in touch
+            <span aria-hidden="true">→</span>
           </Link>
         </div>
       </section>

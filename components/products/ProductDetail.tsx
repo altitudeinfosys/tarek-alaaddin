@@ -8,11 +8,11 @@ interface ProductDetailProps {
 export default function ProductDetail({ product }: ProductDetailProps) {
   return (
     <div id={product.id} className="scroll-mt-20">
-      <div className="bg-gradient-to-br from-primary-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 md:p-12 border border-primary-100 dark:border-gray-700 mb-12">
+      <div className="panel bg-gray-100 dark:bg-gray-950 p-6 md:p-10 mb-12">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div>
-            <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-3">
+            <h2 className="font-display tracking-[-0.025em] text-4xl font-bold text-gray-900 dark:text-white mb-3">
               {product.name}
             </h2>
             <p className="text-2xl font-semibold text-primary-600 dark:text-primary-400 mb-4">
@@ -23,15 +23,15 @@ export default function ProductDetail({ product }: ProductDetailProps) {
 
         {/* Status Pills */}
         <div className="flex flex-wrap gap-3 mb-8">
-          <div className="px-4 py-2 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+          <div className="px-3.5 py-2 bg-white dark:bg-gray-900 rounded-md border border-gray-300 dark:border-gray-800">
             <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Web: </span>
             <span className="text-sm text-gray-600 dark:text-gray-400">{product.status.web}</span>
           </div>
-          <div className="px-4 py-2 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+          <div className="px-3.5 py-2 bg-white dark:bg-gray-900 rounded-md border border-gray-300 dark:border-gray-800">
             <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">iOS: </span>
             <span className="text-sm text-gray-600 dark:text-gray-400">{product.status.ios}</span>
           </div>
-          <div className="px-4 py-2 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+          <div className="px-3.5 py-2 bg-white dark:bg-gray-900 rounded-md border border-gray-300 dark:border-gray-800">
             <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Android: </span>
             <span className="text-sm text-gray-600 dark:text-gray-400">{product.status.android}</span>
           </div>
@@ -49,7 +49,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
               href={product.links.web}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
+              className="btn-flat btn-flat-primary"
             >
               Visit Website
               <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,7 +62,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
               href={product.links.github}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center px-6 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 font-medium rounded-lg transition-colors"
+              className="btn-flat btn-flat-ghost"
             >
               View on GitHub
               <svg className="ml-2 w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -75,7 +75,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
 
       {/* Features Grid */}
       <div className="mb-12">
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+        <h3 className="font-display tracking-[-0.015em] text-2xl font-bold text-gray-900 dark:text-white mb-6">
           Key Features
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -84,9 +84,9 @@ export default function ProductDetail({ product }: ProductDetailProps) {
             return (
               <div
                 key={index}
-                className="flex items-start p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                className="panel flex items-start p-4"
               >
-                <div className="flex-shrink-0 w-6 h-6 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                <div className="flex-shrink-0 w-6 h-6 bg-primary-50 dark:bg-primary-900/30 rounded flex items-center justify-center mr-3 mt-0.5">
                   <svg className="w-4 h-4 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
@@ -105,14 +105,14 @@ export default function ProductDetail({ product }: ProductDetailProps) {
 
       {/* Tech Stack */}
       <div className="mb-12">
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+        <h3 className="font-display tracking-[-0.015em] text-2xl font-bold text-gray-900 dark:text-white mb-6">
           Technology Stack
         </h3>
         <div className="flex flex-wrap gap-3">
           {product.technologies.map((tech, index) => (
             <span
               key={index}
-              className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium border border-gray-200 dark:border-gray-700"
+              className="chip text-[0.78rem] px-2.5 py-1"
             >
               {tech}
             </span>
@@ -123,18 +123,18 @@ export default function ProductDetail({ product }: ProductDetailProps) {
       {/* Pricing (if available) */}
       {product.pricing && (
         <div className="mb-12">
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          <h3 className="font-display tracking-[-0.015em] text-2xl font-bold text-gray-900 dark:text-white mb-6">
             Pricing
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {product.pricing.free && (
-              <div className="p-6 bg-white dark:bg-gray-800 rounded-lg border-2 border-gray-200 dark:border-gray-700">
+              <div className="panel p-6">
                 <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Free</h4>
                 <p className="text-gray-600 dark:text-gray-400">{product.pricing.free}</p>
               </div>
             )}
             {product.pricing.pro && (
-              <div className="p-6 bg-gradient-to-br from-primary-50 to-white dark:from-primary-900/20 dark:to-gray-800 rounded-lg border-2 border-primary-500 dark:border-primary-400">
+              <div className="panel p-6 border-primary-600 dark:border-primary-400">
                 <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Pro</h4>
                 <p className="text-gray-600 dark:text-gray-400">{product.pricing.pro}</p>
               </div>
@@ -146,7 +146,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
       {/* Screenshots */}
       {product.images && product.images.length > 0 && (
         <div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          <h3 className="font-display tracking-[-0.015em] text-2xl font-bold text-gray-900 dark:text-white mb-6">
             Screenshots
           </h3>
           <ScreenshotGallery images={product.images} productName={product.name} />

@@ -24,14 +24,14 @@ export default function SubscribePage() {
       <div className="max-w-3xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center px-4 py-2 bg-primary-100 dark:bg-primary-900/30 rounded-full text-sm font-medium text-primary-700 dark:text-primary-300 mb-6">
+          <div className="chip chip-accent inline-flex items-center uppercase tracking-[0.08em] px-2.5 py-1 mb-6">
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
             Newsletter
           </div>
 
-          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-6">
+          <h1 className="font-display font-bold tracking-[-0.035em] leading-[1.05] text-4xl md:text-[3.25rem] text-gray-900 dark:text-white text-balance mb-6">
             Get new posts by email
           </h1>
 
@@ -41,7 +41,7 @@ export default function SubscribePage() {
           </p>
 
           {/* What You'll Get */}
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-12 text-left">
+          <div className="panel bg-gray-100 dark:bg-gray-950 p-6 mb-12 text-left">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
               What You'll Get:
             </h2>
@@ -75,7 +75,7 @@ export default function SubscribePage() {
         </div>
 
         {/* Form */}
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-8 md:p-10 border border-gray-200 dark:border-gray-700">
+        <div className="panel p-6 md:p-8">
           <NewsletterForm />
         </div>
 

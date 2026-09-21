@@ -11,7 +11,7 @@ export default function ResumePageClient() {
   const [isAIModalOpen, setIsAIModalOpen] = useState(false)
 
   return (
-    <main>
+    <div>
       {/* Hero Section */}
       <Hero onAskAI={() => setIsAIModalOpen(true)} />
 
@@ -50,6 +50,6 @@ export default function ResumePageClient() {
         isOpen={isAIModalOpen}
         onClose={() => setIsAIModalOpen(false)}
       />
-    </main>
+    </div>
   )
 }

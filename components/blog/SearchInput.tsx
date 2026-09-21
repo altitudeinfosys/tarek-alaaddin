@@ -35,7 +35,7 @@ export default function SearchInput({ value, onChange, onFocus, isLoading }: Sea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onFocus={onFocus}
-        className="w-full px-4 py-3 pl-10 pr-10 rounded-lg border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+        className="field py-3 pl-10 pr-10"
       />
 
       {/* Clear button */}

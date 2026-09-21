@@ -59,7 +59,7 @@ export default function TopicSelector({ selectedTopics, onChange }: TopicSelecto
       {topics.map((topic) => (
         <label
           key={topic.id}
-          className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all ${
+          className={`flex items-start p-4 border rounded-md cursor-pointer transition-colors ${
             selectedTopics[topic.id as keyof typeof selectedTopics]
               ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 dark:border-primary-400'
               : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'

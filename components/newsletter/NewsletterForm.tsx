@@ -82,7 +82,7 @@ export default function NewsletterForm() {
           required
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+          className="field py-3"
           placeholder="you@example.com"
         />
       </div>
@@ -97,7 +97,7 @@ export default function NewsletterForm() {
           id="firstName"
           value={formData.firstName}
           onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-          className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+          className="field py-3"
           placeholder="John"
         />
       </div>
@@ -110,7 +110,7 @@ export default function NewsletterForm() {
         <div
           role="alert"
           aria-live="polite"
-          className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300"
+          className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300"
         >
           {errorMessage}
         </div>

@@ -25,9 +25,9 @@ export default function ProductCTA({ product }: ProductCTAProps) {
   const p = products[product]
 
   return (
-    <div className="my-8 p-6 bg-gradient-to-br from-primary-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-xl border-2 border-primary-200 dark:border-gray-700">
+    <div className="my-8 p-6 bg-gray-100 dark:bg-gray-950 rounded-lg border border-gray-300 dark:border-gray-800">
       <div className="flex items-start space-x-4">
-        <div className="flex-shrink-0 w-12 h-12 bg-primary-600 dark:bg-primary-500 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+        <div className="flex-shrink-0 w-12 h-12 bg-primary-600 dark:bg-primary-400 dark:text-gray-950 rounded-md flex items-center justify-center text-white font-bold text-xl">
           {p.name.charAt(0)}
         </div>
         <div className="flex-1">
