@@ -1,19 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { chat, ChatMessage } from '@/lib/claude'
 import { getResumeForChat } from '@/lib/resume-loader'
-import { clientIp, rateLimit } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
-  const limit = rateLimit(`chat:${clientIp(request)}`, 20, 10 * 60 * 1000)
-  if (!limit.ok) {
-    return NextResponse.json(
-      { error: 'Too many messages from this connection. Please try again in a few minutes.' },
-      { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } }
-    )
-  }
-
+  // Rate limiting is enforced at the Vercel Firewall (20 POSTs / 10 min per IP)
   try {
     const { messages } = await request.json() as { messages: ChatMessage[] }
 
