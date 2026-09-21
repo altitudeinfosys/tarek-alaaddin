@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import FooterNewsletterForm from './FooterNewsletterForm'
+import { apps } from '@/data/apps'
 
 const SOCIAL_LINKS = [
   {
@@ -44,59 +45,78 @@ const FOOTER_LINKS = [
 export default function Footer() {
   const currentYear = new Date().getFullYear()
 
+  const headingClass = 'eyebrow mb-3.5'
+  const linkClass = 'text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 transition-colors'
+
   return (
-    <footer className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-      <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
-          {/* Newsletter */}
+    <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+      <div className="max-w-[76rem] mx-auto pt-14 pb-8 px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 md:grid-cols-[1fr_1fr_1fr_1.6fr] gap-8">
+          {/* Navigation */}
+          <nav aria-label="Footer">
+            <h3 className={headingClass}>Site</h3>
+            <ul className="space-y-2 text-[0.92rem]">
+              {FOOTER_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className={linkClass}>
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Apps */}
           <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Get new posts by email</h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <h3 className={headingClass}>Apps</h3>
+            <ul className="space-y-2 text-[0.92rem]">
+              {apps.map((app) => (
+                <li key={app.id}>
+                  <a href={app.url} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                    {app.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Social Links */}
+          <div>
+            <h3 className={headingClass}>Follow</h3>
+            <div className="flex gap-2">
+              {SOCIAL_LINKS.map((link) => (
+                <a
+                  key={link.name}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-500 hover:text-primary-600 hover:border-primary-600 dark:text-gray-400 dark:hover:text-primary-400 dark:hover:border-primary-400 transition-colors"
+                  aria-label={link.name}
+                >
+                  {link.icon}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Newsletter */}
+          <div className="col-span-2 md:col-span-1">
+            <h3 className={headingClass}>Newsletter</h3>
+            <p className="text-[0.92rem] text-gray-600 dark:text-gray-300">
               Practical notes on AI tooling and engineering. No spam, unsubscribe any time.
             </p>
             <FooterNewsletterForm />
           </div>
-
-          {/* Social Links */}
-          <div className="flex gap-3 md:justify-end">
-            {SOCIAL_LINKS.map((link) => (
-              <a
-                key={link.name}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-500 hover:text-primary-600 hover:border-primary-600 dark:text-gray-400 dark:hover:text-primary-400 dark:hover:border-primary-400 transition-colors"
-                aria-label={link.name}
-              >
-                {link.icon}
-              </a>
-            ))}
-          </div>
         </div>
 
-        <div className="mt-10 flex flex-wrap items-center justify-between gap-4 text-sm">
-          {/* Navigation */}
-          <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Footer">
-            {FOOTER_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
-              >
-                {link.name}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-4 text-gray-400 dark:text-gray-500">
-            <span className="inline-flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Powered by Claude AI
-            </span>
-            <span>&copy; {currentYear} Tarek Alaaddin</span>
-          </div>
+        <div className="mt-10 pt-5 border-t border-gray-200 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3 text-[0.8rem] text-gray-500 dark:text-gray-400">
+          <span>&copy; {currentYear} Tarek Alaaddin</span>
+          <span className="inline-flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Powered by Claude AI
+          </span>
         </div>
       </div>
     </footer>

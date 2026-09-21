@@ -66,12 +66,12 @@ export default function FooterNewsletterForm() {
         placeholder="you@example.com"
         aria-label="Email address"
         disabled={status === 'submitting'}
-        className="flex-1 min-w-[12rem] px-4 py-2.5 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+        className="flex-1 min-w-[12rem] px-3.5 py-2.5 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
       />
       <button
         type="submit"
         disabled={status === 'submitting'}
-        className="px-5 py-2.5 rounded-full bg-primary-600 dark:bg-primary-500 text-white text-sm font-semibold hover:bg-primary-700 dark:hover:bg-primary-400 transition disabled:opacity-50"
+        className="px-4 py-2.5 rounded-md bg-primary-600 dark:bg-primary-400 text-white dark:text-gray-950 text-sm font-semibold hover:bg-primary-700 dark:hover:bg-primary-300 transition disabled:opacity-50"
       >
         {status === 'submitting' ? 'Subscribing…' : 'Subscribe'}
       </button>

@@ -39,26 +39,26 @@ export default function Header() {
     )
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <header className="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+      <nav className="max-w-[76rem] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-[3.75rem]">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-gray-900 dark:text-white">
+            <span className="font-display text-base font-bold tracking-[-0.01em] text-gray-900 dark:text-white">
               Tarek Alaaddin
             </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex md:items-center md:space-x-7">
+          <div className="hidden md:flex md:items-center md:gap-1">
             {NAVIGATION_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`text-sm font-medium transition-colors ${
+                className={`text-sm px-3 py-1.5 rounded-[5px] transition-colors ${
                   isActive(link.href)
-                    ? 'text-primary-600 dark:text-primary-400'
-                    : 'text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400'
+                    ? 'bg-gray-100 text-gray-900 font-medium dark:bg-gray-800 dark:text-white'
+                    : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
                 }`}
               >
                 {link.name}
@@ -69,10 +69,10 @@ export default function Header() {
             <Link
               href={RESUME_CTA.href}
               onClick={() => track('resume_click_nav')}
-              className={`text-sm font-semibold px-4 py-2 rounded-full transition-colors ${
+              className={`ml-4 text-sm font-semibold px-3.5 py-2 rounded-md transition-colors ${
                 isActive(RESUME_CTA.href)
-                  ? 'bg-primary-700 text-white dark:bg-primary-400 dark:text-gray-900'
-                  : 'bg-primary-600 text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-400 dark:text-gray-900'
+                  ? 'bg-primary-700 text-white dark:bg-primary-300 dark:text-gray-950'
+                  : 'bg-primary-600 text-white hover:bg-primary-700 dark:bg-primary-400 dark:hover:bg-primary-300 dark:text-gray-950'
               }`}
             >
               {RESUME_CTA.name}
@@ -81,7 +81,7 @@ export default function Header() {
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="ml-2 p-2 rounded-md text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               aria-label="Toggle theme"
             >
               {themeIcon}
@@ -93,7 +93,7 @@ export default function Header() {
             {/* Mobile Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400"
+              className="p-2 rounded-md text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
               aria-label="Toggle theme"
             >
               {themeIcon}
@@ -102,7 +102,7 @@ export default function Header() {
             {/* Hamburger button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400"
+              className="p-2 rounded-md text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
               aria-label="Toggle menu"
             >
               {mobileMenuOpen ? (
@@ -126,9 +126,9 @@ export default function Header() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`block px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive(link.href)
-                    ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
+                    ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white'
                     : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
                 }`}
               >
@@ -141,7 +141,7 @@ export default function Header() {
                 setMobileMenuOpen(false)
                 track('resume_click_nav')
               }}
-              className="block mx-4 mt-3 px-4 py-2.5 rounded-full text-center text-sm font-semibold bg-primary-600 text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-400 dark:text-gray-900 transition-colors"
+              className="block mx-4 mt-3 px-4 py-2.5 rounded-md text-center text-sm font-semibold bg-primary-600 text-white hover:bg-primary-700 dark:bg-primary-400 dark:hover:bg-primary-300 dark:text-gray-950 transition-colors"
             >
               {RESUME_CTA.name}
             </Link>

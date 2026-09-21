@@ -1,72 +1,49 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import TrackedLink from './TrackedLink'
+import HeroArt from './HeroArt'
 
-const SOCIAL_LINKS = [
-  {
-    name: 'LinkedIn',
-    url: 'https://www.linkedin.com/in/tarekalaaddin/',
-    path: 'M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 110-4.13 2.06 2.06 0 010 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z',
-  },
-  {
-    name: 'GitHub',
-    url: 'https://github.com/altitudeinfosys',
-    path: 'M12 .5C5.37.5 0 5.78 0 12.29c0 5.2 3.44 9.6 8.21 11.16.6.11.82-.25.82-.56v-2c-3.34.71-4.04-1.4-4.04-1.4-.55-1.36-1.34-1.72-1.34-1.72-1.08-.72.09-.7.09-.7 1.2.08 1.83 1.2 1.83 1.2 1.07 1.78 2.81 1.27 3.5.97.1-.76.42-1.27.76-1.56-2.67-.29-5.47-1.3-5.47-5.79 0-1.28.47-2.32 1.23-3.14-.12-.29-.53-1.49.12-3.1 0 0 1-.31 3.3 1.2a11.6 11.6 0 016 0c2.28-1.51 3.29-1.2 3.29-1.2.65 1.61.24 2.81.12 3.1.77.82 1.23 1.86 1.23 3.14 0 4.5-2.81 5.49-5.49 5.78.43.36.81 1.08.81 2.18v3.23c0 .31.22.68.83.56A12.02 12.02 0 0024 12.29C24 5.78 18.63.5 12 .5z',
-  },
-  {
-    name: 'X',
-    url: 'https://x.com/tarekalaaddin',
-    path: 'M18.9 1.15h3.68l-8.04 9.19L24 22.85h-7.41l-5.8-7.58-6.64 7.58H.46l8.6-9.83L0 1.15h7.59l5.24 6.93 6.07-6.93z',
-  },
-]
+interface LandingHeroProps {
+  postCount: number
+  appCount: number
+}
 
-export default function LandingHero() {
+export default function LandingHero({ postCount, appCount }: LandingHeroProps) {
+  const STATS = [
+    { value: '20+', label: 'Years in production' },
+    { value: String(postCount), label: 'Articles published' },
+    { value: String(appCount), label: 'Apps shipped solo' },
+  ]
+
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-primary-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      {/* ambient glow */}
-      <div className="pointer-events-none absolute -top-24 -right-24 w-[34rem] h-[34rem] rounded-full bg-primary-200/50 dark:bg-primary-700/20 blur-3xl"></div>
-
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28 grid lg:grid-cols-12 gap-12 items-center">
+    <section className="relative overflow-hidden bg-white dark:bg-gray-900">
+      <div className="max-w-[76rem] mx-auto px-4 sm:px-6 lg:px-8 pt-12 lg:pt-[4.5rem] grid lg:grid-cols-12 gap-8 lg:items-end">
         {/* Copy */}
-        <div className="lg:col-span-7">
-          <div className="animate-rise reveal-1 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300 shadow-sm mb-7">
-            <span className="relative flex h-2 w-2">
+        <div className="relative z-10 lg:col-span-7 lg:pb-14">
+          <div className="animate-rise reveal-1 eyebrow inline-flex items-center gap-2">
+            <span className="relative flex h-[7px] w-[7px]">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              <span className="relative inline-flex rounded-full h-[7px] w-[7px] bg-green-500"></span>
             </span>
-            Open to senior engineering, AI &amp; automation roles
+            Tarek Alaaddin · Senior engineer · Open to roles
           </div>
 
-          <h1 className="animate-rise reveal-2 font-display font-extrabold tracking-[-0.03em] leading-[0.95] text-6xl sm:text-7xl lg:text-[5.25rem] text-gray-900 dark:text-white">
-            Tarek<br />Alaaddin
+          <h1 className="animate-rise reveal-2 mt-5 font-display font-bold tracking-[-0.035em] leading-[0.98] text-[2.75rem] sm:text-6xl lg:text-[5rem] text-gray-900 dark:text-white text-balance">
+            Agents that run unattended. Apps that ship.
           </h1>
 
-          <p className="animate-rise reveal-3 mt-6 text-xl sm:text-2xl font-display font-semibold text-gray-700 dark:text-gray-200 max-w-xl leading-snug">
+          <p className="animate-rise reveal-3 mt-6 text-lg sm:text-[1.3rem] text-gray-600 dark:text-gray-300 max-w-xl leading-normal">
             Senior engineer who builds{' '}
-            <span className="text-primary-600 dark:text-primary-400">AI automations</span> and ships{' '}
-            <span className="text-primary-600 dark:text-primary-400">apps</span> end to end — backed by 20+ years of enterprise Java and React.
+            <span className="font-medium text-primary-600 dark:text-primary-400">AI automations</span> and ships{' '}
+            <span className="font-medium text-primary-600 dark:text-primary-400">apps</span> end to end — backed by 20+ years of enterprise Java and React.
           </p>
 
-          <p className="animate-rise reveal-4 mt-5 text-lg text-gray-500 dark:text-gray-400 max-w-lg leading-relaxed">
-            Claude-powered agents, n8n pipelines, and MCP servers by day; four products shipped solo — Taskitos, ExpandNote, SayCopy, PropertyPulse360. I write about all of it here.
-          </p>
-
-          <div className="animate-rise reveal-5 mt-9 flex flex-wrap items-center gap-3">
-            <TrackedLink
-              href="/resume"
-              event="resume_click_hero"
-              className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-gray-900 dark:bg-primary-600 text-white font-semibold hover:bg-primary-600 dark:hover:bg-primary-500 transition shadow-lg shadow-gray-900/10"
-            >
+          <div className="animate-rise reveal-4 mt-8 flex flex-wrap items-center gap-3">
+            <TrackedLink href="/resume" event="resume_click_hero" className="btn-flat btn-flat-primary">
               View resume
-              <svg className="w-4 h-4 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
+              <span aria-hidden="true">→</span>
             </TrackedLink>
-            <TrackedLink
-              href="/contact"
-              event="contact_click_hero"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white font-semibold hover:border-primary-600 hover:text-primary-600 dark:hover:border-primary-400 dark:hover:text-primary-400 transition"
-            >
+            <TrackedLink href="/contact" event="contact_click_hero" className="btn-flat btn-flat-ghost">
               Get in touch
             </TrackedLink>
             <Link href="/blog" className="ml-1 text-sm font-semibold text-primary-600 dark:text-primary-400 hover:underline">
@@ -74,63 +51,37 @@ export default function LandingHero() {
             </Link>
           </div>
 
-          <div className="animate-rise reveal-5 mt-6 flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-500 dark:text-gray-400">
-            <span className="inline-flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
-              Round Rock, TX · Austin metro
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></svg>
-              Remote-friendly
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" viewBox="0 0 24 24"><path d="M4 7h16v12H4zM4 7l8 6 8-6" /></svg>
-              Replies within a day
-            </span>
+          <div className="animate-rise reveal-5 mt-5 flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-[0.72rem] uppercase tracking-[0.06em] text-gray-500 dark:text-gray-400">
+            <span>Round Rock, TX · Austin metro</span>
+            <span>Remote-friendly</span>
+            <span>Replies within a day</span>
           </div>
 
-          <div className="animate-rise reveal-6 mt-9 flex items-center gap-5 text-gray-400 dark:text-gray-500">
-            <span className="text-xs font-semibold uppercase tracking-widest">Find me</span>
-            <span className="h-px w-8 bg-gray-300 dark:bg-gray-700"></span>
-            {SOCIAL_LINKS.map((link) => (
-              <a
-                key={link.name}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={link.name}
-                className="hover:text-primary-600 dark:hover:text-primary-400 transition"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d={link.path} />
-                </svg>
-              </a>
+          <dl className="animate-rise reveal-6 mt-10 pt-6 border-t border-gray-200 dark:border-gray-800 grid grid-cols-3 gap-x-4 sm:flex sm:flex-wrap sm:gap-x-12 gap-y-5">
+            {STATS.map((stat) => (
+              <div key={stat.label} className="flex flex-col-reverse justify-end">
+                <dt className="font-mono text-[0.66rem] uppercase tracking-[0.14em] text-gray-500 dark:text-gray-400">
+                  {stat.label}
+                </dt>
+                <dd className="font-mono font-medium text-[1.6rem] tabular-nums text-gray-900 dark:text-white">
+                  {stat.value}
+                </dd>
+              </div>
             ))}
-          </div>
+          </dl>
         </div>
 
-        {/* Photo */}
-        <div className="animate-rise reveal-3 lg:col-span-5 relative">
-          <div className="absolute -inset-3 -rotate-3 rounded-[2rem] bg-gradient-to-br from-primary-500 to-primary-700"></div>
-          <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-primary-900/20 aspect-[4/5] ring-1 ring-black/5">
-            <Image
-              src="/images/tarek.jpg"
-              alt="Tarek Alaaddin"
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 40vw"
-              className="object-cover object-top"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-900/40 via-transparent to-transparent"></div>
-          </div>
-          <div className="absolute -bottom-5 -left-5 bg-white dark:bg-gray-800 rounded-2xl shadow-xl px-5 py-3 border border-gray-100 dark:border-gray-700">
-            <div className="text-2xl font-display font-extrabold leading-none text-gray-900 dark:text-white">
-              20<span className="text-primary-600 dark:text-primary-400">+</span>
-            </div>
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mt-1">
-              Years building
-            </div>
-          </div>
+        {/* Photo over the drifting character field */}
+        <div className="relative lg:col-span-5 lg:self-stretch min-h-[340px] lg:min-h-[420px]">
+          <HeroArt className="art-fade absolute -top-5 left-0 w-full h-[calc(100%+1.25rem)] lg:-top-10 lg:-left-40 lg:w-[calc(100%+300px)] lg:max-w-none lg:h-[calc(100%+2.5rem)]" />
+          <Image
+            src="/images/tarek.jpg"
+            alt="Tarek Alaaddin"
+            fill
+            priority
+            sizes="(max-width: 1024px) 100vw, 40vw"
+            className="photo-fade object-cover object-[50%_18%]"
+          />
         </div>
       </div>
     </section>

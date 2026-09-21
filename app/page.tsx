@@ -1,5 +1,4 @@
 import LandingHero from '@/components/home/LandingHero'
-import Highlights from '@/components/home/Highlights'
 import WhatIBring from '@/components/home/WhatIBring'
 import FitCheckSection from '@/components/home/FitCheckSection'
 import BlogPostsSection from '@/components/home/BlogPostsSection'
@@ -22,8 +21,7 @@ export default function Home() {
 
   return (
     <div className="bg-white dark:bg-gray-900">
-      <LandingHero />
-      <Highlights postCount={allPosts.length} appCount={apps.length} />
+      <LandingHero postCount={allPosts.length} appCount={apps.length} />
       <WhatIBring />
       <FitCheckSection />
       <BlogPostsSection posts={allPosts.slice(0, 3)} totalCount={allPosts.length} />
