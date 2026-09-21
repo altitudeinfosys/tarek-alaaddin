@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEO Audit — tarekalaaddin.com</title>
+<style>
+  :root { --bg:#fbfaf7; --ink:#1b1d22; --mute:#5d636e; --line:#e2dfd8; --card:#fff; --ok:#1d7a4f; --okbg:#e6f4ec; --warn:#9a6200; --warnbg:#fdf1d8; --bad:#a8322a; --badbg:#fbe6e3; --accent:#2f5bd0; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#14161a; --ink:#e9e7e2; --mute:#9aa0ab; --line:#2c3038; --card:#1b1e24; --ok:#5fd19a; --okbg:#15301f; --warn:#f0bd5a; --warnbg:#33280f; --bad:#f08a80; --badbg:#3a1a17; --accent:#8aa8ff; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif; }
+  main { max-width:920px; margin:0 auto; padding:48px 16px 80px; }
+  h1 { font-size:2.1rem; line-height:1.15; letter-spacing:-0.02em; margin:0 0 8px; }
+  h2 { font-size:1.3rem; margin:48px 0 14px; letter-spacing:-0.01em; }
+  .sub { color:var(--mute); margin:0 0 28px; }
+  .verdict { border:1px solid var(--line); border-left:5px solid var(--ok); background:var(--card); padding:18px 20px; border-radius:8px; }
+  .verdict strong { color:var(--ok); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:20px 0; }
+  .tile { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px 16px; }
+  .tile b { display:block; font-size:1.7rem; line-height:1.2; font-variant-numeric:tabular-nums; }
+  .tile span { color:var(--mute); font-size:.85rem; }
+  .scroll { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:8px; font-size:.93rem; }
+  th,td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; color:var(--mute); }
+  tr:last-child td { border-bottom:0; }
+  .pill { display:inline-block; padding:1px 9px; border-radius:99px; font-size:.78rem; font-weight:600; white-space:nowrap; }
+  .ok { color:var(--ok); background:var(--okbg); } .warn { color:var(--warn); background:var(--warnbg); } .bad { color:var(--bad); background:var(--badbg); }
+  code { font:0.86em ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--line); padding:1px 5px; border-radius:4px; }
+  .callout { border:1px solid var(--line); border-left:5px solid var(--warn); background:var(--card); padding:14px 18px; border-radius:8px; margin:16px 0; }
+  .ba { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .ba > div { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 14px; }
+  .ba h3 { margin:0 0 6px; font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; color:var(--mute); }
+  pre { margin:0; font:0.82rem/1.5 ui-monospace,Menlo,monospace; white-space:pre-wrap; word-break:break-word; }
+  svg text { font:12px -apple-system,"Segoe UI",sans-serif; fill:var(--ink); }
+  svg .m { fill:var(--mute); font-size:11px; }
+  ol li { margin-bottom:8px; }
+  @media (max-width:600px){ .ba{grid-template-columns:1fr;} h1{font-size:1.7rem;} }
+  @media print { body{background:#fff;} main{padding:0;} }
+</style>
+</head>
+<body>
+<main>
+  <h1>SEO Audit — tarekalaaddin.com</h1>
+  <p class="sub">Run 21 Sep 2026 against live production (<code>www.tarekalaaddin.com</code>), the repo on <code>main</code>, and the Vercel Firewall config.</p>
+
+  <div class="verdict">
+    <strong>Verdict: the fundamentals are solid, and nothing in the code, robots.txt, headers, sitemap or Vercel Firewall blocks search engines.</strong>
+    Every public page returns 200, is <code>index, follow</code>, has a unique title, description, self-canonical, one H1 and valid structured data. Lighthouse SEO is 100/100. I found no lock to remove — see “The unlock” below. Five small defects are fixed on branch <code>feature/seo-audit-fixes</code>; six further recommendations need your decision.
+  </div>
+
+  <div class="grid">
+    <div class="tile"><b>100</b><span>Lighthouse SEO (home + post)</span></div>
+    <div class="tile"><b>100</b><span>Accessibility &amp; best practices</span></div>
+    <div class="tile"><b>75 / 89</b><span>Mobile performance, home / post</span></div>
+    <div class="tile"><b>101</b><span>URLs in sitemap (6 pages + 95 posts)</span></div>
+    <div class="tile"><b>2,202</b><span>Median words per post</span></div>
+    <div class="tile"><b>0</b><span>Post-to-post links on post pages</span></div>
+  </div>
+
+  <h2>The “unlock”: I found nothing locked</h2>
+  <p>I checked every layer where a crawler could be stopped. All are open today. If you had a specific switch in mind that is not listed here, tell me which and I will check it.</p>
+  <div class="scroll">
+  <svg viewBox="0 0 880 150" width="100%" role="img" aria-label="Crawler path through five layers, all open">
+    <g fill="none" stroke="var(--line)" stroke-width="1.5">
+      <rect x="4" y="30" width="150" height="80" rx="8" fill="var(--card)"/><rect x="186" y="30" width="150" height="80" rx="8" fill="var(--card)"/><rect x="368" y="30" width="150" height="80" rx="8" fill="var(--card)"/><rect x="550" y="30" width="150" height="80" rx="8" fill="var(--card)"/><rect x="732" y="30" width="144" height="80" rx="8" fill="var(--card)"/>
+    </g>
+    <g stroke="var(--mute)" stroke-width="1.5"><path d="M156 70h26M338 70h26M520 70h26M702 70h26"/></g>
+    <text x="16" y="56" font-weight="600">Vercel Firewall</text><text x="16" y="76" class="m">Attack Mode off, no bot rules</text><text x="16" y="94" class="m">2 rules: POST /api limits</text>
+    <text x="198" y="56" font-weight="600">robots.txt</text><text x="198" y="76" class="m">Allow: / for all +</text><text x="198" y="94" class="m">search &amp; AI-search bots</text>
+    <text x="380" y="56" font-weight="600">HTTP headers</text><text x="380" y="76" class="m">No X-Robots-Tag</text><text x="380" y="94" class="m">200 to Googlebot UA</text>
+    <text x="562" y="56" font-weight="600">Meta robots</text><text x="562" y="76" class="m">index, follow everywhere</text><text x="562" y="94" class="m">noindex: /thank-you, /admin</text>
+    <text x="744" y="56" font-weight="600">Sitemap</text><text x="744" y="76" class="m">101 URLs, all 200</text><text x="744" y="94" class="m">referenced in robots</text>
+    <g font-weight="600" fill="var(--ok)"><text x="16" y="132" style="fill:var(--ok)">open</text><text x="198" y="132" style="fill:var(--ok)">open</text><text x="380" y="132" style="fill:var(--ok)">open</text><text x="562" y="132" style="fill:var(--ok)">open</text><text x="744" y="132" style="fill:var(--ok)">open</text></g>
+  </svg>
+  </div>
+  <div class="callout">
+    <b>Firewall detail.</b> The active config read from the Vercel API has no managed Bot Protection or AI-bot ruleset, the OWASP rule groups that are on are all <i>log only</i>, and the two custom rules rate-limit only <code>POST /api/fit-check</code> and <code>POST /api/chat</code>. <b>One thing I could not see from here:</b> whether the site is verified in Google Search Console / Bing Webmaster Tools — there is no verification tag in the code, so it is either done by DNS or not done. That registration is the real “unlock”.
+  </div>
+
+  <h2>What was checked</h2>
+  <div class="scroll"><table>
+    <tr><th>Area</th><th>Result</th><th>Evidence</th></tr>
+    <tr><td>Indexability</td><td><span class="pill ok">Pass</span></td><td>7 page types fetched as Googlebot: all 200, <code>index, follow</code>; <code>/thank-you</code> and <code>/admin</code> correctly noindex; unknown URLs return a real 404</td></tr>
+    <tr><td>Canonicals</td><td><span class="pill ok">Pass</span></td><td>Every indexable page self-canonicalises on <code>www</code>; http → https is a 308</td></tr>
+    <tr><td>Titles &amp; descriptions</td><td><span class="pill warn">Mostly</span></td><td>All unique, none missing. 81 of 95 post titles exceed ~70 chars once “ | Tarek Alaaddin” is appended; 21 descriptions exceed 160 chars — Google will truncate them</td></tr>
+    <tr><td>Headings</td><td><span class="pill ok">Pass</span></td><td>One H1 per page. One post had a second H1 in its body — fixed</td></tr>
+    <tr><td>Structured data</td><td><span class="pill warn">Mostly</span></td><td>Person, WebSite, BlogPosting all parse; author links to Person <code>@id</code>. BlogPosting had no <code>image</code> — fixed</td></tr>
+    <tr><td>Social cards</td><td><span class="pill ok">Pass</span></td><td>Full Open Graph + Twitter tags; per-post generated OG image returns 200 image/png</td></tr>
+    <tr><td>Sitemap / RSS</td><td><span class="pill ok">Pass</span></td><td>101 URLs; <code>getAllPosts</code> filters <code>published: false</code>, so drafts cannot reach the sitemap, <code>/blog</code> or the feed; <code>/feed.xml</code> returns 200 with 95 items</td></tr>
+    <tr><td>Content depth</td><td><span class="pill ok">Pass</span></td><td>95 posts, none under 600 words, median 2,202; all images have alt text</td></tr>
+    <tr><td>Internal linking</td><td><span class="pill bad">Weak</span></td><td><code>/blog</code> links all 95 posts server-side, but a post page links to 0 other posts and 44 posts have no internal links in their body</td></tr>
+    <tr><td>Mobile performance</td><td><span class="pill warn">OK</span></td><td>Home: LCP 5.7 s, CLS 0, TBT 0 ms. Post: LCP 3.5 s. Lab test on throttled 4G; Google’s target is LCP under 2.5 s</td></tr>
+    <tr><td>Redirects</td><td><span class="pill warn">Fix</span></td><td><code>tarekalaaddin.com</code> → <code>www</code> is a <b>307 temporary</b> redirect; should be 308 permanent</td></tr>
+  </table></div>
+
+  <h2>Fixed on <code>feature/seo-audit-fixes</code></h2>
+  <p>All five are small, build-verified, and change no visible UI.</p>
+  <div class="scroll"><table>
+    <tr><th>#</th><th>Change</th><th>Why</th></tr>
+    <tr><td>1</td><td><code>robots.txt</code> now disallows <code>/api/</code> and <code>/admin/</code></td><td>Stops crawlers burning requests on the rate-limited AI endpoints, the cron route and the admin page. Note <code>/admin</code> is now both disallowed and noindex; a crawler that cannot fetch a page cannot read its noindex, which is fine here only because nothing public links to <code>/admin</code></td></tr>
+    <tr><td>2</td><td>BlogPosting JSON-LD gains <code>image</code> (the post’s generated OG image)</td><td>Google lists <code>image</code> as a key Article property for rich results</td></tr>
+    <tr><td>3</td><td>Body <code># </code> heading demoted to <code>## </code> in <code>local-llms-build-your-own-ai-stack.mdx</code></td><td>Removes the only duplicate H1 on the site</td></tr>
+    <tr><td>4</td><td><code>/thank-you</code> gets its own canonical</td><td>It was inheriting the homepage canonical from the root layout while being noindex — a mixed signal</td></tr>
+    <tr><td>5</td><td>Sitemap <code>lastmod</code>: home and <code>/blog</code> use the newest post date; other static pages carry none</td><td>They previously said “modified right now” on every fetch, which teaches Google to ignore the field</td></tr>
+  </table></div>
+  <div class="ba" style="margin-top:12px">
+    <div><h3>robots.txt before</h3><pre>User-Agent: *
+Allow: /</pre></div>
+    <div><h3>robots.txt after</h3><pre>User-Agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/</pre></div>
+  </div>
+
+  <h2>Recommended next, in priority order</h2>
+  <ol>
+    <li><b>Register the site with Google Search Console and Bing Webmaster Tools, then submit <code>https://www.tarekalaaddin.com/sitemap.xml</code>.</b> Use a Domain property verified by DNS TXT so apex and www are both covered. This is the step that actually starts indexing and the only way to see coverage errors.</li>
+    <li><b>Make the apex redirect permanent.</b> Vercel → project → Settings → Domains → <code>tarekalaaddin.com</code> → redirect to www with status <b>308</b>. A 307 tells Google the move is temporary, so link equity to the bare domain is not consolidated.</li>
+    <li><b>Add a “Related posts” block to post pages</b> (3–4 posts from the same category/tags). Today every post is a dead end reachable only from <code>/blog</code> and the sitemap. This is the single biggest on-site ranking lever left, and it also helps readers. It is a UI change, so I have not built it without your say.</li>
+    <li><b>Shorten what Google displays.</b> Drop the “ | Tarek Alaaddin” suffix on posts (one line, via <code>title.absolute</code>) which cuts titles over ~70 characters from 81 to 18, and trim the 21 long descriptions to ≤155 chars over time. Also add a rule to the blog-post pipeline: title ≤60, description ≤155, at least two internal links per post.</li>
+    <li><b>Homepage LCP.</b> The hero cut-out is a 642 KB PNG source. It is already <code>priority</code>-loaded through <code>next/image</code>; re-exporting the source as a ~1200 px-wide WebP/AVIF should pull LCP toward the 2.5 s target.</li>
+    <li><b>Homepage relevance.</b> The title “Software Engineer &amp; Product Builder” names no searchable topic. If the goal is to rank for AI automation / agentic coding work, say so in the homepage title, description and H1.</li>
+  </ol>
+
+  <h2>Method and limits</h2>
+  <p class="sub">Live pages fetched with curl (default and Googlebot user agents); frontmatter of all 95 MDX posts parsed by script; JSON-LD parsed from a live post; Lighthouse mobile run locally in headless Chrome (Google’s PageSpeed API was over its shared daily quota, so there is no real-user field data in this report); Vercel Firewall read with <code>vercel firewall overview</code>, <code>rules list</code> and the active-config API. No Vercel settings were changed.</p>
+</main>
+</body>
+</html>

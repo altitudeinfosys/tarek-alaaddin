@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import Button from '@/components/ui/Button'
 import { Metadata } from 'next'
+import { absoluteUrl } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: 'Thank You for Subscribing | Tarek Alaaddin',
   description: 'Thanks for subscribing to my newsletter. Check your inbox for a welcome email.',
+  alternates: { canonical: absoluteUrl('/thank-you') },
   robots: {
     index: false,
     follow: false,
