@@ -18,7 +18,7 @@ const RESUME_CTA = { name: 'View resume', href: '/resume' }
 
 export default function Header() {
   const pathname = usePathname()
-  const { theme, toggleTheme } = useTheme()
+  const { toggleTheme } = useTheme()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const isActive = (href: string) => {
@@ -28,16 +28,18 @@ export default function Header() {
     return pathname.startsWith(href)
   }
 
-  const themeIcon =
-    theme === 'light' ? (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  // Both icons render and CSS picks one, so the icon matches the page theme
+  // before hydration (the theme class is set pre-paint, React state is not).
+  const themeIcon = (
+    <>
+      <svg className="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
       </svg>
-    ) : (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
       </svg>
-    )
+    </>
+  )
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-300 dark:border-gray-800">

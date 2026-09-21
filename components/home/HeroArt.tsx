@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { useTheme } from '@/components/ThemeProvider'
 
 const RAMP = ' ..::-==++**##%%@@'
 const CELL_W = 9
@@ -17,7 +16,6 @@ const COLORS = {
 // drawn only on the client, paused offscreen, static under reduced motion.
 export default function HeroArt({ className = '' }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const { theme } = useTheme()
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -50,7 +48,8 @@ export default function HeroArt({ className = '' }: { className?: string }) {
     const draw = (ms: number) => {
       const t = ms / 1000
       ctx.clearRect(0, 0, width, height)
-      ctx.fillStyle = COLORS[theme]
+      // Read the theme off <html>: it is correct before hydration, React state is not
+      ctx.fillStyle = COLORS[document.documentElement.classList.contains('dark') ? 'dark' : 'light']
       ctx.font = `12px ${fontFamily}`
       ctx.textBaseline = 'top'
 
@@ -95,14 +94,19 @@ export default function HeroArt({ className = '' }: { className?: string }) {
     })
     observer.observe(canvas)
 
+    // Repaint on theme change (matters when the loop is off under reduced motion)
+    const themeObserver = new MutationObserver(() => draw(performance.now()))
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+
     if (!reduceMotion) frame = requestAnimationFrame(loop)
 
     return () => {
       cancelAnimationFrame(frame)
       window.removeEventListener('resize', onResize)
       observer.disconnect()
+      themeObserver.disconnect()
     }
-  }, [theme])
+  }, [])
 
   return <canvas ref={canvasRef} aria-hidden="true" className={`pointer-events-none font-mono ${className}`} />
 }
