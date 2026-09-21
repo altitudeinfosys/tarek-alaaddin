@@ -88,6 +88,7 @@ export function BlogPostingSchema({
         headline: title,
         description,
         url: absoluteUrl(`/blog/${slug}`),
+        image: absoluteUrl(`/blog/${slug}/opengraph-image`),
         datePublished: date,
         dateModified: date,
         articleSection: category,
