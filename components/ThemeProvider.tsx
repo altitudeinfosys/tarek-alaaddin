@@ -45,11 +45,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
-  // Prevent flash of wrong theme
-  if (!mounted) {
-    return null
-  }
-
+  // Children always render, including on the server, so crawlers and the first
+  // paint get real content. The wrong-theme flash is prevented by the inline
+  // script in app/layout.tsx, which sets the class before first paint.
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}

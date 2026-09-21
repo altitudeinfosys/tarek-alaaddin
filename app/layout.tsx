@@ -64,6 +64,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
+        {/* Runs before first paint: the page starts dark; drop the class only if the visitor chose light */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(localStorage.getItem('theme-choice')==='light')document.documentElement.classList.remove('dark')}catch(e){}",
+          }}
+        />
         <PersonSchema />
         <WebSiteSchema />
       </head>
