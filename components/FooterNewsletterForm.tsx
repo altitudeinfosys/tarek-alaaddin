@@ -22,7 +22,7 @@ export default function FooterNewsletterForm() {
       const response = await fetch('/api/newsletter/popup-subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, honeypot }),
+        body: JSON.stringify({ email, honeypot, source: 'footer' }),
       })
       const data = await response.json()
       if (!response.ok) {

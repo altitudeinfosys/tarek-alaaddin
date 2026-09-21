@@ -5,10 +5,15 @@ import { renderWelcomeEmail } from '@/lib/email/templates'
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+// The footer form reuses this honeypot-protected endpoint. Only known values are
+// recorded; anything else falls back to 'popup' so callers can't write arbitrary text.
+const ALLOWED_SOURCES = ['popup', 'footer'] as const
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { email, firstName, honeypot } = body
+    const source = ALLOWED_SOURCES.includes(body.source) ? body.source : 'popup'
 
     if (honeypot) {
       return NextResponse.json({ success: true })
@@ -21,7 +26,7 @@ export async function POST(request: NextRequest) {
     const result = await upsertSubscriber({
       email,
       firstName: firstName?.trim() || null,
-      source: 'popup',
+      source,
     })
 
     if (result.isNew || result.wasReactivated) {
