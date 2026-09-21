@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { track } from '@vercel/analytics'
 import { useTheme } from './ThemeProvider'
+import Logo from './Logo'
 import { useState } from 'react'
 
 const NAVIGATION_LINKS = [
@@ -43,7 +44,8 @@ export default function Header() {
       <nav className="max-w-[76rem] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-[3.75rem]">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center gap-2.5 text-gray-900 dark:text-white">
+            <Logo className="h-7 w-auto" />
             <span className="font-display text-base font-bold tracking-[-0.01em] text-gray-900 dark:text-white">
               Tarek Alaaddin
             </span>
