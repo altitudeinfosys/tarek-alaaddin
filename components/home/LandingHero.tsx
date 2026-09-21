@@ -74,13 +74,14 @@ export default function LandingHero({ postCount, appCount }: LandingHeroProps) {
         {/* Photo over the drifting character field */}
         <div className="relative lg:col-span-5 lg:self-stretch min-h-[340px] lg:min-h-[420px]">
           <HeroArt className="art-fade absolute -top-5 left-0 w-full h-[calc(100%+1.25rem)] lg:-top-10 lg:-left-40 lg:w-[calc(100%+300px)] lg:max-w-none lg:h-[calc(100%+2.5rem)]" />
+          {/* Background-removed portrait, so the character field reads behind the shoulders */}
           <Image
-            src="/images/tarek.jpg"
+            src="/images/tarek-cutout.png"
             alt="Tarek Alaaddin"
             fill
             priority
             sizes="(max-width: 1024px) 100vw, 40vw"
-            className="photo-fade object-cover object-[50%_18%]"
+            className="cutout-fade object-contain object-bottom"
           />
         </div>
       </div>

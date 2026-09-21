@@ -100,12 +100,12 @@
   .reveal-5 { animation-delay: 0.45s; }
   .reveal-6 { animation-delay: 0.55s; }
 
-  /* Hero photo: fade the left/right and bottom edges into the page */
-  .photo-fade {
-    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 26%, #000 80%, transparent 100%),
-      linear-gradient(to bottom, #000 62%, transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0, #000 26%, #000 80%, transparent 100%),
-      linear-gradient(to bottom, #000 62%, transparent 100%);
+  /* Hero cutout: soften the base and the outer edges of the shoulders */
+  .cutout-fade {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 9%, #000 91%, transparent 100%),
+      linear-gradient(to bottom, #000 80%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 9%, #000 91%, transparent 100%),
+      linear-gradient(to bottom, #000 80%, transparent 100%);
     -webkit-mask-composite: source-in;
     mask-composite: intersect;
     -webkit-mask-repeat: no-repeat;
