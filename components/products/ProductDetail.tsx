@@ -43,7 +43,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
         </p>
 
         {/* Links */}
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-3">
           {product.links.web && (
             <a
               href={product.links.web}
@@ -55,6 +55,16 @@ export default function ProductDetail({ product }: ProductDetailProps) {
               <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
+            </a>
+          )}
+          {product.links.ios && (
+            <a href={product.links.ios} target="_blank" rel="noopener noreferrer" className="btn-flat btn-flat-ghost">
+              App Store
+            </a>
+          )}
+          {product.links.android && (
+            <a href={product.links.android} target="_blank" rel="noopener noreferrer" className="btn-flat btn-flat-ghost">
+              Google Play
             </a>
           )}
           {product.links.github && (

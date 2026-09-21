@@ -29,6 +29,7 @@ export default function ScreenshotGallery({ images, productName }: ScreenshotGal
               src={images[selectedImage]}
               alt={`${productName} screenshot ${selectedImage + 1}`}
               fill
+              sizes="128px"
               className="object-contain"
               priority
             />
@@ -56,6 +57,7 @@ export default function ScreenshotGallery({ images, productName }: ScreenshotGal
                     src={image}
                     alt={`${productName} thumbnail ${index + 1}`}
                     fill
+                    sizes="32px"
                     className="object-contain"
                   />
                 </div>

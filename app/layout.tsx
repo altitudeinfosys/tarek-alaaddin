@@ -24,12 +24,12 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: 'Tarek Alaaddin | Software Engineer & Product Builder',
-  description: 'Software engineer with expertise in backend development, cloud architecture, and full-stack applications. Creator of Taskitos and ExpandNote.',
+  description: 'Software engineer with expertise in backend development, cloud architecture, and full-stack applications. Builder of Taskitos, ExpandNote, SayCopy, and PropertyPulse360.',
   keywords: ['software engineer', 'backend developer', 'full-stack', 'cloud architecture', 'AI products', 'SaaS'],
   authors: [{ name: 'Tarek Alaaddin' }],
   openGraph: {
     title: 'Tarek Alaaddin | Software Engineer & Product Builder',
-    description: 'Software engineer with expertise in backend development, cloud architecture, and full-stack applications. Creator of Taskitos and ExpandNote.',
+    description: 'Software engineer with expertise in backend development, cloud architecture, and full-stack applications. Builder of Taskitos, ExpandNote, SayCopy, and PropertyPulse360.',
     url: absoluteUrl(),
     siteName: 'Tarek Alaaddin',
     locale: 'en_US',

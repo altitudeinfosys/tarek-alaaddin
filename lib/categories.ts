@@ -11,6 +11,23 @@ const CATEGORY_LABELS: Record<string, string> = {
   development: 'Development',
   'developer-tools': 'Developer Tools',
   backend: 'Backend',
+  security: 'Security',
+}
+
+// The blog has three filter buttons but posts use many category spellings.
+// Map each one onto a filter so no post is unreachable.
+const CATEGORY_GROUPS: Record<string, 'ai' | 'productivity' | 'development'> = {
+  productivity: 'productivity',
+  development: 'development',
+  'developer-tools': 'development',
+  backend: 'development',
+  security: 'development',
+}
+
+export function categoryGroup(category: string): 'ai' | 'productivity' | 'development' {
+  const key = category.trim().toLowerCase().replace(/\s+/g, '-')
+  if (key === 'ai' || key.startsWith('ai-')) return 'ai'
+  return CATEGORY_GROUPS[key] ?? 'development'
 }
 
 export function categoryLabel(category: string): string {
