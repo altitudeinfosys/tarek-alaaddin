@@ -39,7 +39,7 @@ export default function Header() {
     )
 
   return (
-    <header className="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+    <header className="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-300 dark:border-gray-800">
       <nav className="max-w-[76rem] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-[3.75rem]">
           {/* Logo */}
@@ -58,7 +58,7 @@ export default function Header() {
                 className={`text-sm px-3 py-1.5 rounded-[5px] transition-colors ${
                   isActive(link.href)
                     ? 'bg-gray-100 text-gray-900 font-medium dark:bg-gray-800 dark:text-white'
-                    : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
+                    : 'text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
                 }`}
               >
                 {link.name}
@@ -81,7 +81,7 @@ export default function Header() {
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="ml-2 p-2 rounded-md text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="ml-2 p-2 rounded-md text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               aria-label="Toggle theme"
             >
               {themeIcon}
@@ -93,7 +93,7 @@ export default function Header() {
             {/* Mobile Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-md text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+              className="p-2 rounded-md text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
               aria-label="Toggle theme"
             >
               {themeIcon}
@@ -102,7 +102,7 @@ export default function Header() {
             {/* Hamburger button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-md text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+              className="p-2 rounded-md text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
               aria-label="Toggle menu"
             >
               {mobileMenuOpen ? (
@@ -129,7 +129,7 @@ export default function Header() {
                 className={`block px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive(link.href)
                     ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white'
-                    : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
                 }`}
               >
                 {link.name}

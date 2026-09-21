@@ -66,7 +66,7 @@ export default function FooterNewsletterForm() {
         placeholder="you@example.com"
         aria-label="Email address"
         disabled={status === 'submitting'}
-        className="flex-1 min-w-[12rem] px-3.5 py-2.5 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+        className="flex-1 min-w-[12rem] px-3.5 py-2.5 rounded-md border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
       />
       <button
         type="submit"

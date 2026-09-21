@@ -49,7 +49,7 @@ export default function Footer() {
   const linkClass = 'text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 transition-colors'
 
   return (
-    <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+    <footer className="bg-white dark:bg-gray-900 border-t border-gray-300 dark:border-gray-800">
       <div className="max-w-[76rem] mx-auto pt-14 pb-8 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-[1fr_1fr_1fr_1.6fr] gap-8">
           {/* Navigation */}
@@ -90,7 +90,7 @@ export default function Footer() {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-9 h-9 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-500 hover:text-primary-600 hover:border-primary-600 dark:text-gray-400 dark:hover:text-primary-400 dark:hover:border-primary-400 transition-colors"
+                  className="w-9 h-9 rounded-md border border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-600 hover:text-primary-600 hover:border-primary-600 dark:text-gray-400 dark:hover:text-primary-400 dark:hover:border-primary-400 transition-colors"
                   aria-label={link.name}
                 >
                   {link.icon}
@@ -102,21 +102,15 @@ export default function Footer() {
           {/* Newsletter */}
           <div className="col-span-2 md:col-span-1">
             <h3 className={headingClass}>Newsletter</h3>
-            <p className="text-[0.92rem] text-gray-600 dark:text-gray-300">
+            <p className="text-[0.92rem] text-gray-700 dark:text-gray-300">
               Practical notes on AI tooling and engineering. No spam, unsubscribe any time.
             </p>
             <FooterNewsletterForm />
           </div>
         </div>
 
-        <div className="mt-10 pt-5 border-t border-gray-200 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3 text-[0.8rem] text-gray-500 dark:text-gray-400">
+        <div className="mt-10 pt-5 border-t border-gray-300 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3 text-[0.8rem] text-gray-600 dark:text-gray-400">
           <span>&copy; {currentYear} Tarek Alaaddin</span>
-          <span className="inline-flex items-center gap-1.5">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            Powered by Claude AI
-          </span>
         </div>
       </div>
     </footer>

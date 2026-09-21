@@ -9,7 +9,7 @@ const CELL_H = 15
 const FRAME_MS = 80 // ~12fps keeps the drift calm and cheap
 
 const COLORS = {
-  light: 'rgba(2, 132, 199, 0.6)',
+  light: 'rgba(3, 105, 161, 0.85)',
   dark: 'rgba(56, 189, 248, 0.5)',
 }
 

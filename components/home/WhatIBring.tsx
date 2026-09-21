@@ -1,7 +1,7 @@
 const PILLARS = [
   {
     title: 'AI & automation',
-    body: 'Agents, MCP servers, and unattended pipelines built directly on the Claude API — including the content pipeline that writes, reviews, and publishes to this site and social on a schedule.',
+    body: 'Agents, MCP servers, and unattended pipelines built directly on the Claude API — including the pipeline behind this site: the ideas are mine, and agents handle the research, review, and scheduled publishing to social.',
     tags: ['Claude API', 'Agents', 'MCP', 'n8n', 'Python'],
   },
   {
@@ -23,15 +23,15 @@ export default function WhatIBring() {
       <section className="band">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-[5fr_6fr] gap-x-16 gap-y-6 items-start">
           <h2 className="h-section">AI, automation, and apps that ship.</h2>
-          <div className="space-y-4 text-[1.05rem] leading-relaxed text-gray-600 dark:text-gray-300">
+          <div className="space-y-4 text-[1.05rem] leading-relaxed text-gray-700 dark:text-gray-300">
             <p>
               Three things I&apos;m hired for — each backed by something real you can click on, not a skills list.
             </p>
             <p>
               <strong className="font-semibold text-gray-900 dark:text-white">
-                The content pipeline behind this site is one of them:
+                The pipeline behind this site is one of them:
               </strong>{' '}
-              it writes, reviews, and publishes here and to social on a schedule, with nobody watching it.
+              the ideas and the point of view are mine; agents do the research, review each draft, and publish to social on a schedule.
             </p>
           </div>
         </div>
@@ -50,7 +50,7 @@ export default function WhatIBring() {
                 <h3 className="font-display text-xl font-bold tracking-[-0.015em] text-gray-900 dark:text-white">
                   {pillar.title}
                 </h3>
-                <p className="text-[0.92rem] leading-relaxed text-gray-600 dark:text-gray-300">{pillar.body}</p>
+                <p className="text-[0.92rem] leading-relaxed text-gray-700 dark:text-gray-300">{pillar.body}</p>
                 <ul className="mt-auto flex flex-wrap gap-1.5 pt-2">
                   {pillar.tags.map((tag) => (
                     <li key={tag} className="chip">

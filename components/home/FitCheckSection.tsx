@@ -27,7 +27,7 @@ export default function FitCheckSection() {
               <span className="chip">No email required</span>
             </div>
             <h2 className="h-section">Paste the job description. See if I&apos;m a fit.</h2>
-            <p className="mt-4 text-[1.05rem] text-gray-600 dark:text-gray-300 max-w-lg">
+            <p className="mt-4 text-[1.05rem] text-gray-700 dark:text-gray-300 max-w-lg">
               An agent I built on my own work history scores the match. It&apos;s a working sample of what I do.
             </p>
             {!open ? (
@@ -44,10 +44,10 @@ export default function FitCheckSection() {
             ) : null}
           </div>
 
-          <ol className="border-t border-gray-200 dark:border-gray-800">
+          <ol className="border-t border-gray-300 dark:border-gray-800">
             {STEPS.map((step, i) => (
-              <li key={step} className="grid gap-1 py-4 border-b border-gray-200 dark:border-gray-800">
-                <span className="font-mono text-[0.69rem] uppercase tracking-[0.08em] text-gray-500 dark:text-gray-400">
+              <li key={step} className="grid gap-1 py-4 border-b border-gray-300 dark:border-gray-800">
+                <span className="font-mono text-[0.69rem] uppercase tracking-[0.08em] text-gray-600 dark:text-gray-400">
                   Step {i + 1}
                 </span>
                 <span className="font-display text-lg font-bold tracking-[-0.01em] text-gray-900 dark:text-white">

@@ -32,7 +32,7 @@ export default function LandingHero({ postCount, appCount }: LandingHeroProps) {
             Agents that run unattended. Apps that ship.
           </h1>
 
-          <p className="animate-rise reveal-3 mt-6 text-lg sm:text-[1.3rem] text-gray-600 dark:text-gray-300 max-w-xl leading-normal">
+          <p className="animate-rise reveal-3 mt-6 text-lg sm:text-[1.3rem] text-gray-700 dark:text-gray-300 max-w-xl leading-normal">
             Senior engineer who builds{' '}
             <span className="font-medium text-primary-600 dark:text-primary-400">AI automations</span> and ships{' '}
             <span className="font-medium text-primary-600 dark:text-primary-400">apps</span> end to end — backed by 20+ years of enterprise Java and React.
@@ -51,16 +51,16 @@ export default function LandingHero({ postCount, appCount }: LandingHeroProps) {
             </Link>
           </div>
 
-          <div className="animate-rise reveal-5 mt-5 flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-[0.72rem] uppercase tracking-[0.06em] text-gray-500 dark:text-gray-400">
+          <div className="animate-rise reveal-5 mt-5 flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-[0.72rem] uppercase tracking-[0.06em] text-gray-600 dark:text-gray-400">
             <span>Round Rock, TX · Austin metro</span>
             <span>Remote-friendly</span>
             <span>Replies within a day</span>
           </div>
 
-          <dl className="animate-rise reveal-6 mt-10 pt-6 border-t border-gray-200 dark:border-gray-800 grid grid-cols-3 gap-x-4 sm:flex sm:flex-wrap sm:gap-x-12 gap-y-5">
+          <dl className="animate-rise reveal-6 mt-10 pt-6 border-t border-gray-300 dark:border-gray-800 grid grid-cols-3 gap-x-4 sm:flex sm:flex-wrap sm:gap-x-12 gap-y-5">
             {STATS.map((stat) => (
               <div key={stat.label} className="flex flex-col-reverse justify-end">
-                <dt className="font-mono text-[0.66rem] uppercase tracking-[0.14em] text-gray-500 dark:text-gray-400">
+                <dt className="font-mono text-[0.66rem] uppercase tracking-[0.14em] text-gray-600 dark:text-gray-400">
                   {stat.label}
                 </dt>
                 <dd className="font-mono font-medium text-[1.6rem] tabular-nums text-gray-900 dark:text-white">

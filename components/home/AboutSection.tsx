@@ -28,7 +28,7 @@ export default function AboutSection() {
             width={1536}
             height={1024}
             sizes="(max-width: 1024px) 100vw, 40vw"
-            className="w-full aspect-[4/3] object-cover object-center rounded-lg border border-gray-200 dark:border-gray-800"
+            className="w-full aspect-[4/3] object-cover object-center rounded-lg border border-gray-300 dark:border-gray-800"
           />
         </div>
 
@@ -37,7 +37,7 @@ export default function AboutSection() {
           <div className="eyebrow eyebrow-accent mb-2.5">About</div>
           <h2 className="h-section">Engineer, builder, writer.</h2>
 
-          <div className="mt-5 mb-7 space-y-3.5 text-gray-600 dark:text-gray-300 text-[1.03rem] leading-relaxed">
+          <div className="mt-5 mb-7 space-y-3.5 text-gray-700 dark:text-gray-300 text-[1.03rem] leading-relaxed">
             <p>
               I&apos;ve spent 20+ years building enterprise-scale applications and leading technical teams —
               most recently the contract-administration system a Texas state agency runs on, front to back.
@@ -53,10 +53,10 @@ export default function AboutSection() {
           </div>
 
           {/* Currently */}
-          <dl className="mb-7 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-200 dark:divide-gray-800 bg-white dark:bg-gray-900">
+          <dl className="mb-7 overflow-hidden rounded-lg border border-gray-300 dark:border-gray-800 divide-y divide-gray-300 dark:divide-gray-800 bg-white dark:bg-gray-900">
             {CURRENTLY.map((row) => (
               <div key={row.label} className="grid sm:grid-cols-[8rem_1fr] gap-x-4 gap-y-1 px-[1.125rem] py-3.5">
-                <dt className="pt-0.5 font-mono text-[0.69rem] uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">
+                <dt className="pt-0.5 font-mono text-[0.69rem] uppercase tracking-[0.12em] text-gray-600 dark:text-gray-400">
                   {row.label}
                 </dt>
                 <dd className="text-[0.92rem] text-gray-900 dark:text-gray-100">{row.value}</dd>

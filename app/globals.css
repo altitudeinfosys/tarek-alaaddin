@@ -35,21 +35,21 @@
 
   /* Flat restyle primitives (Sept 2026). New names so pages not yet restyled keep the classes above. */
   .band {
-    @apply py-16 md:py-20 px-4 sm:px-6 lg:px-8 border-t border-gray-200 bg-white;
+    @apply py-16 md:py-20 px-4 sm:px-6 lg:px-8 border-t border-gray-300 bg-white;
     @apply dark:border-gray-800 dark:bg-gray-900;
   }
 
   .band-grey {
-    @apply bg-gray-100 dark:bg-gray-950;
+    @apply bg-[#e9edf2] dark:bg-gray-950;
   }
 
   .eyebrow {
-    @apply font-mono text-[0.72rem] uppercase tracking-[0.16em] text-gray-500;
+    @apply font-mono text-[0.72rem] uppercase tracking-[0.16em] text-gray-600;
     @apply dark:text-gray-400;
   }
 
   .eyebrow-accent {
-    @apply text-primary-600 dark:text-primary-400;
+    @apply text-primary-700 dark:text-primary-400;
   }
 
   .h-section {
@@ -68,13 +68,13 @@
   }
 
   .btn-flat-ghost {
-    @apply bg-white border-gray-200 text-gray-900 hover:border-primary-600 hover:text-primary-600;
+    @apply bg-white border-gray-300 text-gray-900 hover:border-primary-600 hover:text-primary-600;
     @apply dark:bg-gray-900 dark:border-gray-700 dark:text-white dark:hover:border-primary-400 dark:hover:text-primary-400;
   }
 
   /* Cells share 1px rules: the gap shows the grid's own background. */
   .thin-grid {
-    @apply grid gap-px overflow-hidden rounded-lg border border-gray-200 bg-gray-200;
+    @apply grid gap-px overflow-hidden rounded-lg border border-gray-300 bg-gray-300;
     @apply dark:border-gray-800 dark:bg-gray-800;
   }
 
@@ -84,7 +84,7 @@
   }
 
   .chip {
-    @apply font-mono text-[0.69rem] px-2 py-[0.2rem] rounded border border-gray-200 bg-gray-100 text-gray-600;
+    @apply font-mono text-[0.69rem] px-2 py-[0.2rem] rounded border border-gray-300 bg-gray-100 text-gray-700;
     @apply dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300;
   }
 
@@ -120,6 +120,8 @@
       linear-gradient(to bottom, #000 62%, transparent 100%);
     -webkit-mask-composite: source-in;
     mask-composite: intersect;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
   }
 
   .art-fade {
