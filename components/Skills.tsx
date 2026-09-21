@@ -109,44 +109,31 @@ const SKILL_CATEGORIES = [
   },
 ]
 
-const LEVEL_COLORS = {
-  Expert: 'bg-primary-100 text-primary-800 border-primary-200 dark:bg-primary-900/30 dark:text-primary-300 dark:border-primary-700',
-  Advanced: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700',
-  Intermediate: 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700',
-  Learning: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600',
-}
-
 export default function Skills() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {SKILL_CATEGORIES.map((category) => (
-        <div key={category.name} className="card p-6">
-          {/* Category Header */}
-          <div className="flex items-center gap-2 mb-4">
-            <div className="text-primary-600 dark:text-primary-400">{category.icon}</div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {category.name}
-            </h3>
-          </div>
+    <div className="thin-grid sm:grid-cols-2 lg:grid-cols-4">
+      {SKILL_CATEGORIES.map((category, i) => (
+        // An odd count leaves a hole in the last row; the final cell spans it
+        <div
+          key={category.name}
+          className={`thin-cell ${
+            i === SKILL_CATEGORIES.length - 1 && SKILL_CATEGORIES.length % 2 === 1 ? 'sm:col-span-2' : ''
+          }`}
+        >
+          <h3 className="font-display text-base font-bold tracking-[-0.01em] text-gray-900 dark:text-white">
+            {category.name}
+          </h3>
 
-          {/* Skills List */}
-          <div className="space-y-3">
+          <ul className="space-y-1.5 text-[0.9rem]">
             {category.skills.map((skill) => (
-              <div
-                key={skill.name}
-                className="flex items-center justify-between"
-              >
-                <span className="text-gray-700 dark:text-gray-300">{skill.name}</span>
-                <span
-                  className={`px-2 py-0.5 text-xs font-medium rounded-full border ${
-                    LEVEL_COLORS[skill.level as keyof typeof LEVEL_COLORS]
-                  }`}
-                >
+              <li key={skill.name} className="flex items-baseline justify-between gap-3">
+                <span className="text-gray-900 dark:text-gray-100">{skill.name}</span>
+                <span className="font-mono text-[0.66rem] uppercase tracking-[0.08em] text-gray-600 dark:text-gray-400">
                   {skill.level}
                 </span>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       ))}
     </div>
