@@ -131,10 +131,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-cursor-blink {
-    animation: none !important;
-  }
-
   .animate-rise {
     animation: none !important;
     opacity: 1 !important;
