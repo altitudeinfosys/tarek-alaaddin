@@ -33,6 +33,66 @@
     @apply dark:text-gray-100;
   }
 
+  /* Flat restyle primitives (Sept 2026). New names so pages not yet restyled keep the classes above. */
+  .band {
+    @apply py-16 md:py-20 px-4 sm:px-6 lg:px-8 border-t border-gray-300 bg-white;
+    @apply dark:border-gray-800 dark:bg-gray-900;
+  }
+
+  .band-grey {
+    @apply bg-[#e9edf2] dark:bg-gray-950;
+  }
+
+  .eyebrow {
+    @apply font-mono text-[0.72rem] uppercase tracking-[0.16em] text-gray-600;
+    @apply dark:text-gray-400;
+  }
+
+  .eyebrow-accent {
+    @apply text-primary-700 dark:text-primary-400;
+  }
+
+  .h-section {
+    @apply font-display font-bold tracking-[-0.025em] leading-[1.05] text-3xl md:text-[2.5rem] text-gray-900 text-balance;
+    @apply dark:text-white;
+  }
+
+  .btn-flat {
+    @apply inline-flex items-center justify-center gap-2 px-[1.125rem] py-[0.7rem] rounded-md border border-transparent text-[0.92rem] font-semibold transition-colors;
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900;
+  }
+
+  .btn-flat-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-700;
+    @apply dark:bg-primary-400 dark:text-gray-950 dark:hover:bg-primary-300;
+  }
+
+  .btn-flat-ghost {
+    @apply bg-white border-gray-300 text-gray-900 hover:border-primary-600 hover:text-primary-600;
+    @apply dark:bg-gray-900 dark:border-gray-700 dark:text-white dark:hover:border-primary-400 dark:hover:text-primary-400;
+  }
+
+  /* Cells share 1px rules: the gap shows the grid's own background. */
+  .thin-grid {
+    @apply grid gap-px overflow-hidden rounded-lg border border-gray-300 bg-gray-300;
+    @apply dark:border-gray-800 dark:bg-gray-800;
+  }
+
+  .thin-cell {
+    @apply flex min-w-0 flex-col gap-3 bg-white p-6;
+    @apply dark:bg-gray-900;
+  }
+
+  .chip {
+    @apply font-mono text-[0.69rem] px-2 py-[0.2rem] rounded border border-gray-300 bg-gray-100 text-gray-700;
+    @apply dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300;
+  }
+
+  .chip-accent {
+    @apply border-transparent bg-primary-50 text-primary-700;
+    @apply dark:bg-primary-900/30 dark:text-primary-300;
+  }
+
   .skill-tag {
     @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-50 text-primary-700;
     @apply dark:bg-primary-900/30 dark:text-primary-300;
@@ -51,11 +111,27 @@
   .reveal-4 { animation-delay: 0.35s; }
   .reveal-5 { animation-delay: 0.45s; }
   .reveal-6 { animation-delay: 0.55s; }
+
+  /* Hero photo: fade the left/right and bottom edges into the page */
+  .photo-fade {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 26%, #000 80%, transparent 100%),
+      linear-gradient(to bottom, #000 62%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 26%, #000 80%, transparent 100%),
+      linear-gradient(to bottom, #000 62%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+
+  .art-fade {
+    -webkit-mask-image: radial-gradient(closest-side at 52% 55%, #000 45%, transparent 100%);
+    mask-image: radial-gradient(closest-side at 52% 55%, #000 45%, transparent 100%);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-rise,
-  .animate-marquee {
+  .animate-rise {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

@@ -1,0 +1,160 @@
+<meta charset="utf-8">
+<title>Tarek Alaaddin Logo Options</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#e9edf2; --surface:#ffffff; --ink:#0b1220; --body:#374151; --muted:#4b5563;
+  --rule:#d1d5db; --accent:#0284c7; --on-accent:#ffffff;
+  --display:"Bricolage Grotesque","Inter",system-ui,sans-serif;
+  --sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--ground:#030712;--surface:#111827;--ink:#f9fafb;--body:#d1d5db;--muted:#9ca3af;--rule:#1f2937;--accent:#38bdf8;--on-accent:#030712}
+}
+:root[data-theme="dark"]{--ground:#030712;--surface:#111827;--ink:#f9fafb;--body:#d1d5db;--muted:#9ca3af;--rule:#1f2937;--accent:#38bdf8;--on-accent:#030712}
+
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--body);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin-inline:auto;padding-inline:24px;padding-block:48px 72px}
+@media (max-width:520px){.wrap{padding-inline:16px}}
+h1,h2{font-family:var(--display);color:var(--ink);margin:0;letter-spacing:-.025em;line-height:1.1;text-wrap:balance}
+h1{font-size:clamp(30px,5vw,44px)}
+h2{font-size:24px}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:16px;margin-bottom:36px}
+.top p{margin-top:12px;max-width:56ch}
+.seg{display:inline-flex;gap:6px;font-family:var(--mono);font-size:12px}
+.seg button{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--rule);padding:6px 11px;border-radius:5px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.opts{display:grid;gap:24px}
+.opt{background:var(--surface);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.opt-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;padding:20px 24px;border-bottom:1px solid var(--rule)}
+.opt-head .num{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.1em}
+.opt-head p{flex-basis:100%;font-size:14.5px;max-width:70ch}
+.opt-body{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:1px;background:var(--rule)}
+.opt-body>div{background:var(--surface);padding:28px 24px}
+@media (max-width:760px){.opt-body{grid-template-columns:1fr}}
+.big{display:flex;align-items:center;justify-content:center;min-height:200px}
+.big svg{width:min(190px,60%);height:auto}
+.label{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.ctx{display:grid;gap:22px}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--rule);border-radius:6px;padding:10px 14px;background:var(--surface)}
+.lockup{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:-.01em;color:var(--ink)}
+.lockup svg{height:28px;width:auto;display:block}
+.fake-nav{display:flex;gap:14px;font-size:13px;color:var(--muted)}
+@media (max-width:520px){.fake-nav{display:none}}
+.sizes{display:flex;flex-wrap:wrap;align-items:end;gap:22px}
+.sizes figure{margin:0;display:grid;justify-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.tab{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--rule);border-bottom:0;border-radius:8px 8px 0 0;padding:7px 12px;font-size:12.5px;color:var(--body);background:var(--ground)}
+.tab svg{width:16px;height:16px}
+
+.cursor{animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.cursor{animation:none}}
+.foot{margin-top:32px;font-size:14.5px;max-width:70ch}
+</style>
+
+<!-- shared marks: drawn as strokes, so they need no font and stay sharp at any size -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="m-tile" viewBox="0 0 32 32">
+    <rect width="32" height="32" rx="7" style="fill:var(--accent)"/>
+    <path fill="none" stroke-width="3" stroke-linecap="butt" stroke-linejoin="miter" style="stroke:var(--on-accent)" d="M5 9.5H16M10.5 9.5V24"/>
+    <path fill="none" stroke-width="3" stroke-linecap="butt" stroke-linejoin="miter" style="stroke:var(--on-accent)" d="M17.5 24L22 8.5L26.5 24M19.4 18.5H24.6"/>
+  </symbol>
+  <symbol id="m-bracket" viewBox="0 0 44 32">
+    <path fill="none" stroke-width="3" stroke-linecap="butt" stroke-linejoin="miter" style="stroke:var(--accent)" d="M8.5 4.5H4.5V27.5H8.5M35.5 4.5H39.5V27.5H35.5"/>
+    <path fill="none" stroke-width="3" stroke-linecap="butt" stroke-linejoin="miter" style="stroke:var(--ink)" d="M11 9.5H21M16 9.5V24"/>
+    <path fill="none" stroke-width="3" stroke-linecap="butt" stroke-linejoin="miter" style="stroke:var(--ink)" d="M23 24L27.5 8.5L32 24M24.9 18.5H30.1"/>
+  </symbol>
+  <symbol id="m-bracket-ico" viewBox="0 0 32 32">
+    <path fill="none" stroke-width="3" stroke-linecap="butt" stroke-linejoin="miter" style="stroke:var(--accent)" d="M8 3.5H3.5V28.5H8M24 3.5H28.5V28.5H24"/>
+    <path fill="none" stroke-width="3" stroke-linecap="butt" stroke-linejoin="miter" style="stroke:var(--ink)" d="M9.5 10.5H16M12.75 10.5V22"/>
+    <path fill="none" stroke-width="3" stroke-linecap="butt" stroke-linejoin="miter" style="stroke:var(--ink)" d="M16.5 22L19.75 10L23 22M17.9 18H21.6"/>
+  </symbol>
+  <symbol id="m-cursor" viewBox="0 0 40 32">
+    <path fill="none" stroke-width="3" stroke-linecap="butt" stroke-linejoin="miter" style="stroke:var(--ink)" d="M3 9.5H14M8.5 9.5V24"/>
+    <path fill="none" stroke-width="3" stroke-linecap="butt" stroke-linejoin="miter" style="stroke:var(--ink)" d="M15.5 24L20 8.5L24.5 24M17.4 18.5H22.6"/>
+    <rect class="cursor" style="fill:var(--accent)" x="29" y="8" width="7" height="16"/>
+  </symbol>
+  <symbol id="m-cursor-ico" viewBox="0 0 32 32">
+    <path fill="none" stroke-width="3" stroke-linecap="butt" stroke-linejoin="miter" style="stroke:var(--ink)" d="M2 9.5H11M6.5 9.5V24"/>
+    <path fill="none" stroke-width="3" stroke-linecap="butt" stroke-linejoin="miter" style="stroke:var(--ink)" d="M12 24L16 8.5L20 24M13.7 18.5H18.3"/>
+    <rect style="fill:var(--accent)" x="24" y="8" width="6" height="16"/>
+  </symbol>
+</svg>
+
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="eyebrow">Logo options</div>
+      <h1 style="margin-top:10px">Three simple marks for your name</h1>
+      <p>Each is your initials, drawn in the same flat, single-blue style as the new site. They are shapes, not fonts, so they stay sharp from a browser tab up to a slide.</p>
+    </div>
+    <div class="seg" id="theme"><button data-v="light" aria-pressed="false">Light</button><button data-v="dark" aria-pressed="false">Dark</button></div>
+  </div>
+
+  <div class="opts">
+    <section class="opt">
+      <div class="opt-head"><span class="num">A</span><h2>Tile</h2><p>White initials on a squared blue tile. The most conventional of the three and the strongest as a tab icon, because it is a solid block of your color.</p></div>
+      <div class="opt-body">
+        <div class="big"><svg viewBox="0 0 32 32"><use href="#m-tile"/></svg></div>
+        <div class="ctx">
+          <div><div class="label">In the header</div><div class="hdr"><span class="lockup"><svg viewBox="0 0 32 32"><use href="#m-tile"/></svg>Tarek Alaaddin</span><span class="fake-nav"><span>Blog</span><span>Apps</span><span>Contact</span></span></div></div>
+          <div><div class="label">Small sizes</div><div class="sizes">
+            <figure><svg width="48" height="48" viewBox="0 0 32 32"><use href="#m-tile"/></svg>48</figure>
+            <figure><svg width="32" height="32" viewBox="0 0 32 32"><use href="#m-tile"/></svg>32</figure>
+            <figure><svg width="16" height="16" viewBox="0 0 32 32"><use href="#m-tile"/></svg>16</figure>
+            <span class="tab"><svg viewBox="0 0 32 32"><use href="#m-tile"/></svg>Tarek Alaaddin</span>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="opt">
+      <div class="opt-head"><span class="num">B</span><h2>Brackets</h2><p>Initials inside blue square brackets, like an array or a tag in code. Reads as "engineer" at a glance and matches the monospace labels on the site.</p></div>
+      <div class="opt-body">
+        <div class="big"><svg viewBox="0 0 44 32"><use href="#m-bracket"/></svg></div>
+        <div class="ctx">
+          <div><div class="label">In the header</div><div class="hdr"><span class="lockup"><svg viewBox="0 0 44 32"><use href="#m-bracket"/></svg>Tarek Alaaddin</span><span class="fake-nav"><span>Blog</span><span>Apps</span><span>Contact</span></span></div></div>
+          <div><div class="label">Small sizes</div><div class="sizes">
+            <figure><svg width="48" height="48" viewBox="0 0 32 32"><use href="#m-bracket-ico"/></svg>48</figure>
+            <figure><svg width="32" height="32" viewBox="0 0 32 32"><use href="#m-bracket-ico"/></svg>32</figure>
+            <figure><svg width="16" height="16" viewBox="0 0 32 32"><use href="#m-bracket-ico"/></svg>16</figure>
+            <span class="tab"><svg viewBox="0 0 32 32"><use href="#m-bracket-ico"/></svg>Tarek Alaaddin</span>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="opt">
+      <div class="opt-head"><span class="num">C</span><h2>Cursor</h2><p>Initials followed by a blue terminal cursor that blinks in the header. It echoes the moving character wave in your hero and suggests something running.</p></div>
+      <div class="opt-body">
+        <div class="big"><svg viewBox="0 0 40 32"><use href="#m-cursor"/></svg></div>
+        <div class="ctx">
+          <div><div class="label">In the header</div><div class="hdr"><span class="lockup"><svg viewBox="0 0 40 32"><use href="#m-cursor"/></svg>Tarek Alaaddin</span><span class="fake-nav"><span>Blog</span><span>Apps</span><span>Contact</span></span></div></div>
+          <div><div class="label">Small sizes</div><div class="sizes">
+            <figure><svg width="48" height="48" viewBox="0 0 32 32"><use href="#m-cursor-ico"/></svg>48</figure>
+            <figure><svg width="32" height="32" viewBox="0 0 32 32"><use href="#m-cursor-ico"/></svg>32</figure>
+            <figure><svg width="16" height="16" viewBox="0 0 32 32"><use href="#m-cursor-ico"/></svg>16</figure>
+            <span class="tab"><svg viewBox="0 0 32 32"><use href="#m-cursor-ico"/></svg>Tarek Alaaddin</span>
+          </div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <p class="foot">Whichever you pick also becomes the site's tab icon. The site has none today, so the browser shows a blank page icon and logs a missing-file error.</p>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement, seg=document.getElementById('theme');
+  function press(v){seg.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.v===v))})}
+  seg.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;root.dataset.theme=b.dataset.v;press(b.dataset.v)});
+  press(root.dataset.theme||(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));
+})();
+</script>
