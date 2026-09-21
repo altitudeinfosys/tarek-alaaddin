@@ -33,8 +33,14 @@ export default function FitCheck() {
         body: JSON.stringify({ jobDescription: jobDescription.trim() }),
       })
 
+      if (response.status === 429) {
+        // Sent by the Vercel Firewall rule, so there is no JSON body to read
+        setError('Too many fit checks from this connection. Please try again in a few minutes.')
+        return
+      }
+
       if (!response.ok) {
-        // 4xx responses carry a message meant for the visitor (too short, too long, rate limited)
+        // 4xx responses carry a message meant for the visitor (too short, too long)
         if (response.status >= 400 && response.status < 500) {
           const body = await response.json().catch(() => null)
           if (body?.error) {

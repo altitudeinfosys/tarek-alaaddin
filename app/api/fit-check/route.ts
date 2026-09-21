@@ -1,21 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeFitCheck } from '@/lib/claude'
 import { getResumeForFitCheck } from '@/lib/resume-loader'
-import { clientIp, rateLimit } from '@/lib/rate-limit'
 
 const MAX_JOB_DESCRIPTION_CHARS = 20000
 
 export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
-  const limit = rateLimit(`fit-check:${clientIp(request)}`, 5, 10 * 60 * 1000)
-  if (!limit.ok) {
-    return NextResponse.json(
-      { error: 'Too many fit checks from this connection. Please try again in a few minutes.' },
-      { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } }
-    )
-  }
-
+  // Rate limiting is enforced at the Vercel Firewall (5 POSTs / 10 min per IP), not here:
+  // in-memory counters are not shared between function invocations on Vercel.
   try {
     const { jobDescription } = await request.json() as { jobDescription: string }
 
