@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { BlogPostMeta } from '@/types/blog'
 import BlogCard from './BlogCard'
+import { categoryGroup } from '@/lib/categories'
 import CategoryFilter from './CategoryFilter'
 import SearchInput from './SearchInput'
 import { useSearch } from '@/hooks/useSearch'
@@ -19,7 +20,7 @@ export default function BlogClientWrapper({ posts }: BlogClientWrapperProps) {
     let result = posts
 
     if (selectedCategory !== 'all') {
-      result = result.filter((post) => post.category === selectedCategory)
+      result = result.filter((post) => categoryGroup(post.category) === selectedCategory)
     }
 
     if (matchingSlugs !== null) {

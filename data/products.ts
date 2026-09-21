@@ -18,12 +18,14 @@ export const products: Product[] = [
       'Quiet Hours - respects your sleep schedule',
     ],
     status: {
-      web: '✅ Live',
-      ios: '🚧 Coming Soon',
-      android: '🚧 Coming Soon',
+      web: 'Live',
+      ios: 'Live on the App Store',
+      android: 'Live on Google Play',
     },
     links: {
       web: 'https://taskitos.com',
+      ios: 'https://apps.apple.com/us/app/taskitos/id6759997848',
+      android: 'https://play.google.com/store/apps/details?id=com.taskitos.app',
     },
     images: [
       '/images/products/taskitos-logo.png',
@@ -57,12 +59,14 @@ export const products: Product[] = [
       'Real-time Sync - cross-device synchronization with conflict resolution',
     ],
     status: {
-      web: '✅ Live',
-      ios: '🚧 Preview Builds Available',
-      android: '🚧 Preview Builds Available',
+      web: 'Live',
+      ios: 'Live on the App Store',
+      android: 'Live on Google Play',
     },
     links: {
       web: 'https://expandnote.com',
+      ios: 'https://apps.apple.com/us/app/expandnote/id6769591271',
+      android: 'https://play.google.com/store/apps/details?id=com.expandnote.app',
       github: 'https://github.com/altitudeinfosys/ExpandNote',
     },
     images: [

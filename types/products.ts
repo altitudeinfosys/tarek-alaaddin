@@ -6,6 +6,8 @@ export interface ProductStatus {
 
 export interface ProductLinks {
   web?: string
+  ios?: string
+  android?: string
   waitlist?: string
   github?: string
 }

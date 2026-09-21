@@ -34,6 +34,14 @@ export default function FitCheck() {
       })
 
       if (!response.ok) {
+        // 4xx responses carry a message meant for the visitor (too short, too long, rate limited)
+        if (response.status >= 400 && response.status < 500) {
+          const body = await response.json().catch(() => null)
+          if (body?.error) {
+            setError(body.error)
+            return
+          }
+        }
         throw new Error('Failed to analyze job fit')
       }
 

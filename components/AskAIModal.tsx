@@ -66,6 +66,14 @@ export default function AskAIModal({ isOpen, onClose }: AskAIModalProps) {
         }),
       })
 
+      if (response.status === 429) {
+        setMessages((prev) => [
+          ...prev,
+          { role: 'assistant', content: "That's a lot of questions in a short time. Please try again in a few minutes." },
+        ])
+        return
+      }
+
       if (!response.ok) {
         throw new Error('Failed to get response')
       }

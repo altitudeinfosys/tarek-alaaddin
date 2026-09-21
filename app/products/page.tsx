@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getAllProducts } from '@/data/products'
+import { apps } from '@/data/apps'
 import ProductDetail from '@/components/products/ProductDetail'
 import { absoluteUrl } from '@/lib/site'
 
@@ -23,6 +24,7 @@ export const metadata: Metadata = {
 
 export default function ProductsPage() {
   const products = getAllProducts()
+  const otherApps = apps.filter((app) => !products.some((product) => product.id === app.id))
 
   return (
     <div className="bg-white dark:bg-gray-900">
@@ -60,6 +62,27 @@ export default function ProductsPage() {
           </div>
         ))}
       </section>
+
+      {/* Apps without a full write-up here */}
+      {otherApps.length > 0 && (
+        <section className="pb-16 px-4 sm:px-6 lg:px-8 max-w-[76rem] mx-auto">
+          <div className="eyebrow eyebrow-accent mb-5">Also shipped</div>
+          <div className="thin-grid sm:grid-cols-2">
+            {otherApps.map((app) => (
+              <a key={app.id} href={app.url} target="_blank" rel="noopener noreferrer" className="group thin-cell">
+                <span className="font-display text-lg font-bold tracking-[-0.015em] text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                  {app.name}
+                  <span className="sr-only"> (opens in new tab)</span>
+                </span>
+                <span className="text-[0.9rem] leading-relaxed text-gray-700 dark:text-gray-300">{app.tagline}</span>
+                <span className="mt-auto pt-1 font-mono text-[0.69rem] uppercase tracking-[0.08em] text-gray-600 dark:text-gray-400">
+                  {app.platforms}
+                </span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* CTA Section */}
       <section className="band band-grey text-center mt-8">
