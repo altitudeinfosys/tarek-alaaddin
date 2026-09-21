@@ -45,8 +45,8 @@
   <p class="sub">Run 21 Sep 2026 against live production (<code>www.tarekalaaddin.com</code>), the repo on <code>main</code>, and the Vercel Firewall config.</p>
 
   <div class="verdict">
-    <strong>Verdict: the fundamentals are solid and nothing is blocking search engines.</strong>
-    Every public page returns 200, is <code>index, follow</code>, has a unique title, description, self-canonical, one H1 and valid structured data. Lighthouse SEO is 100/100. There was no lock to remove — see “The unlock” below. Five small defects are fixed on branch <code>feature/seo-audit-fixes</code>; four bigger opportunities need your decision.
+    <strong>Verdict: the fundamentals are solid, and nothing in the code, robots.txt, headers, sitemap or Vercel Firewall blocks search engines.</strong>
+    Every public page returns 200, is <code>index, follow</code>, has a unique title, description, self-canonical, one H1 and valid structured data. Lighthouse SEO is 100/100. I found no lock to remove — see “The unlock” below. Five small defects are fixed on branch <code>feature/seo-audit-fixes</code>; six further recommendations need your decision.
   </div>
 
   <div class="grid">
@@ -58,15 +58,15 @@
     <div class="tile"><b>0</b><span>Post-to-post links on post pages</span></div>
   </div>
 
-  <h2>The “unlock”: there is nothing locked</h2>
-  <p>I checked every layer where a crawler could be stopped. All are open today, so there is no switch to flip on the site itself.</p>
+  <h2>The “unlock”: I found nothing locked</h2>
+  <p>I checked every layer where a crawler could be stopped. All are open today. If you had a specific switch in mind that is not listed here, tell me which and I will check it.</p>
   <div class="scroll">
   <svg viewBox="0 0 880 150" width="100%" role="img" aria-label="Crawler path through five layers, all open">
     <g fill="none" stroke="var(--line)" stroke-width="1.5">
       <rect x="4" y="30" width="150" height="80" rx="8" fill="var(--card)"/><rect x="186" y="30" width="150" height="80" rx="8" fill="var(--card)"/><rect x="368" y="30" width="150" height="80" rx="8" fill="var(--card)"/><rect x="550" y="30" width="150" height="80" rx="8" fill="var(--card)"/><rect x="732" y="30" width="144" height="80" rx="8" fill="var(--card)"/>
     </g>
     <g stroke="var(--mute)" stroke-width="1.5"><path d="M156 70h26M338 70h26M520 70h26M702 70h26"/></g>
-    <text x="16" y="56" font-weight="600">Vercel Firewall</text><text x="16" y="76" class="m">Attack Mode off, 0 IP blocks</text><text x="16" y="94" class="m">2 rules: /api rate limits only</text>
+    <text x="16" y="56" font-weight="600">Vercel Firewall</text><text x="16" y="76" class="m">Attack Mode off, no bot rules</text><text x="16" y="94" class="m">2 rules: POST /api limits</text>
     <text x="198" y="56" font-weight="600">robots.txt</text><text x="198" y="76" class="m">Allow: / for all +</text><text x="198" y="94" class="m">search &amp; AI-search bots</text>
     <text x="380" y="56" font-weight="600">HTTP headers</text><text x="380" y="76" class="m">No X-Robots-Tag</text><text x="380" y="94" class="m">200 to Googlebot UA</text>
     <text x="562" y="56" font-weight="600">Meta robots</text><text x="562" y="76" class="m">index, follow everywhere</text><text x="562" y="94" class="m">noindex: /thank-you, /admin</text>
@@ -75,7 +75,7 @@
   </svg>
   </div>
   <div class="callout">
-    <b>Two things I could not see from here.</b> (1) Vercel’s managed <i>Bot Protection</i> ruleset is not shown by the CLI — check Vercel → project → Firewall → Bot Management; it should be off or on “Log”, never “Challenge”, for verified bots. (2) Whether the site is verified in Google Search Console / Bing Webmaster Tools — there is no verification tag in the code, so it is either done by DNS or not done. That registration is the real “unlock”.
+    <b>Firewall detail.</b> The active config read from the Vercel API has no managed Bot Protection or AI-bot ruleset, the OWASP rule groups that are on are all <i>log only</i>, and the two custom rules rate-limit only <code>POST /api/fit-check</code> and <code>POST /api/chat</code>. <b>One thing I could not see from here:</b> whether the site is verified in Google Search Console / Bing Webmaster Tools — there is no verification tag in the code, so it is either done by DNS or not done. That registration is the real “unlock”.
   </div>
 
   <h2>What was checked</h2>
@@ -87,7 +87,7 @@
     <tr><td>Headings</td><td><span class="pill ok">Pass</span></td><td>One H1 per page. One post had a second H1 in its body — fixed</td></tr>
     <tr><td>Structured data</td><td><span class="pill warn">Mostly</span></td><td>Person, WebSite, BlogPosting all parse; author links to Person <code>@id</code>. BlogPosting had no <code>image</code> — fixed</td></tr>
     <tr><td>Social cards</td><td><span class="pill ok">Pass</span></td><td>Full Open Graph + Twitter tags; per-post generated OG image returns 200 image/png</td></tr>
-    <tr><td>Sitemap / RSS</td><td><span class="pill ok">Pass</span></td><td>101 URLs, no drafts leaking (0 unpublished files); RSS feed advertised in head</td></tr>
+    <tr><td>Sitemap / RSS</td><td><span class="pill ok">Pass</span></td><td>101 URLs; <code>getAllPosts</code> filters <code>published: false</code>, so drafts cannot reach the sitemap, <code>/blog</code> or the feed; <code>/feed.xml</code> returns 200 with 95 items</td></tr>
     <tr><td>Content depth</td><td><span class="pill ok">Pass</span></td><td>95 posts, none under 600 words, median 2,202; all images have alt text</td></tr>
     <tr><td>Internal linking</td><td><span class="pill bad">Weak</span></td><td><code>/blog</code> links all 95 posts server-side, but a post page links to 0 other posts and 44 posts have no internal links in their body</td></tr>
     <tr><td>Mobile performance</td><td><span class="pill warn">OK</span></td><td>Home: LCP 5.7 s, CLS 0, TBT 0 ms. Post: LCP 3.5 s. Lab test on throttled 4G; Google’s target is LCP under 2.5 s</td></tr>
@@ -98,7 +98,7 @@
   <p>All five are small, build-verified, and change no visible UI.</p>
   <div class="scroll"><table>
     <tr><th>#</th><th>Change</th><th>Why</th></tr>
-    <tr><td>1</td><td><code>robots.txt</code> now disallows <code>/api/</code> and <code>/admin/</code></td><td>Stops crawlers burning requests on the rate-limited AI endpoints, the cron route and the admin page</td></tr>
+    <tr><td>1</td><td><code>robots.txt</code> now disallows <code>/api/</code> and <code>/admin/</code></td><td>Stops crawlers burning requests on the rate-limited AI endpoints, the cron route and the admin page. Note <code>/admin</code> is now both disallowed and noindex; a crawler that cannot fetch a page cannot read its noindex, which is fine here only because nothing public links to <code>/admin</code></td></tr>
     <tr><td>2</td><td>BlogPosting JSON-LD gains <code>image</code> (the post’s generated OG image)</td><td>Google lists <code>image</code> as a key Article property for rich results</td></tr>
     <tr><td>3</td><td>Body <code># </code> heading demoted to <code>## </code> in <code>local-llms-build-your-own-ai-stack.mdx</code></td><td>Removes the only duplicate H1 on the site</td></tr>
     <tr><td>4</td><td><code>/thank-you</code> gets its own canonical</td><td>It was inheriting the homepage canonical from the root layout while being noindex — a mixed signal</td></tr>
@@ -124,7 +124,7 @@ Disallow: /admin/</pre></div>
   </ol>
 
   <h2>Method and limits</h2>
-  <p class="sub">Live pages fetched with curl (default and Googlebot user agents); frontmatter of all 95 MDX posts parsed by script; JSON-LD parsed from a live post; Lighthouse mobile run locally in headless Chrome (Google’s PageSpeed API was over its shared daily quota, so there is no real-user field data in this report); Vercel Firewall read with <code>vercel firewall overview</code> and <code>rules list</code>. No Vercel settings were changed.</p>
+  <p class="sub">Live pages fetched with curl (default and Googlebot user agents); frontmatter of all 95 MDX posts parsed by script; JSON-LD parsed from a live post; Lighthouse mobile run locally in headless Chrome (Google’s PageSpeed API was over its shared daily quota, so there is no real-user field data in this report); Vercel Firewall read with <code>vercel firewall overview</code>, <code>rules list</code> and the active-config API. No Vercel settings were changed.</p>
 </main>
 </body>
 </html>
