@@ -31,18 +31,19 @@ export default function BlogClientWrapper({ posts }: BlogClientWrapperProps) {
 
   return (
     <div className="bg-white dark:bg-gray-900 min-h-screen">
-      <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[76rem] mx-auto py-14 md:py-[4.5rem] px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-6">
+        <div className="mb-10">
+          <div className="eyebrow eyebrow-accent mb-3">Writing</div>
+          <h1 className="font-display font-bold tracking-[-0.035em] leading-[1.02] text-[2.5rem] sm:text-6xl text-gray-900 dark:text-white mb-4">
             Blog
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+          <p className="text-[1.15rem] text-gray-700 dark:text-gray-300 max-w-2xl">
             Insights on productivity, AI tools, software engineering, and building SaaS products
           </p>
           <a
             href="/feed.xml"
-            className="inline-flex items-center gap-1.5 mt-4 text-sm text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
+            className="inline-flex items-center gap-1.5 mt-4 font-mono text-xs uppercase tracking-[0.08em] text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors"
             aria-label="RSS feed"
           >
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -53,7 +54,7 @@ export default function BlogClientWrapper({ posts }: BlogClientWrapperProps) {
         </div>
 
         {/* Search */}
-        <div className="flex justify-center mb-6">
+        <div className="mb-5">
           <SearchInput
             value={query}
             onChange={setQuery}
@@ -63,7 +64,7 @@ export default function BlogClientWrapper({ posts }: BlogClientWrapperProps) {
         </div>
 
         {/* Category Filter */}
-        <div className="flex justify-center mb-12">
+        <div className="mb-6">
           <CategoryFilter
             currentCategory={selectedCategory}
             onCategoryChange={setSelectedCategory}
@@ -72,7 +73,7 @@ export default function BlogClientWrapper({ posts }: BlogClientWrapperProps) {
 
         {/* Result count */}
         {query && matchingSlugs !== null && (
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-6">
+          <p className="font-mono text-xs uppercase tracking-[0.08em] text-gray-600 dark:text-gray-400 mb-6">
             {filteredPosts.length} {filteredPosts.length === 1 ? 'result' : 'results'} found
           </p>
         )}
@@ -87,7 +88,7 @@ export default function BlogClientWrapper({ posts }: BlogClientWrapperProps) {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredPosts.map((post) => (
               <BlogCard key={post.slug} post={post} />
             ))}

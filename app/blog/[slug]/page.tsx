@@ -10,6 +10,7 @@ import rehypeHighlight from 'rehype-highlight'
 import rehypeSlug from 'rehype-slug'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import Link from 'next/link'
+import { categoryLabel } from '@/lib/categories'
 import Badge from '@/components/ui/Badge'
 import { BlogPostingSchema } from '@/components/JsonLd'
 import { absoluteUrl } from '@/lib/site'
@@ -99,52 +100,49 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         tags={post.tags}
         category={post.category}
       />
-      <article className="max-w-4xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+      <article className="max-w-4xl mx-auto py-12 md:py-16 px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <header className="mb-12">
+        <header className="mb-12 pb-10 border-b border-gray-300 dark:border-gray-800">
           <Link
             href="/blog"
-            className="inline-flex items-center text-primary-600 dark:text-primary-400 hover:underline mb-6"
+            className="inline-flex items-center font-mono text-xs uppercase tracking-[0.08em] text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 mb-8"
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Back to Blog
+            Back to blog
           </Link>
 
-          <div className="flex items-center gap-3 mb-4">
-            <Badge variant={categoryVariant}>
-              {post.category}
-            </Badge>
-            <time className="text-gray-500 dark:text-gray-400">
+          <div className="flex flex-wrap items-center gap-3 mb-5">
+            <time className="font-mono text-[0.72rem] uppercase tracking-[0.08em] text-gray-600 dark:text-gray-400">
               {formattedDate}
             </time>
+            <Badge variant={categoryVariant}>
+              {categoryLabel(post.category)}
+            </Badge>
           </div>
 
-          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-6">
+          <h1 className="font-display font-bold tracking-[-0.03em] leading-[1.05] text-4xl md:text-[3.25rem] text-gray-900 dark:text-white text-balance mb-6">
             {post.title}
           </h1>
 
-          <p className="text-xl text-gray-600 dark:text-gray-300">
+          <p className="text-xl leading-relaxed text-gray-700 dark:text-gray-300">
             {post.description}
           </p>
 
           {post.tags && post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-6">
+            <ul className="flex flex-wrap gap-1.5 mt-6">
               {post.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="text-sm px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full"
-                >
+                <li key={tag} className="chip">
                   #{tag}
-                </span>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </header>
 
         {/* Content */}
-        <div className="prose prose-lg dark:prose-invert max-w-none">
+        <div className="prose prose-lg dark:prose-invert max-w-none prose-headings:font-display prose-headings:tracking-[-0.02em] [&_:is(h2,h3,h4)>a]:font-bold [&_:is(h2,h3,h4)>a]:text-inherit [&_:is(h2,h3,h4)>a]:no-underline hover:[&_:is(h2,h3,h4)>a]:underline">
           <MDXRemote
             source={post.content}
             components={components}
@@ -162,19 +160,19 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         </div>
 
         {/* Footer */}
-        <footer className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
+        <footer className="mt-12 pt-8 border-t border-gray-300 dark:border-gray-800">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <Link
               href="/blog"
-              className="text-primary-600 dark:text-primary-400 hover:underline"
+              className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:underline"
             >
               ← Back to all posts
             </Link>
             <Link
               href="/subscribe"
-              className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
+              className="btn-flat btn-flat-primary"
             >
-              Subscribe to Newsletter
+              Subscribe to the newsletter
             </Link>
           </div>
         </footer>

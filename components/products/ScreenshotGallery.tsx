@@ -22,7 +22,7 @@ export default function ScreenshotGallery({ images, productName }: ScreenshotGal
   return (
     <div className="space-y-4">
       {/* Main Image */}
-      <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+      <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-800">
         <div className="w-full h-full flex items-center justify-center p-8">
           <div className="relative w-32 h-32">
             <Image

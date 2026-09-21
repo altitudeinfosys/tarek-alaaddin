@@ -97,7 +97,7 @@ export default function ContactPageClient() {
   return (
     <div className="bg-white dark:bg-gray-900">
       {/* Main Content */}
-      <main className="py-14 md:py-[4.5rem]">
+      <div className="py-14 md:py-[4.5rem]">
         <div className="max-w-[76rem] mx-auto px-4 sm:px-6 lg:px-8">
           {/* Page Header */}
           <div className="mb-12">
@@ -412,7 +412,7 @@ export default function ContactPageClient() {
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   )
 }
