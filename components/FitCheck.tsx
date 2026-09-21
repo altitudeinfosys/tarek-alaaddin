@@ -62,8 +62,8 @@ export default function FitCheck() {
   return (
     <div className="space-y-6">
       {/* Input Form */}
-      <form onSubmit={handleSubmit} className="card p-6">
-        <label htmlFor="job-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+      <form onSubmit={handleSubmit} className="panel p-6">
+        <label htmlFor="job-description" className="eyebrow block mb-2.5">
           Paste the job description
         </label>
         <textarea
@@ -72,17 +72,17 @@ export default function FitCheck() {
           onChange={(e) => setJobDescription(e.target.value)}
           placeholder="Paste the full job description here..."
           rows={8}
-          className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-3 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 resize-none placeholder-gray-400 dark:placeholder-gray-500"
+          className="field resize-none"
           disabled={isLoading}
         />
         <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="font-mono text-xs text-gray-600 dark:text-gray-400">
             {jobDescription.length > 0 && `${jobDescription.split(/\s+/).length} words`}
           </p>
           <button
             type="submit"
             disabled={!jobDescription.trim() || isLoading}
-            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="btn-flat btn-flat-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>
@@ -106,7 +106,7 @@ export default function FitCheck() {
 
       {/* Error */}
       {error && (
-        <div className="card p-4 bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700">
+        <div className="panel p-4 bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700">
           <p className="text-red-700 dark:text-red-300">{error}</p>
         </div>
       )}
@@ -115,10 +115,10 @@ export default function FitCheck() {
       {result && (
         <div className="space-y-4">
           {/* Score Card */}
-          <div className={`card p-6 ${getScoreBackground(result.score)}`}>
+          <div className={`panel p-6 ${getScoreBackground(result.score)}`}>
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Match Score</h3>
+                <h3 className="font-display text-lg font-bold tracking-[-0.01em] text-gray-900 dark:text-white">Match Score</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Based on {result.resumeType} resume
                 </p>
@@ -130,14 +130,14 @@ export default function FitCheck() {
           </div>
 
           {/* Assessment */}
-          <div className="card p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Honest Assessment</h3>
+          <div className="panel p-6">
+            <h3 className="font-display text-lg font-bold tracking-[-0.01em] text-gray-900 dark:text-white mb-3">Honest Assessment</h3>
             <p className="text-gray-700 dark:text-gray-300">{result.assessment}</p>
           </div>
 
           {/* Strengths */}
-          <div className="card p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+          <div className="panel p-6">
+            <h3 className="font-display text-lg font-bold tracking-[-0.01em] text-gray-900 dark:text-white mb-3 flex items-center gap-2">
               <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
@@ -155,8 +155,8 @@ export default function FitCheck() {
 
           {/* Gaps */}
           {result.gaps.length > 0 && (
-            <div className="card p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+            <div className="panel p-6">
+              <h3 className="font-display text-lg font-bold tracking-[-0.01em] text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                 <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
@@ -180,7 +180,7 @@ export default function FitCheck() {
                 setResult(null)
                 setJobDescription('')
               }}
-              className="btn-secondary"
+              className="btn-flat btn-flat-ghost"
             >
               Try Another Job
             </button>

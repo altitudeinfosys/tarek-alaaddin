@@ -110,11 +110,11 @@ export default function AskAIModal({ isOpen, onClose }: AskAIModalProps) {
 
       {/* Modal */}
       <div className="flex min-h-full items-end justify-center p-4 sm:items-center">
-        <div className="relative w-full max-w-2xl transform overflow-hidden rounded-xl bg-white dark:bg-gray-800 shadow-2xl transition-all">
+        <div className="relative w-full max-w-2xl transform overflow-hidden rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl transition-all">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-6 py-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary-50 dark:bg-primary-900/30">
                 <svg
                   className="h-5 w-5 text-primary-600 dark:text-primary-400"
                   fill="none"
@@ -140,7 +140,7 @@ export default function AskAIModal({ isOpen, onClose }: AskAIModalProps) {
             </div>
             <button
               onClick={onClose}
-              className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-500 dark:hover:text-gray-300"
+              className="rounded-md p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-500 dark:hover:text-gray-300"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -160,7 +160,7 @@ export default function AskAIModal({ isOpen, onClose }: AskAIModalProps) {
                     <button
                       key={question}
                       onClick={() => sendMessage(question)}
-                      className="rounded-full border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:border-primary-300 dark:hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
+                      className="rounded-md border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:border-primary-300 dark:hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
                     >
                       {question}
                     </button>
@@ -218,7 +218,7 @@ export default function AskAIModal({ isOpen, onClose }: AskAIModalProps) {
               <button
                 type="submit"
                 disabled={!input.trim() || isLoading}
-                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-flat btn-flat-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

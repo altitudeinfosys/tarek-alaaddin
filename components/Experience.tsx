@@ -76,104 +76,71 @@ export default function Experience() {
   const [expandedId, setExpandedId] = useState<number | null>(null)
 
   return (
-    <div className="space-y-6">
-      {EXPERIENCES.map((exp, index) => (
-        <div
-          key={exp.id}
-          className="card p-6 hover:shadow-md transition-shadow"
-        >
-          {/* Timeline connector */}
-          <div className="flex gap-4">
-            {/* Timeline dot and line */}
-            <div className="flex flex-col items-center">
-              <div
-                className={`w-3 h-3 rounded-full ${
-                  exp.current ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'
-                }`}
-              />
-              {index < EXPERIENCES.length - 1 && (
-                <div className="w-0.5 h-full bg-gray-200 dark:bg-gray-700 mt-2" />
-              )}
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 -mt-1">
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-2">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {exp.title}
-                  </h3>
-                  <p className="text-primary-600 dark:text-primary-400 font-medium">{exp.company}</p>
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  <p>{exp.period}</p>
-                  <p>{exp.location}</p>
-                </div>
-              </div>
-
-              {/* Highlights */}
-              <ul className="mt-3 space-y-2">
-                {exp.highlights.map((highlight, i) => (
-                  <li key={i} className="flex gap-2 text-gray-600 dark:text-gray-300">
-                    <span className="text-primary-500 mt-1.5">•</span>
-                    <span>{highlight}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {/* Technologies */}
-              <div className="flex flex-wrap gap-2 mt-4">
-                {exp.technologies.map((tech) => (
-                  <span
-                    key={tech}
-                    className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded dark:bg-gray-700 dark:text-gray-300"
-                  >
-                    {tech}
-                  </span>
-                ))}
-              </div>
-
-              {/* AI Context Toggle */}
-              {exp.aiContext && (
-                <div className="mt-4">
-                  <button
-                    onClick={() =>
-                      setExpandedId(expandedId === exp.id ? null : exp.id)
-                    }
-                    className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 flex items-center gap-1"
-                  >
-                    <svg
-                      className={`w-4 h-4 transition-transform ${
-                        expandedId === exp.id ? 'rotate-90' : ''
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                    {expandedId === exp.id ? 'Hide' : 'View'} AI Context
-                  </button>
-                  {expandedId === exp.id && (
-                    <div className="mt-3 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg text-sm text-gray-700 dark:text-gray-300 border border-primary-100 dark:border-primary-800">
-                      <p className="italic">{exp.aiContext}</p>
-                      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                        This context helps the AI answer deeper questions about
-                        this role.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+    <div className="overflow-hidden rounded-lg border border-gray-300 dark:border-gray-800 divide-y divide-gray-300 dark:divide-gray-800 bg-white dark:bg-gray-900">
+      {EXPERIENCES.map((exp) => (
+        <article key={exp.id} className="grid md:grid-cols-[13.5rem_1fr] gap-x-8 gap-y-4 px-5 py-6 md:px-6 md:py-7">
+          {/* When / where */}
+          <div className="flex flex-col items-start gap-1.5">
+            <span className="font-mono font-medium text-[0.82rem] text-gray-900 dark:text-white">{exp.period}</span>
+            <span className="font-mono text-[0.69rem] uppercase tracking-[0.08em] text-gray-600 dark:text-gray-400">
+              {exp.location}
+            </span>
+            {exp.current && <span className="chip chip-accent mt-1">CURRENT</span>}
           </div>
-        </div>
+
+          {/* Role */}
+          <div>
+            <h3 className="font-display text-xl font-bold tracking-[-0.015em] leading-tight text-gray-900 dark:text-white">
+              {exp.title}
+            </h3>
+            <p className="mt-1 font-medium text-[0.95rem] text-primary-700 dark:text-primary-400">{exp.company}</p>
+
+            {/* Highlights */}
+            <ul className="mt-3.5 space-y-1.5 list-disc pl-[1.1rem] text-[0.92rem] leading-relaxed text-gray-700 dark:text-gray-300 marker:text-gray-400 dark:marker:text-gray-600">
+              {exp.highlights.map((highlight, i) => (
+                <li key={i}>{highlight}</li>
+              ))}
+            </ul>
+
+            {/* Technologies */}
+            <ul className="mt-4 flex flex-wrap gap-1.5">
+              {exp.technologies.map((tech) => (
+                <li key={tech} className="chip">
+                  {tech}
+                </li>
+              ))}
+            </ul>
+
+            {/* AI Context Toggle */}
+            {exp.aiContext && (
+              <div className="mt-4">
+                <button
+                  onClick={() => setExpandedId(expandedId === exp.id ? null : exp.id)}
+                  aria-expanded={expandedId === exp.id}
+                  className="font-mono text-xs text-primary-700 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 flex items-center gap-1"
+                >
+                  <svg
+                    className={`w-3.5 h-3.5 transition-transform ${expandedId === exp.id ? 'rotate-90' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                  {expandedId === exp.id ? 'Hide' : 'View'} AI context
+                </button>
+                {expandedId === exp.id && (
+                  <div className="mt-3 p-4 rounded-md border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300">
+                    <p className="italic">{exp.aiContext}</p>
+                    <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                      This context helps the AI answer deeper questions about this role.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </article>
       ))}
     </div>
   )
