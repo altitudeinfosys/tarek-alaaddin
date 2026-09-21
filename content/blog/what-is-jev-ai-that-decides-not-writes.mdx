@@ -1,0 +1,216 @@
+---
+title: "What Is Jev? The AI Model That Decides Instead of Writes"
+description: "Jev returns typed decisions instead of text — dramatically faster and cheaper than frontier LLMs. Here's what it is, when to use it, and how to integrate it with Claude Code."
+date: "2026-09-20"
+category: "ai"
+tags: ["ai", "jev", "typesafe", "automation", "claude-code", "decision-making"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+## A New Kind of AI Model Just Dropped
+
+Every few months, a new model launches and the pitch is the same: more tokens, bigger context, better benchmarks. Jev is not that.
+
+On September 15, 2026, TypeSafe AI emerged from stealth with a $40 million seed round led by DCVC and a model that does something categorically different. Jev does not generate text. It does not write code. It does not chat. It takes a block of program state and a set of typed questions, evaluates them all in parallel, and returns structured decisions with calibrated probabilities.
+
+TypeSafe calls it a **System One model** — built for fast, intuitive decisions rather than deliberate reasoning. Where frontier LLMs like Claude Opus 5, GPT-5.6, and Gemini Astra are slow, deliberate, and expensive, Jev is the snap judgment layer: fast, cheap, and type-safe by design.
+
+The founder? Diogo Almeida, co-author of the InstructGPT paper and co-inventor of RLHF at OpenAI. He helped build the training methodology behind ChatGPT, then left to build something entirely different.
+
+## How Jev Actually Works
+
+Jev's architecture breaks from the standard transformer playbook in two fundamental ways.
+
+**Non-autoregressive sampling.** Traditional LLMs generate tokens one at a time, left to right. Jev evaluates all outputs in a single parallel pass. This is why it runs in 70-500 milliseconds — TypeSafe claims 40-200x faster than frontier LLMs on comparable decision tasks.
+
+**Reinforcement Learning for Calibrated Decisions (RLCD).** Instead of training with RLHF to produce human-preferred text, Jev is trained with RLCD to produce epistemically honest probabilities. When Jev says it is 90% confident, it should actually be right 90% of the time. This matters enormously when you are putting AI into automated pipelines where bad confidence estimates cause cascading failures.
+
+The model supports three question types:
+
+- **Choice** — pick one option from up to 255 categories
+- **Score** — rate something on a defined scale (2-10 levels)
+- **Noul** — yes/no expressed as a probability between 0 and 1
+
+You send a block of state (up to 32K tokens) and multiple questions in a single call (total context up to 64K tokens), and Jev evaluates them all at once. The response is structured JSON with typed answers and confidence scores. No string parsing. No schema validation nightmares.
+
+## Why It Cannot Hallucinate
+
+This is the claim that sounds too good to be true, but it holds up under scrutiny.
+
+Jev's outputs are constrained to predefined schemas. If you define a Choice question with three options — billing, technical, sales — the model can only return one of those three, plus a probability distribution across them. There is no mechanism for it to invent a fourth option or return an unexpected value.
+
+<Callout type="info">
+**TypeSafe reports a 0% structured output error rate and 0% tool call error rate.** For comparison, in their benchmarks Claude Haiku 4.5 showed a 45.5% structured output error rate and GPT-5.6 Sol showed a 17% tool call failure rate. Whether you trust vendor benchmarks is up to you, but the architectural constraint is real — invalid values cannot exist within the predefined schema.
+</Callout>
+
+This does not mean Jev is always *correct*. It can still pick the wrong option. But it will always pick a valid option and tell you how confident it is. That distinction is everything for production systems.
+
+## The Numbers: Speed and Cost
+
+Here is where Jev gets compelling for anyone running AI at scale.
+
+According to TypeSafe's own benchmarks across four production workflows:
+
+| Metric | Jev | GPT-5.6 Terra | Claude Opus 5 |
+|--------|-----|---------------|---------------|
+| Latency | 0.4s | 10.1s | 37.8s |
+| Accuracy | 67.8% | 67.9% | 73.1% |
+| Cost per case | $0.0004 | $0.0304 | $0.1761 |
+| Input token cost | $0.042/M | — | — |
+| Output token cost | Free | — | — |
+
+Jev achieves near-parity with mid-tier frontier models on structured decision tasks at a fraction of the cost. Compared to GPT-5.6 Terra, it costs about 76x less per case. Compared to Opus 5, about 440x less. The trade-off is clear: Opus 5 still wins on raw accuracy (73.1% vs 67.8%), but at hundreds of times the cost.
+
+For high-volume, bounded decisions — routing, classification, scoring, triage — that trade-off tips heavily in Jev's favor.
+
+## Five Use Cases That Actually Work
+
+Based on the early access results from the first week of Jev's availability, here are five practical applications:
+
+### 1. Email and Ticket Triage
+
+Classify incoming support tickets by department, urgency, and sentiment in a single parallel call. According to early testers, 1,000 emails were classified in about 6 seconds for 9 cents.
+
+### 2. Content Moderation at Scale
+
+Sort comments, posts, or messages by type, sentiment, and severity. One developer reported classifying 1,000 YouTube comments in 5 seconds for 5 cents. Cumulative testing showed close to 20,000 requests processed for under a dollar.
+
+### 3. Agent Workflow Routing
+
+Use Jev as the decision layer in multi-model pipelines. A browser automation agent booked flights in 7.1 seconds at $0.0039 per booking by using Jev for all routing decisions instead of calling a frontier model. In one demo, scoring every tool call in a Claude session reduced the session from nearly 1 million tokens to 86K.
+
+### 4. LLM Output Guardrailing
+
+Screen the output of generative models before it reaches users. Jev can evaluate whether generated content meets safety guidelines, stays on-topic, or matches the requested format — in milliseconds rather than the seconds a frontier model would need.
+
+### 5. Real-Time Classification
+
+A developer built a Chrome extension that classified posts in an X (Twitter) feed by relevance and quality as they loaded on the page. Jev's 70-500ms latency makes this kind of inline classification practical in ways that frontier models simply cannot match.
+
+<Callout type="warning">
+**Where Jev does NOT work:** Code generation, written explanations, open-ended reasoning, or any task requiring free-form text. It also returns probabilities without natural-language rationales, which limits its usefulness in regulated domains where you need to explain *why* a decision was made.
+</Callout>
+
+## How to Install and Use Jev
+
+Getting started is straightforward. TypeSafe provides official SDKs for Python and JavaScript.
+
+**Python:**
+
+```bash
+pip install typesafe-sdk
+```
+
+**JavaScript/TypeScript:**
+
+```bash
+npm install @typesafe-ai/sdk
+```
+
+Set your API key:
+
+```bash
+export TYPESAFE_API_KEY="sk-..."
+```
+
+Here is a minimal Python example that classifies a support ticket:
+
+```python
+from typesafe_sdk import Choice, Noul, Score, TypeSafeClient
+
+client = TypeSafeClient()
+
+response = client.system_one(
+    state={
+        "ticket": {
+            "subject": "Duplicate charge on my account",
+            "message": "I was charged twice for my subscription. Please refund.",
+        }
+    },
+    questions={
+        "department": Choice(
+            instructions="Which team should handle this ticket",
+            criteria={
+                "billing": "Payment and refund issues",
+                "technical": "Bugs or integration problems",
+                "sales": "Pricing and plan questions",
+            },
+        ),
+        "urgency": Score(
+            instructions="How urgent is this request",
+            criteria=["Low", "Medium", "High", "Critical"],
+        ),
+        "refund_requested": Noul(
+            instructions="Customer explicitly requests a refund",
+        ),
+    },
+)
+
+print(response.answers["department"].choice)      # "billing"
+print(response.answers["urgency"].score)           # 3
+print(response.answers["refund_requested"].prob)   # 0.94
+```
+
+All three questions are evaluated in a single API call, in parallel. The response comes back in under 500 milliseconds.
+
+## How to Use Jev with Claude Code
+
+This is where things get practical for developers already using agentic coding tools. Jev is not a replacement for Claude Code or ChatGPT Codex — it is a **screening layer** that sits alongside them.
+
+The pattern looks like this:
+
+1. **Claude Code** handles the deliberate work: planning, implementation, code review, investigation
+2. **Jev** handles the fast decisions: which skill fits a request, what deserves attention in a diff, whether an observation merits escalation
+3. **Code** handles the deterministic parts: running tests, type checks, static analysis
+
+There is already an open-source [TypeSafe MCP server](https://github.com/itsmostafa/typesafe-mcp) that gives Claude Code, Claude Desktop, and Codex direct access to the Jev model. Install it, and your agent can call Jev to make routing decisions at a fraction of the cost of calling itself.
+
+The token savings potential is real. In TypeSafe's skill-selection experiment, using Jev to pick the right skill before loading it reduced wrong-skill loads from 16.8% to 7.3%. Fewer wrong skills means fewer wasted tokens means lower cost per session.
+
+The recommended workflow:
+
+1. **Start small** — add one Jev check to an existing workflow (e.g., classify incoming requests before routing to the right agent)
+2. **Compare** — measure Jev's decisions against human labels or existing model outputs
+3. **Expand** — once confidence thresholds are calibrated, add more decision points
+
+## Who Should Use Jev
+
+**Use it if you are:**
+- Running AI at scale and paying too much for classification tasks that do not need generation
+- Building agent workflows where routing decisions add latency and cost
+- Processing high-volume data (emails, comments, logs, transactions) that needs fast categorization
+- Guardrailing LLM outputs in production pipelines
+
+**Skip it if you are:**
+- Building a chatbot or conversational AI
+- Generating content, code, or creative text
+- Working on tasks that require natural-language explanations of decisions
+- Running low-volume workloads where latency and cost are not bottlenecks
+
+## How Jev Compares to Frontier Models
+
+Jev is not competing with Astra, Fable, or Opus. It is **complementing** them.
+
+Think of it like a kitchen. Claude Opus 5 is the executive chef — capable of handling any dish, but expensive and slow for routine tasks. Jev is the prep cook — impossibly fast at chopping, sorting, and measuring, but it will never create the final dish.
+
+The winning architecture for 2026 and beyond is a **cascade**: Jev for routing and classification (cheap, fast), code for deterministic operations (free, instant), and frontier models only for tasks that actually require deep reasoning or generation.
+
+<Callout type="tip">
+**The practical rule:** If the answer to your question is one of a fixed set of options, and you need it in under a second, Jev is probably the right tool. If you need the model to *explain* its answer or *generate* something new, reach for a frontier model.
+</Callout>
+
+## The Bigger Picture
+
+Jev represents a bet that the future of AI is not one giant model that does everything. It is a stack of specialized models, each optimized for a different kind of cognitive work. System One for fast decisions. System Two for deep reasoning. Code for everything deterministic.
+
+We have been paying System Two prices for System One work. Every time an agent calls a frontier model to answer a yes/no question, or classify an email, or route a request, it is overpaying by orders of magnitude. Jev is the first production-ready model to make that inefficiency obvious — and fixable.
+
+Whether TypeSafe's specific claims hold up under independent scrutiny is still an open question. The model is five days old, benchmarks are self-reported, and the early access waitlist means most developers have not tested it yet. But the architecture is sound, the pricing is disruptive, and the use cases are clear.
+
+If you are building with AI agents, Jev is worth your attention.
+
+---
+
+*Want more breakdowns of the tools reshaping how we build with AI? [Subscribe to the newsletter](/subscribe) — one practical post per week, no hype.*
