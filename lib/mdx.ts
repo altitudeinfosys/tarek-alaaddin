@@ -94,6 +94,29 @@ export function getPostsByCategory(category: string): BlogPostMeta[] {
 }
 
 /**
+ * Get posts related to a given post: ranked by shared tags, then same
+ * category, then newest first. Always fills `limit` slots when enough posts exist.
+ */
+export function getRelatedPosts(
+  post: Pick<BlogPostMeta, 'slug' | 'category' | 'tags'>,
+  limit = 3
+): BlogPostMeta[] {
+  const tags = new Set(post.tags.map((tag) => tag.toLowerCase()))
+
+  const score = (other: BlogPostMeta) =>
+    other.tags.filter((tag) => tags.has(tag.toLowerCase())).length * 3 +
+    (other.category === post.category ? 1 : 0)
+
+  // getAllPosts is newest-first and Array.sort is stable, so ties keep date order
+  return getAllPosts()
+    .filter((other) => other.slug !== post.slug)
+    .map((other) => ({ other, score: score(other) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(({ other }) => other)
+}
+
+/**
  * Get featured posts
  */
 export function getFeaturedPosts(): BlogPostMeta[] {
