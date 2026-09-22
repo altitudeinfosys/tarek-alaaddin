@@ -26,7 +26,7 @@ export function PersonSchema() {
         url: absoluteUrl(),
         description:
           'Software engineer with expertise in backend development, cloud architecture, and full-stack applications. Creator of Taskitos and ExpandNote.',
-        jobTitle: 'Software Engineer & Product Builder',
+        jobTitle: 'AI Engineer',
         knowsAbout: [
           'Software Engineering',
           'Backend Development',
