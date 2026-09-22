@@ -23,13 +23,13 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: 'Tarek Alaaddin | Software Engineer & Product Builder',
-  description: 'Software engineer with expertise in backend development, cloud architecture, and full-stack applications. Builder of Taskitos, ExpandNote, SayCopy, and PropertyPulse360.',
-  keywords: ['software engineer', 'backend developer', 'full-stack', 'cloud architecture', 'AI products', 'SaaS'],
+  title: 'Tarek Alaaddin | AI Engineer Building Agents & Apps',
+  description: 'AI engineer building autonomous agents and shipping full-stack apps, backed by 20+ years of enterprise Java and React. Open to senior engineering roles.',
+  keywords: ['AI engineer', 'AI agents', 'AI automation', 'full-stack developer', 'software engineer', 'Java', 'React'],
   authors: [{ name: 'Tarek Alaaddin' }],
   openGraph: {
-    title: 'Tarek Alaaddin | Software Engineer & Product Builder',
-    description: 'Software engineer with expertise in backend development, cloud architecture, and full-stack applications. Builder of Taskitos, ExpandNote, SayCopy, and PropertyPulse360.',
+    title: 'Tarek Alaaddin | AI Engineer Building Agents & Apps',
+    description: 'AI engineer building autonomous agents and shipping full-stack apps, backed by 20+ years of enterprise Java and React. Open to senior engineering roles.',
     url: absoluteUrl(),
     siteName: 'Tarek Alaaddin',
     locale: 'en_US',
@@ -37,8 +37,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Tarek Alaaddin | Software Engineer & Product Builder',
-    description: 'Software engineer with expertise in backend development, cloud architecture, and full-stack applications.',
+    title: 'Tarek Alaaddin | AI Engineer Building Agents & Apps',
+    description: 'AI engineer building autonomous agents and shipping full-stack apps, backed by 20+ years of enterprise Java and React. Open to senior engineering roles.',
     creator: '@tarekalaaddin',
     site: '@tarekalaaddin',
   },

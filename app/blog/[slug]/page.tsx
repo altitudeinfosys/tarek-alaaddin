@@ -15,6 +15,8 @@ import Badge from '@/components/ui/Badge'
 import { BlogPostingSchema } from '@/components/JsonLd'
 import { absoluteUrl } from '@/lib/site'
 
+const TITLE_SUFFIX = ' | Tarek Alaaddin'
+
 interface BlogPostPageProps {
   params: { slug: string }
 }
@@ -36,7 +38,8 @@ export async function generateMetadata({ params }: BlogPostPageProps) {
   const url = absoluteUrl(`/blog/${params.slug}`)
 
   return {
-    title: `${post.title} | Tarek Alaaddin`,
+    // Append the name only when the full title still fits in a search result (~70 chars)
+    title: post.title.length + TITLE_SUFFIX.length <= 70 ? `${post.title}${TITLE_SUFFIX}` : post.title,
     description: post.description,
     keywords: post.tags,
     alternates: {
