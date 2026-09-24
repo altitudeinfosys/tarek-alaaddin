@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { MDXRemote } from 'next-mdx-remote/rsc'
-import { getPostBySlug, getAllPostSlugs } from '@/lib/mdx'
+import { getPostBySlug, getAllPostSlugs, getRelatedPosts } from '@/lib/mdx'
+import BlogCard from '@/components/blog/BlogCard'
 import Callout from '@/components/mdx/Callout'
 import CodeBlock from '@/components/mdx/CodeBlock'
 import ProductCTA from '@/components/mdx/ProductCTA'
@@ -93,6 +94,8 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
 
   const categoryVariant = categoryColors[post.category as keyof typeof categoryColors] || 'default'
 
+  const relatedPosts = getRelatedPosts(post)
+
   return (
     <div className="bg-white dark:bg-gray-900 min-h-screen">
       <BlogPostingSchema
@@ -180,6 +183,25 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
           </div>
         </footer>
       </article>
+
+      {relatedPosts.length > 0 && (
+        <section
+          aria-labelledby="related-posts-heading"
+          className="border-t border-gray-300 dark:border-gray-800"
+        >
+          <div className="max-w-6xl mx-auto py-12 md:py-16 px-4 sm:px-6 lg:px-8">
+            <div className="eyebrow eyebrow-accent mb-2.5">Keep reading</div>
+            <h2 id="related-posts-heading" className="h-section mb-8">
+              Related posts
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {relatedPosts.map((related) => (
+                <BlogCard key={related.slug} post={related} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   )
 }
