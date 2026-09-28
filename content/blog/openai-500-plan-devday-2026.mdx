@@ -1,0 +1,150 @@
+---
+title: "OpenAI $500 Pro Max Plan, Agent 'o,' and the DevDay 2026 Playbook"
+description: "OpenAI DevDay 2026 lands with a leaked $500 plan, an always-on agent called 'o,' and the Sora API going dark. Here's what actually matters for developers."
+date: "2026-09-28"
+category: "ai-tools"
+tags: ["openai", "chatgpt", "devday", "ai-pricing", "ai-agents", "codex", "sora", "gpt-6-astra", "pro-max"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+OpenAI's DevDay lands tomorrow, September 29, in San Francisco. The official invite says technical sessions and product demos. The leaks tell a different story: a $500 subscription, an autonomous agent that gets its own email address, and the quiet burial of the Sora video platform.
+
+Three signals. One pattern. AI is getting more expensive for power users, more autonomous in how it works, and more ruthless about killing products that don't earn their compute.
+
+## The $500 Pro Max Plan: Buying Speed, Not Quota
+
+On September 24, researcher Tibor Blaho spotted a new subscription tier hiding in ChatGPT's front-end configuration code. TestingCatalog confirmed it within hours: a plan called **ChatGPT Pro Max**, priced at $500 per month.
+
+The leaked feature description adds exactly one line over the existing $200 Pro plan: **"Fastest Work and Codex."**
+
+That's it. Not more usage. Not new models. Faster execution of the same things.
+
+<Callout type="warning">
+Pro Max at $500 would be the most expensive individual AI subscription from any major lab — 2.5x Claude Max ($200), 2.5x Google AI Ultra ($200), and 1.7x SuperGrok Heavy ($300).
+</Callout>
+
+Here's the current pricing ladder across the big labs, verified as of September 25, 2026:
+
+| Provider | $20/mo | $100/mo | $200/mo | $500/mo |
+|----------|--------|---------|---------|---------|
+| OpenAI | Plus | Pro (5x) | Pro (20x) — **closed to new buyers** | Pro Max (leaked) |
+| Anthropic | Claude Pro | Max 5x | Max 20x | — |
+| Google | AI Pro | AI Ultra 5x | AI Ultra 20x | — |
+| xAI | SuperGrok ($30) | — | — | — ($300 Heavy) |
+
+Until now, every rung of the ChatGPT ladder got cheaper per unit of usage as you climbed. Pro Max breaks that pattern. If it keeps the same 20x allowance as the $200 plan, you're paying $25 per unit of Plus-equivalent usage instead of $10.
+
+The economics only work if your bottleneck is speed, not volume. At a loaded engineering cost of $100/hour, the $300 premium pays for itself if faster Codex runs save three hours of waiting per month. For developers who kick off long agent jobs and stare at a spinner, that bar is low. For everyone else, it's an expensive fast pass to the same ride.
+
+### Why the $200 Plan Is Closed
+
+Context matters here. OpenAI launched GPT-6 Astra in early September. Within days, demand overwhelmed their infrastructure. On September 10, OpenAI paused all new sign-ups for the $200 Pro plan.
+
+Thibault Sottiaux, who leads core products, told Fortune the $200 subscriptions "put the most strain on our systems" and the pause was "the smallest step that allows us to continue giving the broadest access possible."
+
+Existing $200 subscribers kept their plans. On September 23, OpenAI opened a narrow return window for people who held the $200 plan on September 10. Everyone else is locked out.
+
+A $500 tier that sells priority access to scarce compute is the logical response. OpenAI has more demand than capacity, and a higher-priced plan monetizes that scarcity without handing out more tokens it doesn't have.
+
+### The Cerebras Connection
+
+Nothing in the leaked code mentions Cerebras by name. But the "fastest" claim fits a known trajectory: OpenAI signed a deal worth over $10 billion with Cerebras in January 2026 for inference capacity. In August, the two companies previewed GPT-5.6 Sol Ultrafast running on Cerebras hardware at up to 14x standard speed and 750 output tokens per second.
+
+A "Fastest" ChatGPT plan is the consumer wrapper for that infrastructure. It's plausible, but still inference, not a leak.
+
+## Agent "o": The Always-On Assistant
+
+The second major leak is potentially bigger than the pricing change. Across upgrade menus, internal configuration files, and translator notes, evidence points to a new OpenAI product called **"o"** — an always-on agent designed to run autonomously in the background.
+
+The upgrade page briefly listed "o, your always-on assistant" alongside maximum memory and expanded storage. TestingCatalog found deeper references: a dedicated "-o" email suffix and full localization across 63 languages.
+
+<Callout type="tip">
+Agent "o" gets its own email suffix. That's not a chatbot. That's a digital employee with an inbox.
+</Callout>
+
+What makes "o" different from existing AI assistants:
+
+- **Persistent cloud sandbox** — it doesn't wait for your prompt. You set acceptance criteria and it runs for hours or days, fixing its own errors.
+- **Multi-agent architecture** — internal files reference "Astra AON" technology. A primary controller breaks tasks down while sub-agents handle search, coding, and quality control on a shared message board.
+- **Background execution** — it keeps working after you close the browser. Research. Monitoring. Communications.
+
+The pricing structure hints at where this lands: leaked configuration suggests "o" is excluded from the $20 Plus and Codex Plus plans, drawing a clear line between tools you drive and agents that drive themselves.
+
+### What This Actually Means
+
+If "o" works as described, it changes the conversation about AI from "what can I ask it" to "what can it do while I'm gone." That's a fundamental shift.
+
+Every major lab is heading this direction. Claude has background tasks and scheduled routines. Google has Project Astra. But an always-on agent with its own email address, running inside a persistent sandbox, represents the most aggressive consumer-facing vision of autonomous AI from any lab.
+
+The timing — right before DevDay — strongly suggests a stage announcement on September 29. The volume and specificity of the leaks (63 localizations, a dedicated email suffix, pricing configuration already in the front end) point to a product that's ready for launch, not a prototype.
+
+## Sora's Quiet Exit
+
+While OpenAI builds $500 plans and autonomous agents, it's also making hard cuts. On September 24 — the same day the Pro Max leak surfaced — the Sora video API was officially discontinued.
+
+The timeline, confirmed by OpenAI's help center:
+
+- **April 26, 2026**: Sora web and app experiences discontinued
+- **September 24, 2026**: Videos API fully shut down
+
+The Sora models are gone. OpenAI's help center confirmed the API discontinuation alongside the earlier app shutdown — the entire video generation product line is now offline.
+
+This isn't a pivot. It's a triage decision. When your flagship language model is so popular you have to close your top subscription tier, running a video generation service on the same infrastructure becomes a luxury you can't afford.
+
+<Callout type="info">
+The Sora shutdown, five days before DevDay, is the clearest signal of where OpenAI is spending its compute: language models and agents, not video generation.
+</Callout>
+
+## The Pattern: AI Is Repricing Itself
+
+Zoom out from the individual announcements and a pattern emerges. In September alone, OpenAI:
+
+1. Launched GPT-6 Astra (early September)
+2. Closed the $200 Pro plan to new buyers (September 10)
+3. Shut down the Sora API (September 24)
+4. Leaked a $500 plan (September 24)
+5. Prepared an autonomous agent for DevDay (September 29)
+
+The market is already responding. Vercel AI Gateway data from Guillermo Rauch shows Anthropic's share of routed requests fell from 69% to 40% while OpenAI's rose from 10% to 24% — a sign that developers are actively rebalancing across providers as each one shifts pricing and capacity.
+
+None of this is malicious. All of it changes what a seat costs and what it can do.
+
+The three major labs have converged on the same pricing ladder: $20, $100, $200 for 1x, 5x, 20x usage. Pro Max would be the first rung above that consensus. If it sticks, the other labs will watch closely. Claude and Gemini both have room to add a $500 tier if demand exists.
+
+### What It Means for Your Stack
+
+The practical lesson isn't about whether to buy Pro Max. It's about dependency.
+
+If your engineering workflow runs through one consumer subscription, you inherit every pricing change, capacity crunch, and product pivot that vendor makes. In three weeks, OpenAI changed the rules three times.
+
+The hedge is straightforward: know how to move between providers without rewriting your process. If you use Codex today, know how Claude Code works. If you depend on ChatGPT's Work mode, understand what Gemini Deep Think offers. The tools aren't identical, but the switching cost should be hours, not weeks.
+
+## What to Watch at DevDay
+
+Tomorrow's DevDay keynote will be livestreamed from San Francisco. Based on what's leaked, the most likely announcements:
+
+**High confidence:**
+- Pro Max at $500, positioned around Codex and Work speed
+- Agent "o" as an always-on assistant, likely starting on $100+ Pro tiers
+
+**Possible:**
+- GPT-6 Astra running on Cerebras hardware (would explain the "fastest" claim)
+- Expansion of the $200 Pro plan reopening
+
+**Unlikely:**
+- Video generation replacement for Sora (the shutdown timing suggests they're moving away, not replacing)
+- Anything called "Astra 6.1" — this rumor traces to a single social media account with no supporting evidence
+
+## The Bottom Line
+
+OpenAI is telling you three things at once. AI is getting more expensive for the people who use it most. Agents are moving from "answer my question" to "do my job while I sleep." And products that don't justify their compute get killed, even popular ones.
+
+DevDay will put a stage and a keynote around these moves. But the decisions were already made in the code, the configuration files, and the shutdown notices. The announcement is a formality.
+
+The question for developers isn't whether to buy the $500 plan. It's whether your workflow survives the next time any vendor makes three changes in three weeks.
+
+---
+
+*Want to stay ahead of AI pricing shifts and product changes? [Subscribe to the newsletter](/subscribe) for weekly analysis of what actually matters in the AI tools space.*
