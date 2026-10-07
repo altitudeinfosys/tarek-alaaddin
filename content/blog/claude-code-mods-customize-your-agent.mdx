@@ -1,0 +1,157 @@
+---
+title: "Claude Code Mods: Your AI Agent Is Now a Platform You Control"
+description: "Claude Code mods let you rewrite prompts, block commands, and draw custom UI inside the agent. Here's how the middleware API works and why it matters."
+date: "2026-10-06"
+category: "ai-tools"
+tags: ["claude-code", "anthropic", "ai-agents", "developer-tools", "claude-code-mods", "claude-code-hooks", "typescript"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+On October 1, Anthropic shipped a feature that quietly changed what an AI coding agent is. It's called **mods** — small TypeScript functions that hook into Claude Code's execution pipeline, intercept events, and change what the agent does from the inside out.
+
+Not alongside it. Not through a config file. *Inside* it.
+
+You can rewrite prompts before they reach the model. Block a dangerous command and replace it with a dry run. Draw a live dashboard next to the conversation. Replace built-in features with your own versions. And here's the kicker: you can ask Claude Code to write the mod for you, and it'll build it, install it, and hot-reload it in your running session.
+
+Other coding agents let you configure behavior. Mods let you reprogram it.
+
+## What Mods Actually Are
+
+A mod is a JavaScript or TypeScript module that ships inside a Claude Code plugin. When Claude Code does something — calls a tool, asks for permission, renders part of the UI, starts a turn — it fires an event. A mod hooks into that event with a function that follows a middleware pattern.
+
+The function receives three arguments: `$` (the mod API — UI, state, session, filesystem, process control), `e` (the event data), and `next` (passes the event to the next mod or to Claude Code's own behavior).
+
+From there, you have three moves:
+
+- **Observe**: call `next(e)`, let everything happen normally, then look at the result
+- **Rewrite**: call `next({ ...e, command: safer })` — change what downstream code sees
+- **Answer**: return your own response without calling `next` — the event never reaches Claude Code
+
+When multiple mods hook the same event, they form a chain. First loaded sees the event first. This lets you stack mods from different authors without conflicts.
+
+The skeleton looks like this:
+
+```ts
+register(on => {
+  on('tool.call', ($, e, next) => {
+    // observe, rewrite, or answer
+    return next(e)
+  })
+})
+```
+
+<Callout type="info">
+Mods shipped in Claude Code v2.1.287 on October 1, 2026. You can validate your mod with `claude plugin validate` and test it with `claude plugin test`.
+</Callout>
+
+## Why Hooks Weren't Enough
+
+Claude Code already had **hooks** — shell commands that fire on events, passing JSON over stdin and stdout. Hooks were useful for light automation: log a tool call, reject a command, append context. But they hit a wall fast.
+
+A hook spawns a new process for every event. It can't keep state between calls. It can't draw anything on screen. It can't rewrite what happens next — only react after the fact. And it dies when the event is done.
+
+Mods solve all of that:
+
+| | Settings Hooks | Mods |
+|---|---|---|
+| **Runtime** | Shell process per event | Loaded once, stays in the session |
+| **Language** | Shell + JSON I/O | TypeScript module with full type support |
+| **Capabilities** | React to events | Observe, rewrite, or fully replace events |
+| **State** | Ephemeral | Persistent across events (survives hot reload) |
+| **UI** | None | Terminal and desktop UI — panes, bands, buttons, toasts |
+| **Distribution** | Local config files | Ship inside plugins via marketplace or directory |
+
+The gap is clear: hooks were designed to react. Mods are designed to reshape.
+
+## Three Mods That Show the Range
+
+Anthropic's getting-started guide, written by Addy Osmani and published alongside the launch, walks through three mods that demonstrate what the API can do. They're worth understanding even if you never build one yourself, because they show where this is headed.
+
+### Token Weather: A Context Window Forecast
+
+About 80 lines of code. It reads how full the context window is after each turn and draws a one-line weather report above the prompt: a weather icon, percentage used, tokens consumed, a sparkline of recent turns, and how much the last turn added.
+
+Different usage levels get different weather icons — sun when things are clear, lightning when compaction looms. Simple, but it answers the question every Claude Code user asks constantly — "how close am I to the limit?"
+
+The mod uses `$.session.usage()` to read context stats and `$.state` to keep history across hot reloads. The UI updates automatically because reading state during a render subscribes the drawing to future changes. No manual refresh needed.
+
+### Blast Radius: A Safety Net for Destructive Commands
+
+When Claude calls `rm -rf`, `git reset --hard`, `git clean`, a force push, or a database migration, Blast Radius intercepts the tool call. It runs the command's own dry-run mode to figure out what would change, then opens a pane showing the impact — files that would be deleted, changes that would be lost, migrations that would run.
+
+Two buttons: Proceed and Cancel. Press Cancel and the command never executes. Press Proceed and it runs as written.
+
+This is the "answer" pattern in action. The mod holds the event, waits for the user's decision, then either forwards it with `next(e)` or returns a denial. The destructive command never runs unless you click Proceed.
+
+### Replay Theater: Step Through Changes After the Fact
+
+Records every Edit and Write tool call during a turn. When the turn ends, type `/replay` and a pane walks through each file change as a diff, one step at a time, with navigation buttons.
+
+This is pure observation — it never blocks or changes an edit. It pairs `turn.start` and `turn.complete` events to bracket edits into replays, and uses `$.command.register` to add the `/replay` slash command.
+
+## Built-In Features Are Now Mods
+
+This is the part that signals where Anthropic is going. Some of Claude Code's own features now ship as mods:
+
+- **`cc-plugin-diff`**: The `/diff` pane. You can disable it or replace it with your own diff viewer.
+- **`cc-plugin-agents-md`**: Loads `AGENTS.md` as project instructions. Don't want it? Turn it off.
+- **`cc-plugin-you-should-know`**: A side agent that watches Claude's output and sends "heads up" messages when it spots information you might have missed. Off by default — enable it with `/plugin enable cc-plugin-you-should-know@builtin`.
+
+The direction is clear: if a feature can be a mod, it probably will be. The more of Claude Code's own behavior ships as replaceable middleware, the more control developers get over what their agent actually does.
+
+<Callout type="warning">
+Mods run with the same machine access as Claude Code — they're not sandboxed. Install only from sources you trust, the same way you'd install any npm package. On Team and Enterprise plans, a built-in mod called `sec-default` loads first to prevent user mods from overriding permission deny rules.
+</Callout>
+
+## The Community Moved Fast
+
+By October 3 — two days after launch — Dev.to counted 2,685 catalogued mods. On the same day, 10 of the 15 trending repositories on GitHub were agent skills, harness optimizers, or multi-agent orchestration tools.
+
+Some early mods worth watching:
+
+- **review-pane**: Renders Claude's reply in a side pane for easier reading
+- **buffer-pane**: A scratch area for composing your next prompt while a turn runs
+- **aside**: A side chat channel that keeps exploratory questions out of the main context
+- **prismantis**: Restyles replies with alternative themes, tables, and copy buttons
+
+The developer community didn't wait to see if mods would catch on. They were already building.
+
+## "Mod Claude with Claude"
+
+The most practical feature might be the simplest one. You can describe the mod you want in a conversation, and Claude Code will write it for you.
+
+Paste something like: "Make me a mod that shows a cost meter above the prompt, tracking API spend per session." Claude Code writes the TypeScript, creates the plugin folder structure, installs it, and hot-reloads it in your running session. If you don't like the result, describe what to change. The mod updates in place.
+
+You don't need to know the API. You don't need to read docs. You describe what you want to see, and the tool builds the tool that shows it.
+
+This is a different kind of extensibility. Other coding agents offer configuration files and instruction prompts. Claude Code lets you reprogram the runtime — and uses its own model to do the programming.
+
+<Callout type="tip">
+Try it yourself: tell Claude Code "make me a mod that shows a cost estimate above each turn" and watch it scaffold, install, and hot-reload the plugin without leaving the session.
+</Callout>
+
+## What This Means for Enterprise Teams
+
+The trust question is real. Mods run unsandboxed with full machine access. That's the same trust model as any code you install — npm packages, VS Code extensions, CLI tools — but it's richer attack surface because mods stay loaded and can draw UI.
+
+Anthropic built controls for this:
+
+- **`sec-default`**: A built-in mod that loads first on Team and Enterprise plans. It prevents user-installed mods from overriding permission deny rules.
+- **Plugin allow/block lists**: Admins control which marketplaces and plugins can load.
+- **Managed settings**: Pushed to users' machines, so the admin's mods load before anything else.
+
+Beyond security, mods open real workflow possibilities for teams: CI/CD status panes that update as builds pass or fail, production safeguards that require confirmation before touching prod config, audit logging that records every call every mod makes.
+
+## The Bigger Picture
+
+The agentic coding tool space is in a land grab right now. Cursor is IDE-first, betting on inline edits and visual context. OpenAI's Codex is autonomous-first, betting on agents that work in the background. Claude Code is betting on **extensibility at the event layer** — letting developers reshape the agent itself rather than just telling it what to do differently.
+
+It's a platform play. And if the first week's community response is any signal, developers were waiting for exactly this.
+
+The question now isn't whether mods are useful — 2,685 mods in two days answered that. It's what developers will build that Anthropic never imagined. The whole point of opening the event layer is that you stop being the bottleneck for your own users' ideas. Token Weather took about 80 lines. The next mod that changes how thousands of developers work might not take many more.
+
+---
+
+Want more breakdowns of the tools reshaping how developers work? [Subscribe to the newsletter](/subscribe) for weekly analysis of AI development tools, workflows, and strategies.
