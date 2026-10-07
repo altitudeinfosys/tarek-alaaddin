@@ -1,0 +1,110 @@
+---
+title: "Cursor Remote Control: Steer Your Coding Agents from Your Phone"
+description: "Cursor's iOS app now connects to local coding agents. Combined with SDK updates for background subagents and mid-run steering, supervision is going mobile."
+date: "2026-10-07"
+category: "ai-tools"
+tags: ["cursor", "ai-agents", "developer-tools", "cursor-remote-control", "coding-agents", "cursor-sdk", "agent-supervision"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+You leave your laptop open on the desk, an agent halfway through a refactor. Twenty minutes later, your phone buzzes — the agent hit an ambiguous type and wants direction. You glance at the screen, type "use the stricter generic — skip the legacy wrapper," and pocket the phone. The agent picks up where it paused and keeps going.
+
+That's not a concept demo. It shipped on October 6, 2026, when Cursor added **Remote Control** to its iOS app. The feature is small. The implication isn't: the developer's relationship to an AI coding agent is no longer a conversation at a terminal. It's becoming supervision from anywhere your phone has signal.
+
+## What Cursor Remote Control Does
+
+Remote Control connects the Cursor iOS app — currently in public beta — to agents already running on your computer. It doesn't move your code to the cloud or spin up a remote VM. Everything stays local: the agent, the codebase, the file system, the shell access. Your phone is a window into the machine, not a replacement for it.
+
+The setup is a few steps:
+
+1. **Sign in** to the Cursor iOS app with your existing account.
+2. **Select a computer.** Machines on your account appear in the app automatically.
+3. **Approve the pairing** on the Cursor desktop app.
+4. **Tap an agent** to see its live status and send it a message.
+
+The feature ships on by default for individual users and teams. Push notifications and iOS Live Activities on the lock screen mean you don't have to keep the app open to stay in the loop.
+
+<Callout type="info">
+Remote Control launched on October 6, 2026. It's available to all Cursor users except Enterprise organizations, where an administrator must enable it under Org settings → Security and identity → Remote control. The iOS app is currently in public beta; no Android version has been announced.
+</Callout>
+
+## Local Agents vs. Cloud Agents: The Tradeoff
+
+Two constraints shape how Remote Control works in practice:
+
+**Your computer must stay on and online.** The agent runs locally, and the phone connects to it. Close the lid, lose the connection. Cursor added a "Keep this computer awake" toggle in desktop settings, but it requires the machine to be plugged in with the lid open. If the battery dies or Wi-Fi drops, the phone shows nothing.
+
+**Remote Control doesn't require cloud agents.** This distinction matters. Cursor also offers cloud agents that handle their own environment — useful for fire-and-forget work. Remote Control is specifically for the scenario where you want agents running against your actual local environment, with your file system and your credentials, and you want to check in from elsewhere.
+
+The practical tradeoff: local agents keep secrets on your machine and run against your real setup, but they need the machine to stay awake. Cloud agents survive a closed laptop but move the code off-device. Cursor's iOS blog post describes a handoff between local and cloud — moving a session from one to the other and back — but that requires both environments to be functionally equivalent, which isn't always true.
+
+## Cursor SDK Updates: Background Subagents and Mid-Run Steering
+
+Separately from Remote Control, a series of Cursor SDK releases in September 2026 changed how agents handle background work and human input mid-run. These primitives could underpin the kind of mobile supervision Remote Control enables, though Cursor hasn't explicitly connected the two.
+
+**SDK 1.0.31 (September 3):** Background subagents now return their results to the parent run. Previously, a subagent's result was dropped when the parent turn ended. Now it comes back as a follow-up turn on the same run. This works for local agents in both TypeScript and Python.
+
+**SDK 1.0.32 (September 22):** `run.steer(text)` no longer waits for background subagents to finish. If a subagent is mid-task when you steer, it moves to the background and continues working. Your steering message becomes the next turn immediately. Background results still arrive afterward. TypeScript local runs only.
+
+**SDK 1.0.34 (September 29):** Subagents can inherit the parent's executors, workspace path, and allowed/excluded tools via `local.subagentInherit`. Child agents operate under the same constraints as the parent — same tool limits, same workspace. TypeScript local agents only.
+
+**SDK 1.0.35 (September 30):** Custom tools now receive `context.sessionId`, so a host can keep separate state for each child agent.
+
+<Callout type="warning">
+Steering and background subagent results are currently limited to local agents. Cloud runs return `revert_to_followup` on steer, meaning the message is queued as a new follow-up rather than injected mid-run.
+</Callout>
+
+The pieces fit together: background subagents that report back, immediate steering that doesn't block on pending work, and a mobile app that lets you send those steering messages from your pocket. Whether or not Cursor built these as a single system, they compose into one.
+
+## Cursor vs. Codex: Two Models of Mobile Agent Control
+
+Cursor isn't the only company shipping mobile agent controls. OpenAI added mobile remote control to Codex in May 2026, letting developers monitor cloud agents and approve actions from their phone.
+
+The architectures differ in ways that matter:
+
+- **Cursor Remote Control** targets local agents with a message-and-steer model. You type a message, the agent incorporates it immediately, and keeps working. The code never leaves your machine.
+- **Codex mobile** targets cloud-hosted agents with a review-and-approve model. You see what the agent wants to do, approve or reject it, and the agent proceeds in the cloud.
+
+Different trust models, different latency profiles, same direction: the developer doesn't need to be at the terminal to keep agents productive.
+
+It's worth watching how these models evolve. Cursor's local-first approach gives developers full control over their environment but ties them to a running machine. Codex's cloud-first approach removes the hardware dependency but requires trusting code to a remote sandbox. Most teams will end up using both patterns depending on the task — local for sensitive repos, cloud for long-running background jobs.
+
+## The Shift Toward Agent Supervision
+
+The pattern across both implementations points somewhere specific. Agent work is moving from single-threaded conversation to multi-agent supervision. You don't sit with one agent and guide every step. You start several agents on different tasks, let them work in the background, and check in when they surface something that needs judgment.
+
+That's management, not programming. Mobile access, background subagents, mid-run steering — these are supervision infrastructure. The tools are catching up to a workflow that the most agent-heavy developers have already adopted informally.
+
+## What Still Breaks
+
+The model is promising but incomplete. Three friction points stand out.
+
+### Notification Fatigue Is Coming
+
+If every agent pings your phone when it hits a decision point, you're not supervising — you're on call. Cursor's iOS app supports push notifications and Live Activities on the lock screen, which is great for staying aware. But the value of those notifications depends entirely on agents being good enough to handle most decisions alone and only escalating the ones that genuinely need human input. Without that filter, Remote Control becomes a pager.
+
+### The Laptop-Awake Requirement Is Real
+
+For local agents, keeping a machine plugged in with the lid open limits the "work from anywhere" promise. Cloud agents solve this but introduce their own tradeoffs — a separate environment and, for some developers, discomfort with code leaving the machine. The local-to-cloud handoff Cursor describes is the eventual answer, but it requires both environments to be functionally equivalent.
+
+### Security Needs to Catch Up
+
+A phone that can message an agent with shell access is a new control surface. Cursor handles this with desktop-side pairing approval and the Enterprise default-off switch — reasonable first steps. But as agents gain more capabilities — writing to production databases, deploying code, managing infrastructure — the security model for remote control will need to evolve.
+
+<Callout type="tip">
+Enterprise administrators can keep Remote Control off by default and enable it selectively. If your organization runs agents with production access, review the security implications before turning it on.
+</Callout>
+
+## What to Do With This
+
+If you use Cursor and have agents running while you step away from your desk, Remote Control is worth trying. Download the iOS app, pair your machine, and steer an agent on your next coffee run. The feature itself is simple, but the workflow shift it enables — from terminal-bound conversation to phone-based supervision — previews where all of this is headed.
+
+For SDK developers building agent orchestration, the 1.0.31–1.0.35 releases are the ones to read. Background subagent results returning to the parent run and immediate steering are the primitives that make multi-agent supervision work in code, not just in the UI.
+
+The developer's job title hasn't changed. But the job description is quietly being rewritten: less typing, more judgment. Less operating, more supervising.
+
+---
+
+*Want more breakdowns of AI coding tools and agent workflows? [Subscribe to the newsletter](/subscribe) for weekly analysis.*
