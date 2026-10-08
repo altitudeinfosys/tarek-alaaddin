@@ -40,7 +40,7 @@ I do best in environments that:
 ### AI-Accelerated Development (Vibe Coding)
 **Context:** I wanted to explore how AI tools could change solo development
 **Challenge:** Could one person achieve team-level productivity?
-**Approach:** Built 3 SaaS apps using Claude Code, Copilot, and other AI tools
+**Approach:** Built and shipped 10+ web and mobile products using Claude Code, Codex, and other AI tools
 **Outcome:** Shipping features 3-5x faster while maintaining quality
 **Learning:** AI doesn't replace engineering judgment - it amplifies it. You still need to know what good code looks like.
 
@@ -54,7 +54,7 @@ I do best in environments that:
 - Clear communication with both technical and non-technical stakeholders
 
 ### Areas of Growth
-- Always learning new frontend frameworks (React ecosystem moves fast)
+- Mobile and modern web stacks come from shipped side products rather than years on a company mobile team
 - Continuing to refine AI-assisted workflows
 - Balancing hands-on coding with leadership responsibilities
 
@@ -83,16 +83,31 @@ I believe in data-driven discussions. When there's disagreement, I try to:
 - Team size preference: Mid-size teams where I can have impact
 - Industry interests: Open to various industries, especially interested in modernization projects
 
-## Side Projects
+## Side Projects and Products
 
-### Taskitos
-Task management app that "nags" tasks to completion with smart, persistent notifications. Built with Next.js + Supabase.
+All of these are built with AI coding agents (mainly Claude Code) as a solo developer. The full list with stacks is in the resume's "Products Built and Shipped" section. Highlights:
 
-### ExpandNote
-Notes with automation hooks - like "notes + Zapier". Notes can trigger workflows and integrations. Built with Next.js + Supabase.
+- **Taskitos**: AI task manager with persistent reminders and voice-to-task. Next.js web + React Native/Expo mobile, Supabase, PowerSync offline sync. Released on the App Store and Google Play.
+- **ExpandNote**: AI notes app with voice-to-text, email-to-note, AI Profiles, and an MCP server. Next.js 16 + Expo SDK 54, Supabase, PowerSync.
+- **TextInvoice / SpeakInvoice**: contractors text or call to create invoices; an AI voice/SMS agent plus Claude turns the conversation into an invoice.
+- **SayCopy**: Expo / React Native app for recording, transcribing, and translating speech.
+- **AckPush**: push notification hub for apps and AI agents, answered from the notification.
+- **PropertyPulse360**: property management with Claude parsing vendor invoice emails.
+- **RentalROI**: rental investment calculator on web and mobile.
+- **LUZIT dashboard**, **GetYourWebsiteReady** (AI website/GEO audit), **Second Brain** MCP server, and client websites such as Austin Patio.
 
-### PropertyPulse360
-Property management for small landlords: rent tracking, expenses, owner distributions, lease-expiry tracking. Built with Next.js + Supabase.
+## Mobile Development
+
+### What mobile experience do you have?
+I build cross-platform mobile apps with React Native and Expo: Expo Router navigation, EAS Build and Submit, push notifications (including actionable notifications with buttons and inline replies), audio recording and voice features, secure storage, offline-first sync with PowerSync, and RevenueCat subscriptions. I've taken Taskitos through internal previews to public releases on the Apple App Store and Google Play, including testing on physical iOS and Android devices before release. Most of my mobile apps share TypeScript packages with a Next.js web app in a pnpm monorepo.
+
+### Is this professional or side-project experience?
+Mobile is from my own shipped products, not from an employer. It's real, released work, but I don't have years of mobile development inside a company team.
+
+## Supabase and Backend Platforms
+
+### How do you use Supabase?
+Supabase is my default backend for products: Postgres schema design and migrations, Auth, Row Level Security policies, Storage, Realtime, and pgvector for semantic search. I've also run self-hosted infrastructure around it, such as PowerSync sync services on Hetzner with Coolify and Docker, and debugged production incidents there (for example, replication drops caused by an IPv6 proxy). For this site I use Neon serverless Postgres with Drizzle ORM.
 
 ## AI & Automation Expertise
 
@@ -146,14 +161,7 @@ I build end-to-end ETL workflows combining web crawling, data extraction, transf
 ## AI Resume Analyzer Project
 
 ### What is the AI Resume Analyzer?
-I built an AI-powered resume-to-job-description matcher into my personal site (tarekalaaddin.com). It uses the Claude API to:
-- Score how well my resume matches a given job description (0-100%)
-- Provide an honest assessment of fit
-- Identify strong matches and gaps
-- Automatically select the best resume version (fullstack, backend, or leadership) based on keywords in the job description
-
-### How does the resume auto-selection work?
-The system analyzes keywords in the pasted job description and automatically picks the most relevant resume version. Backend-heavy roles get the backend resume, full-stack roles get the fullstack version, and leadership/management roles get the leadership resume. This ensures the AI evaluates fit against the most relevant experience.
+It's the fit-check tool on tarekalaaddin.com. A recruiter pastes a job description and the Claude API (Claude Sonnet 5.5 with adaptive thinking) scores the match from 0 to 100 against my full work history and shipped products. It returns a verdict, strengths with evidence, gaps, and an honest assessment. It uses structured JSON outputs so responses always match the schema, prompt caching on the profile, and treats pasted text as untrusted input.
 
 ## Fun Facts
 - 20+ years in the industry, still excited to learn new things

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeFitCheck } from '@/lib/claude'
-import { getResumeForFitCheck } from '@/lib/resume-loader'
+import { getProfileForFitCheck } from '@/lib/resume-loader'
 
 const MAX_JOB_DESCRIPTION_CHARS = 20000
 
@@ -33,23 +33,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get the most relevant resume based on job description keywords
-    const { resume, type } = getResumeForFitCheck(jobDescription)
+    const result = await analyzeFitCheck(getProfileForFitCheck(), jobDescription)
 
-    // Analyze fit using Claude Sonnet
-    const result = await analyzeFitCheck(resume, jobDescription)
-
-    return NextResponse.json({
-      ...result,
-      resumeType: type,
-    })
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Fit check API error:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     console.error('Error details:', errorMessage)
 
+    // Details stay in the server logs; visitors get a generic message
     return NextResponse.json(
-      { error: `Failed to analyze job fit: ${errorMessage}` },
+      { error: 'Failed to analyze job fit' },
       { status: 500 }
     )
   }

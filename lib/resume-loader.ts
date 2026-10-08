@@ -143,12 +143,13 @@ export function getResumeForChat(): string {
   return `${resume}\n\n---\n\nAdditional Context:\n${context}`
 }
 
-export function getResumeForFitCheck(jobDescription: string): {
-  resume: string
-  type: ResumeType
-} {
-  const type = selectResumeType(jobDescription)
-  const resume = loadResume(type)
+// The fit check scores against one complete profile (main resume + extra
+// context) instead of a keyword-picked variant. Keyword routing sent most job
+// descriptions ("lead", "team") to the leadership file, which is an unfilled
+// template, and the narrower variants hid relevant experience from the model.
+export function getProfileForFitCheck(): string {
+  const resume = loadResume('fullstack')
+  const context = loadContext()
 
-  return { resume, type }
+  return `${resume}\n\n---\n\n# Additional Context\n\n${context}`
 }
