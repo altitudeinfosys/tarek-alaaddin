@@ -34,6 +34,9 @@ function extractText(message: Anthropic.Message): string {
     .join('')
 }
 
+const CHAT_REFUSAL_REPLY =
+  "I can only answer questions about Tarek's experience, skills, and work. Feel free to ask about his projects, the roles he's held, or the technologies he uses."
+
 export async function chat(
   messages: ChatMessage[],
   systemPrompt: string,
@@ -50,6 +53,11 @@ export async function chat(
       content: m.content,
     })),
   })
+
+  // A declined chat message gets a polite redirect instead of a 500
+  if (response.stop_reason === 'refusal') {
+    return CHAT_REFUSAL_REPLY
+  }
 
   return extractText(response)
 }
