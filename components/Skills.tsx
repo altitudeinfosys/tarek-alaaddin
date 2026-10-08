@@ -31,8 +31,24 @@ const SKILL_CATEGORIES = [
       { name: 'React', level: 'Advanced' },
       { name: 'Next.js', level: 'Advanced' },
       { name: 'Spring Batch', level: 'Advanced' },
-      { name: '.NET Core', level: 'Intermediate' },
+      { name: 'Tailwind CSS', level: 'Advanced' },
       { name: 'Node.js', level: 'Intermediate' },
+      { name: '.NET Core', level: 'Intermediate' },
+    ],
+  },
+  {
+    name: 'Mobile',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+      </svg>
+    ),
+    skills: [
+      { name: 'React Native', level: 'Advanced' },
+      { name: 'Expo & EAS', level: 'Advanced' },
+      { name: 'Push Notifications', level: 'Advanced' },
+      { name: 'App Store & Play Releases', level: 'Advanced' },
+      { name: 'Offline Sync (PowerSync)', level: 'Intermediate' },
     ],
   },
   {
@@ -49,6 +65,7 @@ const SKILL_CATEGORIES = [
       { name: 'Azure DevOps', level: 'Advanced' },
       { name: 'Git', level: 'Expert' },
       { name: 'Vercel', level: 'Advanced' },
+      { name: 'Docker', level: 'Intermediate' },
     ],
   },
   {
@@ -63,10 +80,11 @@ const SKILL_CATEGORIES = [
       { name: 'SQL Server', level: 'Expert' },
       { name: 'PostgreSQL', level: 'Advanced' },
       { name: 'Supabase', level: 'Advanced' },
+      { name: 'Neon + Drizzle', level: 'Intermediate' },
     ],
   },
   {
-    name: 'AI & Productivity',
+    name: 'AI Engineering',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -74,8 +92,10 @@ const SKILL_CATEGORIES = [
     ),
     skills: [
       { name: 'Claude Code', level: 'Expert' },
-      { name: 'GitHub Copilot', level: 'Advanced' },
-      { name: 'Gemini', level: 'Advanced' },
+      { name: 'Claude API', level: 'Advanced' },
+      { name: 'MCP Servers', level: 'Advanced' },
+      { name: 'OpenAI Codex', level: 'Advanced' },
+      { name: 'LLM Features & Agents', level: 'Advanced' },
       { name: 'AI-Accelerated Dev', level: 'Expert' },
     ],
   },

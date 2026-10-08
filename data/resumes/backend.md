@@ -77,7 +77,7 @@ Microservices architecture, REST APIs, Distributed systems, High-volume batch pr
 
 ### AI Resume Analyzer
 - Built an AI-powered resume-to-job-description analyzer using Claude API and Next.js — scores job fit, identifies strong matches, and surfaces gaps with honest assessments
-- Designed resume auto-selection logic that picks the optimal resume version (fullstack/backend/leadership) based on job description keyword analysis
+- Uses Claude Sonnet 5.5 with structured JSON outputs and prompt caching, scoring against the full work history
 
 ### Web Scraping & Data Pipelines
 - Built custom web scrapers using Python Scrapy and BeautifulSoup to extract structured lead data from public web sources, automating manual research workflows
