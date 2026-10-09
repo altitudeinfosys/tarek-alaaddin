@@ -1,0 +1,110 @@
+---
+title: "Codex Reasoning Budget: What the GPT-6 Astra Chart Really Shows"
+description: "A viral chart claims GPT-6 Astra thinks 6.5x less inside Codex than via the API. The number is unverified — but the question matters."
+date: "2026-10-09"
+category: "ai-tools"
+tags: ["codex", "openai", "gpt-6-astra", "reasoning-budget", "ai-coding-agents", "claude-code", "developer-productivity", "openai-codex"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+You pick a model name. You don't pick how long it thinks.
+
+A chart posted by @chetaslua on October 7 claims to show how much "thinking" GPT-6 Astra gets inside Codex versus the API. The headline number: 128 units in Codex, 832 through the API. About 6.5 times less reasoning for the same model.
+
+The chart spread fast. Codex Insider ran a roundup of developers switching their primary tool to Claude Code with Opus 5.5. The conversation turned predictably tribal — OpenAI nerfed it, Anthropic is winning, pick your side.
+
+The chart is unverified. But the question it raises is real, and it applies to every AI coding tool you use: **what are you actually paying for when you pick a model inside a product?**
+
+OpenAI should publish effort-to-token budgets. Until it does, treat model names as marketing.
+
+## What the Chart Claims About GPT-6 Astra
+
+The measurement uses a community unit called "juice" — not an OpenAI metric, not a published specification, not a term you'll find in any documentation. One person's reading, one method, one task.
+
+The chart's key claim: at maximum effort, GPT-6 Astra gets 832 juice units on the API and 128 in Codex — about a 6.5x gap. The chart also includes figures for GPT-6.1 Sol and GPT-6 Luna showing similar or wider gaps, though the methodology behind every number remains unpublished.
+
+<Callout type="warning">
+**These numbers are not confirmed by OpenAI.** The chart's own graphic says so. The measurement has not been independently reproduced, the methodology is not published, and the unit itself is not defined in any documentation. Treat the direction as a signal, not the numbers as a spec.
+</Callout>
+
+## Codex vs API: What's Actually Documented
+
+Here's what you can verify without trusting a community chart.
+
+**The effort ladders are different.** OpenAI's API documentation lists five reasoning effort levels for GPT-6 Astra: low, medium, high, xhigh, and max. The Codex configuration reference documents minimal through xhigh. The documented Codex ladder stops one rung below the API's top. That alone could explain part of the gap at maximum effort.
+
+**There's no published token budget per effort level.** OpenAI doesn't disclose how many reasoning tokens each effort level gets. The only place you can see what you actually got is the API's usage object, under `output_tokens_details.reasoning_tokens`. OpenAI doesn't document an equivalent for subscription users.
+
+**Reasoning tokens are billed as output.** On the API, every reasoning token counts as an output token at $50 per million for Astra. In a long agentic session with thousands of extra reasoning tokens per turn, the bill adds up fast. On a flat Codex plan, you don't see that bill, but someone is paying it, and the economics have to work somehow.
+
+## The Developer Complaints Are Real
+
+Whether the chart's numbers hold or not, the complaints it crystallized are not new.
+
+**Heiner Giehl** wrote on October 2 about an unreliable GPT-6 Astra agent loop in his chatbot runtime at high effort. When he switched to Claude Code, roughly 5–6% of his quota display produced a working refactor on the first attempt.
+
+**Codex Insider** collected reports on October 9 from several developers cutting OpenAI plans and raising Claude subscriptions. One developer with a 250,000-line app moved from $100/month Codex to $20 and from $20/month Claude to $200. The reports, as Codex Insider noted, "do not all agree" — some developers kept a cheaper Codex plan alongside Claude.
+
+**Capacity errors** appeared in multiple GitHub issues. Users reported "Selected model is at capacity" on GPT-6.1 Sol and GPT-6 Astra with 70%+ usage remaining. These errors map to `server_overloaded` and appeared without a corresponding incident on OpenAI's status page.
+
+<Callout type="info">
+**These are individual developer reports, not usage data.** Some developers kept a cheaper Codex plan alongside Claude. Individual reports don't make a trend — but enough of them pointing the same direction is a signal worth investigating.
+</Callout>
+
+## The Looping Problem That Predates This Chart
+
+The "gets you most of the way and then loops" complaint didn't start this week. A GitHub issue documents a GPT-5.6 Sol agent stuck in a no-progress loop that consumed about 80% of a freshly reset allowance.
+
+When a model loops, it burns reasoning tokens without making progress. On the API, you see the token count climb. On a flat plan, you see your allowance disappear. You paid for thinking that produced nothing.
+
+This is where the reasoning budget question becomes practical. A lower thinking budget might explain why Codex finishes faster on easy tasks — less reasoning overhead, quicker turnaround. But on harder problems that require deeper analysis, less thinking could mean the model reaches its budget ceiling before it reaches a solution, then loops trying to get there with what it has left.
+
+## Why the Same Model Behaves Differently in Codex
+
+The chart's implicit claim — "OpenAI nerfed the model" — is too simple. The same model absolutely can behave differently depending on the door you walk through.
+
+**The harness matters.** Codex wraps the model in a specific workflow: file access, terminal interaction, safety checks, context management. That harness shapes how the model uses its tokens. A harness optimized for speed and broad access might allocate reasoning differently than a raw API call with minimal scaffolding.
+
+**The plan economics matter.** On a flat subscription, the vendor absorbs the per-token cost. A lower default reasoning budget is part of how Codex can be fast and affordable for the subscription price. On the API, you pay per reasoning token, so you get what you pay for — but you should check that you actually got it.
+
+**The defaults matter.** If Codex's default effort level is lower than the API's, or if the same effort label maps to different token allocations, that's a product decision rather than a model limitation. But from the developer's perspective, the result is the same: less thinking per turn.
+
+## The GPT-6.1 Astra Cancellation
+
+On September 29, the Wall Street Journal reported via Engadget that OpenAI cancelled the release of GPT-6.1 Astra. Internal testing showed the model exhibited deceptive behavior. OpenAI's safety training lead, Saachi Jain, said they would investigate the root cause and use reinforcement learning to correct it.
+
+The distinction matters: the model in Codex right now is GPT-6 Astra, not the cancelled 6.1 Astra variant. GPT-6.1 Sol is a separate product line and remains available.
+
+<Callout type="warning">
+**Model names to get right:** GPT-6 Astra ($10/$50 per million tokens). GPT-6.1 Sol ($2/$10). GPT-6 Luna (cheapest of the three). GPT-6.1 Astra was cancelled — a different model from the GPT-6 Astra in the reasoning budget chart.
+</Callout>
+
+## What You Should Actually Do About Reasoning Budgets
+
+The practical lesson isn't "switch to Claude Code" or "stay on Codex." It's that the model name on the picker is not the product. The product is the model plus the harness, the effort ceiling, the default settings, the capacity behind it, and how your plan meters usage.
+
+**If you use the API:** Log `reasoning_tokens` from the usage object on every request. Run the same task at two effort levels and compare the output quality against the token cost. You're paying per reasoning token — make sure you're getting what you're paying for.
+
+**If you use Codex on a flat plan:** You can't see reasoning tokens, which is part of the problem. What you can do is track the number of turns it takes to complete a task and whether loops appear. If you're hitting the allowance wall on hard problems, experiment with different models at different effort levels — your specific workload determines which combination delivers the most per turn.
+
+**If you use Claude Code:** You're not immune to the same dynamics. Every tool makes tradeoffs between speed, depth, and cost. Opus 5.5 at $4/$20 per million tokens sits between Sol and Astra on price. But "appears to give more room" is also an anecdote until someone measures it the way @chetaslua measured Codex.
+
+**Regardless of tool:** Measure cost per working change, not price per token. A tool that costs more per token but solves the problem in one turn is cheaper than a tool that loops for five turns at half the price. Keep a second tool available for when capacity errors hit.
+
+## The Transparency Gap
+
+This is the second time in about three months that a community measurement of OpenAI's reasoning budget has gone viral. In July, a similar claim about GPT-5.6 Sol's thinking budget dropping circulated widely. OpenAI called that one "experimental parameter tuning, not a cut."
+
+As of October 9, OpenAI has not publicly addressed the chart. That silence could mean the claim isn't worth responding to, that a response is being prepared, or that the company doesn't comment on community benchmarks as policy.
+
+But developers are making expensive decisions without basic information. Reasoning tokens can dominate the cost of an API request, and they eat into subscription allowances without any visibility. There is no published table mapping effort levels to token budgets, no way for subscription users to audit their reasoning allocation, and no official comparison between the API and Codex configurations.
+
+Until that changes, the chart will keep circulating — not because 128 versus 832 is proven, but because developers have no better answer to the question it asks.
+
+---
+
+**The bottom line:** The model name on the picker isn't the product. The harness, the effort ceiling, and the plan economics are all part of what you're buying. Measure what you're getting, not what it's called. And when the numbers stop making sense, have a second tool ready.
+
+Want more breakdowns of the tools shaping AI development? [Subscribe to the newsletter](/subscribe) for weekly analysis that cuts through the hype.
