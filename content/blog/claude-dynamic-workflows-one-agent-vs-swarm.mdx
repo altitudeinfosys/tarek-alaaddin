@@ -1,0 +1,137 @@
+---
+title: "One Agent Found 14 Bugs, a Swarm Found 66: Claude Dynamic Workflows"
+description: "Anthropic planted 70 bugs in 116,000 lines of code. A single agent caught up to 27. A dynamic workflow caught 66 — every time."
+date: "2026-10-09"
+category: "ai-tools"
+tags: ["claude", "anthropic", "dynamic-workflows", "multi-agent", "managed-agents", "claude-code", "ai-coding-agents", "multi-agent-systems"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+The single agent found 14 bugs. Then 15. Then 27. Three runs, three different answers, none of them close to complete.
+
+The dynamic workflow found 66. Then 66. Then 66.
+
+Same codebase — 116,000 lines, 70 planted bugs. The difference was how the work was organized. One agent reasoning alone versus a lead agent writing a plan, distributing it across dozens of subagents, checking their findings against each other, and merging the results. Anthropic hasn't disclosed which model powered the benchmark, so this is a test of structure, not a model comparison.
+
+That gap — 38.6% recall at best versus 94.3% every run — is the argument Anthropic is making for dynamic workflows. And as of October 9, 2026, you can use them without running anything locally.
+
+## Claude Dynamic Workflows Hit Managed Agents
+
+Anthropic moved dynamic workflows from Claude Code (where they launched as a research preview on May 28 and later reached general availability) to the Managed Agents platform as a public beta.
+
+In Claude Code, the workflow runs on your machine. On Managed Agents, the workflow runs on Anthropic's servers — the agent manages the execution, and you track it through the API.
+
+To enable them, you set the multiagent type to `multiagent_20261001` and include the `anthropic-beta: managed-agents-2026-04-01` header. You also need `workflows.type` set to `"enabled"` in the configuration.
+
+```json
+{
+  "agent": {
+    "multiagent": {
+      "type": "multiagent_20261001"
+    },
+    "workflows": {
+      "type": "enabled"
+    }
+  }
+}
+```
+
+A run can orchestrate up to 1,000 agents total — but not 1,000 simultaneously. Agents cycle through in batches as earlier ones finish, with the managed platform handling concurrency behind the scenes.
+
+<Callout type="info">
+**The 1,000-agent figure is a per-run ceiling, not a concurrency limit.** Some headlines say "1,000 agents in parallel." That's misleading. Most runs will never need anywhere near that number — the orchestrator spins up what the plan requires.
+</Callout>
+
+## Dynamic Workflows vs Single Agent: The Bug-Hunt Benchmark
+
+Here are the numbers Anthropic published. Three runs each:
+
+**Single agent:** 14, 15, 27 bugs found (20.0% to 38.6% recall).
+
+**Dynamic workflow:** 66, 66, 66 bugs found (94.3% recall).
+
+The consistency of the workflow result is almost as striking as the recall gap. The single agent's variance — nearly 2x between worst and best run — suggests that a lone agent's path through a large codebase is semi-random. The workflow's consistency likely comes from structural coverage: a lead agent writes a plan that spans the entire surface area, and subagents work bounded sections rather than hoping a single thread catches everything.
+
+Now for the caveats, because they matter.
+
+This is Anthropic's own benchmark on a synthetic codebase with planted bugs. The bugs were synthetic — we don't know how their distribution compares to the bugs that actually ship in production code. The test measures recall — how many you catch — but reports no precision data. We don't know how many false positives each setup generated. We don't know the token cost of the single-agent run versus the workflow run. We don't know the wall-clock time.
+
+<Callout type="warning">
+**Vendor benchmarks are marketing with methodology.** The direction of the result — coordinated agents find more — is consistent with independent research. A Microsoft Tech Community study found a 45-agent swarm caught 266 vulnerabilities versus 21 for independent parallel agents across 15 open-source projects. But the specific 94.3% figure comes from one test, run by the vendor, on planted bugs. Treat the direction as a signal, not the number as a guarantee.
+</Callout>
+
+A 116,000-line codebase is real-world-sized, not a toy. But real bugs hide in implicit assumptions, race conditions, and business logic that depends on context no static analysis can reach. How well dynamic workflows handle those remains to be seen.
+
+## How Dynamic Workflows Run Under the Hood
+
+The lead agent reads your prompt and writes an orchestration plan that defines phases, assigns tasks, and specifies how results combine. In Claude Code, this takes the form of a JavaScript script; the managed runtime executes the plan in the background as a "workflow run."
+
+Inside the run, based on AlphaSignal and The Decoder coverage of the launch:
+
+1. **Planning phase:** The lead agent analyzes the task, identifies dimensions of work, and writes a plan. For a bug hunt, it might split the codebase by module. For a migration, by file type and dependency order.
+
+2. **Fan-out:** Subagents receive bounded assignments. Each gets its own context and a scoped objective.
+
+3. **Cross-check:** The architecture supports adversarial verification — later agents can review earlier output, and a finding from one agent can be assigned to another for a second opinion. This is what's supposed to reduce false positives.
+
+4. **Merge:** The lead agent synthesizes verified findings into a coherent report.
+
+The architecture also supports mixing models at different stages — sending mechanical extraction work to a cheaper model and keeping the judgment calls on a stronger one.
+
+## Haiku 5.5 Pricing and Dynamic Workflow Economics
+
+Two days before the dynamic workflows beta, on October 7, Anthropic released Claude Haiku 5.5. Pricing: $0.10 per million input tokens and $0.50 per million output tokens for prompts up to 100K tokens (with a higher tier for prompts over 100K). That's 75% cheaper on average than Haiku 4.5.
+
+The timing likely isn't a coincidence. Dynamic workflows are only economically practical when your subagent tokens are cheap. Fan-out multiplies token spend; running subagents on a cheap model keeps that tolerable.
+
+The play is: strong model plans and judges, cheap model executes. Haiku scans each file, Opus verifies the findings. You get the coverage of a swarm without the bill of running your best model everywhere.
+
+Whether the quality holds when subagents run a smaller model is the question Anthropic's benchmark doesn't answer. The benchmark doesn't disclose which model was used for the bug hunt, and the 94.3% number might well require the strongest model at every node. But the architecture supports model mixing, and the pricing makes it viable.
+
+## When to Use a Multi-Agent Workflow (and When Not To)
+
+The overhead of planning, distributing, cross-checking, and merging only pays off when the task is wide enough to parallelize.
+
+**Good fits:**
+- **Codebase-wide audits** — security, performance, accessibility, dependency health across dozens of files
+- **Large migrations** — framework upgrades, API version bumps, language ports where every file needs consistent changes
+- **Deep research** — synthesizing information from dozens of sources with cross-verification
+- **Multi-file refactors** — where consistency across files matters more than speed on any one file
+
+**Bad fits:**
+- Single-file bug fixes
+- Quick questions that fit within one context window
+- Tasks where the coordination cost exceeds the actual work
+- Anything requiring real-time interaction — workflows run in the background
+
+The Bun project's Zig-to-Rust port is the most dramatic example so far: 750,000 lines of Rust generated, 99.8% of the existing test suite passing, eleven days to completion. That's a task no single agent could reasonably attempt.
+
+A practical rule of thumb: if you'd split the task across three or more people in a code review, it's probably wide enough for a workflow. If one person could review it in a single sitting, a single agent is simpler and cheaper.
+
+## Managed Agents Pricing and Session Budgets
+
+Managed Agents charges $0.08 per session-hour in the `running` state, metered per millisecond. Tokens are billed at the applicable model rates on top of the runtime fee.
+
+You control spend with a session budget — a count of US cents passed as a string when you create the session. Set `"125"` and you've capped the run at $1.25. Once the budget is hit, no new model requests start, though in-flight requests finish.
+
+Web searches inside a run cost $10 per thousand. That adds up if your agents are fetching documentation pages at each step.
+
+The catch: there's no published comparison of what the 70-bug benchmark actually cost as a single-agent run versus a workflow run. Token usage scales with agent count, context size, phase count, and the amount of cross-checking. A 66/70 recall score is impressive — but until someone publishes the cost comparison, you can't calculate the price-per-bug-found tradeoff.
+
+<Callout type="info">
+**Start small.** Anthropic's own recommendation is to begin with a narrowly defined task and expand scope only after measuring cost, runtime, and output quality. Dynamic workflows can consume substantially more tokens than a typical session.
+</Callout>
+
+## The Honest Take
+
+Dynamic workflows are arguably the most significant infrastructure announcement in AI tooling this year. Not because 94.3% recall on planted bugs will transfer cleanly to production codebases — it probably won't — but because the approach formalizes something every experienced developer already knows: code review by one person finds some bugs. Code review by three people, each looking from a different angle, with a fourth person challenging their findings, finds almost all of them.
+
+The question is whether the cost and complexity are worth it for your specific task. For a startup shipping fast with a small codebase, probably not. For an enterprise shipping a security audit to a regulated client, probably yes.
+
+Models will keep getting smarter. But the gap between one agent and a coordinated team working a structured plan — that gap is structural, and the benchmark suggests it won't close by making the single agent faster alone. How you organize the work moved recall dramatically in at least this one test. Whether that holds broadly is the next thing to watch.
+
+---
+
+*Want analysis like this in your inbox every week? [Subscribe to the newsletter](/subscribe).*
