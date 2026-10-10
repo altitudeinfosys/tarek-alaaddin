@@ -1,0 +1,128 @@
+---
+title: "October Is Open-Weights Month, and the 27B Is the One That Counts"
+description: "StepFun, Mistral, and Alibaba are all releasing open-weight models this month. The giant MoEs grab headlines, but the dense 27B is what changes the game."
+date: "2026-10-10"
+category: "ai-tools"
+tags: ["open-weights", "stepfun", "mistral-large-4", "qwen4", "local-llm", "mixture-of-experts", "ai-models"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Three separate labs are dropping open weights this month. StepFun's Step 5 Preview, Mistral's Large 4 "Le Chonk," and Alibaba's Qwen4 are all releasing — or promising to — before November. The flagship parameter counts are staggering: 600 billion, one trillion, and an as-yet-unannounced number for Qwen4 Max.
+
+The headlines will focus on the trillion. They should focus on the 27 billion.
+
+Not because the giant MoE models do not matter — they do, and they are impressive. But because a dense 27B model that you can actually download and run on your own GPU is a fundamentally different kind of disruption than a trillion-parameter model you rent through an API. October is the month both of those things happen at the same time, and the distinction between them matters more than any benchmark table.
+
+## Three Labs, One Window, Different Bets
+
+StepFun's Step 5 Preview is available through its API, with open weights slated for October 15. Mistral Large 4 launched its API preview on October 6, with weights coming "by end of month" — VentureBeat estimates October 27. And Qwen4 was announced at Alibaba's Apsara Conference on September 22, with four model tiers including a dense open-weight 27B, though no release date has been published yet.
+
+<Callout type="info">
+As of October 10, none of these three have actually released downloadable weights. StepFun's October 15 date is the soonest. Mistral's and Alibaba's timelines are vaguer. Everything below is based on published specs, API previews, and official announcements — not hands-on testing of local weights.
+</Callout>
+
+The convergence is what makes this interesting. Three well-funded labs, different countries, different architectures, all racing to define what "open" means at the frontier.
+
+## StepFun Step 5 Preview: 600B Total, 27B Active
+
+StepFun built Step 5 as a sparse Mixture-of-Experts model. The total parameter count is 600 billion, but only 27 billion are active per token. That means each inference pass only fires a subset of the network — the compute cost per token scales with the active parameters, not the total.
+
+The architecture is notable for its depth: 92 Transformer layers in a narrow-deep configuration, which prioritizes reasoning depth over width. StepFun positioned it for agentic work, software engineering, and finance.
+
+The benchmarks are strong. On the Artificial Analysis Intelligence Index, Step 5 scored 44 against a median of 24 for its tier. DeepSWE v1.1: 67.7 percent. ProgramBench: 80.5 percent. Output speed on StepFun's API: 99.8 tokens per second.
+
+Pricing is aggressive: $1.00 per million input tokens on a cache miss, $0.05 on a hit, and $2.70 per million output tokens.
+
+<Callout type="warning">
+StepFun has not published a license for the open weights. Until the actual release on October 15 (or whenever it lands), the terms are unknown. Do not assume Apache 2.0 or any specific license.
+</Callout>
+
+The 24-hour kernel optimization experiment deserves attention: Step 5 generated and tested GPU kernels autonomously, reaching 508 TFLOPS — compared to Claude Opus 5's 493 TFLOPS in the same benchmark. Whether that gap holds across real workloads is another question, but it signals serious agentic coding capability.
+
+## Mistral Large 4 "Le Chonk": The Trillion-Parameter European MoE
+
+Mistral went big. Large 4 is 1.05 trillion total parameters with 52 billion active (49 billion plus embedding and output layers). They trained it on 3,800 NVIDIA Grace Blackwell GPUs in European data centers. The internal codename "Le Chonk" tells you exactly what they think of the model's size.
+
+Natively multimodal, one-million-token context window, over 160 languages. Positioned around cybersecurity, finance, and agentic coding.
+
+The cybersecurity numbers stand out. Mistral Large 4 scored in the top 5 on the Artificial Analysis Cyber Index, reproduced 82 percent of known vulnerabilities, and hit 93 percent on Cybench. For a company navigating Europe's regulatory landscape, leading in security benchmarks is a shrewd strategic move.
+
+Coding benchmarks are competitive: DeepSWE v1.1 at 61.7 percent (below Step 5's 67.7), Terminal-Bench 4 at 28.3 percent, AutomationBench at 59.9 percent.
+
+API pricing: $1.36 per million input tokens and $4.18 per million output tokens, with a half-price introductory promotion.
+
+Large 3 shipped under Apache 2.0, but Large 4's license has not been published yet. Mistral mentioned a red-teaming period before the weights drop. Given the model's cybersecurity capabilities, the caution is understandable.
+
+Mistral just closed a three-billion-euro Series D. They have the funding to sustain this, and the tailwind of being Europe's leading AI lab at a moment when the continent is actively investing in homegrown AI infrastructure.
+
+## Qwen4: The Dense 27B That Actually Runs on Your GPU
+
+This is the one that should have your attention if you care about local inference.
+
+Alibaba's Qwen team announced Qwen4 at the Apsara Conference on September 22. Project lead Liu Dayiheng confirmed four tiers: Max, Plus, Flash, and a dense 27B open-weight variant for local deployment.
+
+Details beyond that are thin. No weights, no model card, no license, no benchmarks, no release date. The official word is "in training" and coming "very soon." A prediction market puts the probability of launch before November 1 at 74 percent.
+
+Here is why it matters anyway: Qwen's predecessor, the Qwen3.8-27B, shipped under Apache 2.0. If Qwen4 follows the same licensing pattern, it will be the most permissively licensed frontier-class model you can run on your own hardware.
+
+And it will actually fit. The hardware requirements for a dense 27B model at 4-bit quantization land around 16 to 18 gigabytes of VRAM — an RTX 3090, an RTX 4090, or a MacBook with 32 gigabytes of unified memory. Hardware that a serious builder or a small team already owns.
+
+<Callout type="tip">
+The Qwen team has outlined a longer roadmap: Qwen 4.5 and Qwen 5, with the latter potentially reaching 5 to 10 trillion parameters. If Qwen4-27B delivers on quality, it becomes the gateway drug for a family that keeps scaling.
+</Callout>
+
+## MoE vs. Dense: Why the Distinction Matters More Than the Number
+
+Here is the nuance the headlines miss: "27B active parameters" and "27B total parameters" are completely different deployment stories.
+
+Step 5 has 27 billion active parameters per token, but all 600 billion parameters need to sit in memory. Even at 4-bit quantization, 600 billion parameters at half a byte each means roughly 300 gigabytes before overhead — you need multiple high-end GPUs or a dedicated inference server just to load the model. The same applies to Mistral Large 4 and its 1.05 trillion total parameters.
+
+A dense 27B model like Qwen4-27B needs about 16 to 18 gigabytes at 4-bit. One GPU. One machine. No distributed setup.
+
+The MoE models are extraordinary for API providers and well-resourced teams who can host them. The active parameter count means fast inference and low per-token compute cost — which is why StepFun and Mistral can price their APIs so aggressively. But you are not running them on your workstation.
+
+The dense 27B is the one you download, quantize, and iterate with locally. Fine-tune with LoRA on a workstation. Run evaluations without burning API credits. Deploy on a single cloud instance.
+
+Both matter. But they serve different audiences, and conflating them is the mistake most coverage of this month is making.
+
+## The License Question No One Is Answering
+
+All three models have an asterisk next to "open weights." None has published a license as of October 10.
+
+StepFun has not stated terms. Mistral is in a red-teaming period — Large 3 was Apache 2.0, but the team has not committed to the same for Large 4. Qwen's predecessor was Apache 2.0, but that is not a guarantee.
+
+"Open weights" without a license is not "open source." You can download and run inference, but your ability to fine-tune, deploy commercially, modify, and redistribute depends entirely on the license terms. And if you build a product on weights whose license changes post-release, you have a supply chain problem.
+
+The practical move: build on these models for experimentation and benchmarking now. Lock in production decisions after the terms are published.
+
+## Where the Market Goes From Here
+
+Three things to watch:
+
+**API pricing is compressing.** StepFun's $1.00 per million input tokens is notably below most frontier providers. Mistral is running a half-price promotion. When open-weight models let hosting providers spin up their own inference, the ceiling on API pricing drops further.
+
+**Dense 27B models are the new competitive tier.** This is the size class where capability meets hardware accessibility. As more labs release competitive dense models in this range, the pressure on closed-model providers intensifies — not across the board, but in the large middle of use cases where frontier-class reasoning is not required.
+
+**Geographic diversity in AI is real now.** StepFun is based in China, Mistral in France, Alibaba has global reach. If you care about data sovereignty or supply chain diversification, having frontier-quality open-weight options from multiple geographies is strategically meaningful.
+
+## What to Actually Do With This
+
+If you run local inference, Qwen4-27B is the release to watch. The moment weights drop, benchmark it against your specific tasks. Published benchmarks measure general capability; your workload is what matters.
+
+If you want frontier-class performance without hosting costs, the MoE models are the play. Step 5's API pricing makes it worth evaluating for agentic and coding workloads. Mistral Large 4 is the choice if cybersecurity or European data residency matter to your use case.
+
+If you are a team lead or a CTO, the strategic question is not which of these three to pick. It is whether your stack is flexible enough to swap models without rewriting your application. The rate of open-weight releases is accelerating. The model you deploy in Q1 2027 may not exist today. Build for portability.
+
+## The Real Takeaway
+
+October 2026 is the month where three labs independently decided the frontier should be open — but "open" means two different things depending on the architecture.
+
+The giant MoEs give you frontier quality through cheap, fast APIs. The dense 27B gives you frontier-adjacent quality on hardware you already own. Both are disruptions. They disrupt different things.
+
+Watch the licenses. Run your own benchmarks. And stop treating "open weights" as a single category — the gap between a 600-billion-parameter MoE and a 27-billion-parameter dense model is not just a number. It is the difference between renting and owning.
+
+---
+
+*Want more breakdowns on AI tools and models as they ship? [Subscribe to the newsletter](/subscribe) for weekly analysis you can actually use.*
