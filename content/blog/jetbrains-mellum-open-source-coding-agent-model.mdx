@@ -1,0 +1,131 @@
+---
+title: "JetBrains Open-Sourced a Coding-Agent Model You Can Actually Run"
+description: "JetBrains Mellum2.1 is a 12B MoE coding-agent model you can run locally. Here is what it does, where it fits, and why the timing matters."
+date: "2026-10-13"
+category: "ai-tools"
+tags: ["jetbrains", "mellum", "open-source", "coding-agents", "local-ai", "cursor", "openai", "developer-tools"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Since August, Cursor's model menu gained Grok through the SpaceX acquisition and OpenAI proposed November 12 as its exit date. Now JetBrains has released an Apache 2.0 coding-agent model you can run on your own hardware.
+
+It will not replace a frontier model. It might replace the parts of your workflow you are now paying a meter for.
+
+## What Mellum2.1 Actually Is
+
+Mellum2.1-12B-A2.5B-Thinking is a mixture-of-experts (MoE) model: 12 billion total parameters, but only 2.5 billion active on any given token. Sixty-four experts, eight firing at a time, across 28 layers. Context window is 131,072 tokens with a sliding window of 1,024 on three-quarters of the layers.
+
+The architecture is unchanged from the previous Mellum2. What changed is the post-training: JetBrains reports millions of sandboxed RL runs across real repositories, with the model earning reward when its edits made tests pass.
+
+That training loop is the difference between "another small code model" and "a model trained to act as a sub-agent." Mellum2.1 was trained to work inside a repository: read a failing test, explore the relevant files, edit the source, and run the test again. JetBrains describes the reward as pass/fail on real test suites, not synthetic tasks.
+
+JetBrains says the training data was filtered before use. Open RL datasets, they noted, often have "broken tests, unverifiable answers, or tasks that are too easy or impossible." The curated task set covers math, competitive programming, science, tool use, and software engineering.
+
+<Callout type="info">
+License is Apache 2.0 — permissive, commercial use allowed. Weights are on Hugging Face in BF16 at roughly 24 GB.
+</Callout>
+
+## The Numbers, With Caveats
+
+All benchmarks are self-reported by JetBrains, tested with their Pi v0.73.1 harness, a 114K-token context, and up to 16K tokens per turn. Independent verification is still pending.
+
+| Benchmark | Mellum2.1 | Qwen3.5-9B | Mellum2 |
+|---|---|---|---|
+| SWE-bench Verified | 47.0 | ~50.0 | 2.0 |
+| SWE-bench Pro | 28.0 | ~38.0 | — |
+| Terminal-Bench 2.1 | 17.4 | ~21.7 | — |
+| LiveCodeBench v6 | 82.0 | — | — |
+| HumanEval+ | 91.5 | — | — |
+| MBPP+ | 79.4 | — | — |
+| BFCL v4 | 62.3 | — | — |
+| GPQA Diamond | 64.6 | — | — |
+
+Qwen3.5-9B beats Mellum2.1 on SWE-bench Verified, Pro, and Terminal-Bench. JetBrains reports Mellum2.1 leads on LiveCodeBench, MBPP+, and BFCL, though Qwen numbers for those benchmarks are not shown. Both are roughly the same weight class.
+
+The jump from Mellum2 to Mellum2.1 — from 2.0 to 47.0 on SWE-bench Verified — is dramatic but misleading. It says more about how weak Mellum2 was at agentic tasks than about Mellum2.1 being frontier.
+
+## Where This Model Fits
+
+This is not the model for a gnarly multi-file refactor that touches twelve packages and needs to understand your entire monorepo's dependency graph. Half the SWE-bench tasks it attempts still fail.
+
+This is the model for the boring eighty percent:
+
+- **Sub-agent tasks**: grep the repo, find why a test fails, draft a fix, summarize a diff
+- **Tool calling**: structured function calls, API interactions, shell commands
+- **Contained bug fixes**: single-file or tightly scoped changes where the model does not need a frontier-level understanding of your architecture
+- **Private code**: models you run locally never leave your machine
+- **Offline work**: airports, trains, anywhere the API is slow or absent
+
+That boring eighty percent is exactly what gets metered in closed coding stacks.
+
+<Callout type="warning">
+Not enough for: long multi-step agent sessions, hard terminal work, or anything that needs deep architectural reasoning. About half of SWE-bench tasks still fail, and Terminal-Bench sits at 17.4.
+</Callout>
+
+## How to Run It
+
+Mellum2.1 runs on vLLM today. Serve it like this:
+
+```bash
+vllm serve JetBrains/Mellum2.1-12B-A2.5B-Thinking \
+  --max-model-len 131072 \
+  --reasoning-parser qwen3
+```
+
+Add `--enable-auto-tool-choice --tool-call-parser hermes` if you need tool calling. SGLang and Docker Model Runner also work.
+
+JetBrains says GGUF builds for Ollama and LM Studio are "coming soon," along with a multi-token prediction (MTP) head for speculative decoding in vLLM. The MTP head matters: JetBrains claims nearly 2x throughput versus Qwen3.5-9B on a single H200 under load. With only 2.5 billion active parameters, it should be relatively efficient on smaller hardware too, though consumer-GPU benchmarks have not appeared yet.
+
+The BF16 weights sit at around 24 GB. That is just the weights, so plan on a GPU with more VRAM than that to accommodate the KV cache during inference. Quantized versions, when the GGUFs land, should bring it within reach of smaller cards.
+
+## Why the Timing Matters
+
+Three things happened since August:
+
+**SpaceX acquired Cursor's parent company for $60 billion on August 14.** Within two weeks, OpenAI announced it would stop directly providing models to Cursor, proposing November 12 as the cutoff. OpenAI's reasoning: "We cannot be confident that SpaceX will use our technology within our terms of service." OpenAI also cited xAI's past deviation from usage terms, confirmed under oath by Musk.
+
+**Cursor got Grok.** SpaceXAI introduced Grok 4.5, trained in collaboration with Cursor, available directly in the editor. Cursor's default model menu now includes its parent company's house model.
+
+**Your coding tool is not neutral anymore.** Cursor's model menu is now shaped by who owns Cursor. That is not a conspiracy — it is the ordinary incentive of vertical integration. OpenAI models are leaving. Anthropic says it will stay and increase compute. Grok is the house brand.
+
+None of this is intrinsically bad. But if your workflow depends on a specific model being available inside a specific tool at a specific price, you are one acquisition away from that changing.
+
+Anthropic's Tom Brown responded publicly, saying the company will keep supporting Claude in Cursor and increase compute for it: "Cursor has been a trusted partner of Anthropic since Sonnet 3.5." Meanwhile, Cursor co-founder Michael Truell estimated that OpenAI models make up about 5% of the service's user traffic — suggesting the practical impact may be smaller than the headline. But the signal is bigger than the traffic number: it tells you that the model menu in your coding tool is a business decision, not a technical one.
+
+## The Open-Source Insurance Policy
+
+A good-enough open model is insurance against exactly this kind of shift. Not because you will replace Claude or GPT for the hard problems — you will not. But because you can own the commodity layer: the grep-fix-summarize loop that accounts for most of the tokens your coding agent burns.
+
+The landscape of local-friendly coding models in October 2026:
+
+- **Qwen3.5-9B**: The current default for single-GPU local coding. Stronger than Mellum2.1 on SWE-bench. Larger Qwen models scale up for heavier work.
+- **Mellum2.1**: The dedicated sub-agent. Trained specifically for tool use and agentic workflows. Likely the better choice if your use case is structured function calls and contained tasks, not open-ended coding.
+- **gpt-oss 21B/3.6B**: Another Apache 2.0 MoE option for consumer hardware. Worth watching.
+
+The right setup is probably hybrid: a frontier model for the hard reasoning, and a local model for the volume. That mix is not new — anyone who has run Copilot for completions and Claude for architecture questions has been doing it for years. What is new is that the local model can now do tool calling, explore a codebase, and check its own work. That is the threshold between "local autocomplete" and "local sub-agent," and Mellum2.1 is among the first small models trained specifically to cross it.
+
+## What to Watch
+
+Three things will determine whether Mellum2.1 earns a permanent spot in anyone's stack:
+
+1. **GGUF builds**: The model is usable today with vLLM if you have a workstation GPU. It becomes interesting to a much wider audience when you can `ollama run mellum2.1` on a MacBook.
+
+2. **Independent benchmarks**: Every number in this post is self-reported by JetBrains. The SWE-bench leaderboard and community benchmarks on different harnesses will tell the real story.
+
+3. **Community integrations**: Can it slot into Continue, Aider, or Claude Code as a cheap sub-agent? The Apache 2.0 license removes the legal friction. The practical friction is whether anyone builds the integrations.
+
+<Callout type="info">
+The model is available now on [Hugging Face](https://huggingface.co/JetBrains/Mellum2.1-12B-A2.5B-Thinking). The JetBrains blog post has the full technical writeup. Apache 2.0 means you can use it commercially, modify it, and ship it inside your own product.
+</Callout>
+
+## The Bottom Line
+
+Mellum2.1 is not the best open coding model. Qwen3.5-9B beats it on the hardest agentic benchmarks. But Mellum2.1 might be the most purpose-built one: a model whose post-training was built around agentic tool use, and that is small enough to run locally.
+
+In a season where the biggest coding tool changed owners and its model menu started reshuffling, that is not a small thing. You do not need to run everything locally. But having the option to run the commodity layer on hardware you control is worth more today than it was six months ago.
+
+---
+
+*The AI tooling landscape shifts every week. [Subscribe to the newsletter](/subscribe) to get the analysis that matters, minus the hype.*
