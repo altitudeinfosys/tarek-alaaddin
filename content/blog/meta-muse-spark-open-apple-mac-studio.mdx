@@ -1,0 +1,136 @@
+---
+title: "Meta Muse Spark Open Runs on Mac Studios, and That Changes the Math"
+description: "Meta's 816B open-weight model runs locally on Apple's M5 Ultra Mac Studios via MLX distributed inference. What the collaboration means for local AI."
+date: "2026-10-15"
+category: "ai-tools"
+tags: ["meta", "apple", "muse-spark-open", "local-ai", "mlx", "mac-studio", "open-weights", "mixture-of-experts", "local-llm", "apple-silicon"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+816 billion parameters. Two desktop machines. 36.7 tokens per second.
+
+Today Meta released Muse Spark Open with open weights on Hugging Face. Apple published MLX documentation to run it on M5 Ultra Mac Studios. Both happened on the same day, and that timing was not accidental.
+
+A frontier model with open weights has shipped before. But a frontier model with open weights, a hardware partner selling the consumer machines that can run it, and a first-party software stack tuned for that hardware is different. Two companies that spent years competing in adjacent markets just launched something that looks a lot like a joint product.
+
+## The Model: 816B Parameters, 42B Active
+
+Muse Spark Open is a mixture-of-experts architecture: 816 billion total parameters, 42 billion active per token. It supports a one-million-token context window, handles text and images natively, and was built for coding and agentic workflows.
+
+Meta says it beats GLM 5.3 and Kimi K3 on agent tasks and visual reasoning. Those are Meta's self-reported numbers; independent benchmarks have not landed yet.
+
+| Spec | Value |
+|---|---|
+| Total parameters | 816B |
+| Active parameters | 42B |
+| Architecture | Mixture of Experts |
+| Context window | 1M tokens |
+| Modalities | Text + vision (native) |
+| License | Limited commercial use |
+| Weights | Hugging Face (available now) |
+
+<Callout type="info">
+Muse Spark Open is not Meta's most capable model. Alexandr Wang confirmed that the proprietary Muse Wonder remains stronger. What stands out is that Meta chose to release the open version on the same day Apple published the hardware guide to run it, suggesting a level of coordination neither company has shown before.
+</Callout>
+
+## Running It Locally: M5 Ultra Mac Studio Hardware
+
+Here is where this release diverges from the usual "download the weights and figure it out" open-model launch.
+
+Apple published a detailed technical post on its [Machine Learning Research blog](https://machinelearning.apple.com/research/mlx-distributed-inference) showing exactly how to run Muse Spark Open on Mac Studios with M5 Ultra chips. Apple's own engineers benchmarked Meta's model on Apple's own hardware.
+
+The M5 Ultra Mac Studio ships with up to 512 GB of unified memory and 1.2 TB/s of memory bandwidth. In NVFP4 (4-bit quantized) format, Muse Spark Open's memory footprint drops to roughly 493 GB. That is too large for one machine once you add inference overhead, but it fits across two.
+
+Two 512 GB Mac Studios connected via Thunderbolt 5 run the full model using pipeline parallelization. Four Mac Studios with tensor parallelization hit 36.7 tokens per second at 8,192-token context, per Apple's benchmarks. That is well above average human reading speed.
+
+| Setup | Decode Speed (tok/s) | TTFT at 8K context |
+|---|---|---|
+| 2× M5 Ultra 512 GB (pipeline) | 15.7 | 8.4s |
+| 2× M5 Ultra 512 GB (tensor) | 25.0 | 8.2s |
+| 4× M5 Ultra (tensor) | 36.7 | 4.8s |
+
+*Benchmarks from Apple's MLX research post, measured with `mlx_lm.benchmark` at 8,192-token context generating 128 tokens.*
+
+Peak power consumption is about 300W per Mac Studio. These machines can sit under a desk, not in a data center.
+
+## The Software: MLX Distributed Inference
+
+Apple's MLX framework (v0.30.1 and later) introduced `jaccl` communication collectives, built on an RDMA-over-Thunderbolt driver that shipped in macOS 26.2. Per Apple's documentation, connecting Mac Studios with two Thunderbolt 5 cables doubles the link bandwidth. The setup runs from a single command:
+
+```bash
+mlx.launch --hostfile hostfile.json --backend jaccl \
+  --env MLX_METAL_FAST_SYNCH=1 -- \
+  mlx_lm.server --model meta-models/Muse-Spark-Open-816B-A42B-NVFP4 --port 8080
+```
+
+Apple's MLX post shows this serving an OpenAI-compatible API that works with agentic coding tools like [OpenCode](https://opencode.ai/). That means a locally running frontier model accessible to any tool that speaks the completions API.
+
+<Callout type="warning">
+The 256 GB M5 Ultra Mac Studio starts at $10,799 (per CNBC). The 512 GB model ships "late October" with no price announced yet. Four 256 GB machines for tensor parallelization would run roughly $43,000 based on the listed base price. The two-machine 512 GB setup is not yet buyable.
+</Callout>
+
+## The Apple-Meta Collaboration Nobody Expected
+
+Mark Zuckerberg posted on X crediting "@johnternus and Apple." John Ternus is Apple's new CEO, having succeeded Tim Cook. Daniel Gross, a former Apple executive now at Meta, reportedly helped broker the collaboration, according to CNBC.
+
+Alexandr Wang, in an Axios interview, said he was "excited for mommy and daddy to be playing nice again."
+
+The strategic logic is straightforward. Apple gets a compelling reason to sell expensive Mac Studios to AI developers. Meta gets an optimized local deployment target for its open models that does not depend on cloud providers it competes with. Both benefit from establishing a local-inference ecosystem built on hardware neither company's competitors make.
+
+The demos reinforce this. Meta showed Muse Code, an on-device coding agent, editing an iOS app (Ice Cubes, a Mastodon client) and a DaVinci Resolve video project. These are Apple-ecosystem workflows demonstrated by a Meta model on Apple silicon.
+
+## Same-Day Releases: Step 5 Preview and Nemotron 3.5 Super VL
+
+Muse Spark Open was not the only open model released today.
+
+**StepFun Step 5 Preview** dropped open weights: 600B total parameters, 27B active, 1M-token context. It targets the same agentic and software engineering workloads.
+
+**Nvidia Nemotron 3.5 Super VL** also launched: 120B total, 12B active, built for multimodal reasoning across text, images, documents, and video. The NVFP4 version runs in 82 GB of RAM, per Nvidia's documentation.
+
+Three major open MoE models in one day. The common thread: all use mixture-of-experts to keep active parameters low, and all target agentic work.
+
+## Local AI vs. Cloud API: The Cost Equation
+
+The practical question is whether a Mac Studio cluster running Muse Spark Open locally beats paying per-token for a cloud API.
+
+The math depends entirely on volume. Consider a rough sketch: if a cloud API charges $15 per million output tokens and a coding agent session generates 50,000 tokens, that is $0.75 per session. At 50 sessions per day, you are spending roughly $1,100 per month on API calls. A four-machine cluster at approximately $43,000 reaches break-even in about three years at that rate, not counting electricity, maintenance, or the value of your time setting it up.
+
+Change the assumptions and the math swings dramatically. Double the session count or use a pricier model and the payback period shrinks. Cut the sessions in half and the cloud wins easily.
+
+But cost is not the only variable:
+
+- **Privacy**: local inference means proprietary code never leaves your network
+- **Latency**: no round-trip to a data center
+- **Availability**: no deprecation notices, no model swaps mid-project
+- **Customization**: you control the quantization, the context length, the serving configuration
+
+The limitation is real, too. This is a "limited commercial use" license, not Apache 2.0. Meta controls the terms, and those terms could change. For production deployments that depend on licensing stability, that matters.
+
+<Callout type="tip">
+A single 256 GB M5 Ultra Mac Studio at $10,799 can run Nemotron 3.5 Super VL (82 GB in NVFP4) or most other sub-200B models without any distributed setup. The multi-machine cluster is only necessary for the very largest models like Muse Spark Open.
+</Callout>
+
+## Open Questions Worth Watching
+
+Several things are still unresolved, and they matter:
+
+- **Independent benchmarks.** Meta's claims that Muse Spark Open beats GLM 5.3 and Kimi K3 are self-reported. Third-party evaluations will determine whether those numbers hold outside Meta's test harness.
+- **512 GB pricing.** The two-machine pipeline setup needs 512 GB Mac Studios that are not yet shipping. The price will determine whether the entry point is expensive or prohibitive.
+- **License terms.** "Limited commercial use" is vague. The exact restrictions will decide whether startups and enterprises can ship products built on this model.
+- **MLX maturity.** Distributed inference over Thunderbolt RDMA is new technology. Production reliability across sustained workloads is unproven.
+
+## What Changed Today
+
+Apple's MLX documentation benchmarks Qwen 3.8 (27B) running comfortably on a single Mac Studio. That class of model has been runnable locally for a while. What changed today is that an 816B frontier model now runs locally too, with first-party support from both the model maker and the hardware maker.
+
+The ceiling moved, and the ceiling matters more than the floor. A developer who can run a frontier model locally does not need to choose between capability and privacy. They do not need to explain to compliance why their code is hitting an external API.
+
+That is the real product being sold here. Not a Mac Studio, and not a model. The pitch is sovereignty: your AI, on your desk, under your control.
+
+Whether the price justifies that depends on what you are building and how much you run. But the option did not exist yesterday, and now it does.
+
+---
+
+[Subscribe to the newsletter](/subscribe) to get posts like this when they ship.
