@@ -1,0 +1,140 @@
+---
+title: "Claude Code Is Quietly Fixing the Cost of Long Sessions"
+description: "Idle compaction summarizes your session before the cache expires, so coming back to a long conversation doesn't cost a fortune."
+date: "2026-10-15"
+category: "ai-tools"
+tags: ["claude-code", "prompt-caching", "idle-compaction", "developer-tools", "anthropic", "cost-optimization", "ai-coding", "context-window"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Leave a big Claude Code session alone for an hour. Come back. Type a message.
+
+Until recently, that next message paid to re-read your entire conversation from scratch — every file Claude had opened, every tool result, every back-and-forth message. The prompt cache had expired while you were gone, and the API treated the whole context as new input.
+
+Now Claude Code can summarize the session just before the cache runs out. When you come back, the model reads a compact summary instead of the full history, and your next turn is fast and cheap again.
+
+The feature is called **idle compaction**, and it shipped quietly alongside two other significant changes this week. Together they address one of the most persistent complaints about agentic coding tools: that long sessions get expensive in ways developers cannot predict or control.
+
+## The Problem: Cache Expiry Is Invisible and Costly
+
+Prompt caching is the mechanism that makes Claude Code affordable at all. Every message you send includes the full conversation history — system prompt, project context, every prior exchange. On a session that has been running for a while, that context can easily reach tens of thousands of tokens.
+
+When the cache is warm, the API reads the unchanged prefix at a fraction of standard input price. When the cache expires, the entire context is reprocessed at full rates.
+
+Here are the actual numbers from [Anthropic's pricing page](https://platform.claude.com/docs/en/about-claude/pricing):
+
+| Operation | Sonnet 5.5 Rate |
+|---|---|
+| Standard input | $2.00 / MTok |
+| 5-min cache write | $2.50 / MTok (1.25x) |
+| 1-hour cache write | $4.00 / MTok (2x) |
+| Cache read (hit) | $0.10 / MTok (0.05x) |
+
+That last row is the one that matters. A cache hit on Sonnet 5.5 costs **5% of standard input price** — a 20x discount. On Fable 5.1 and Mythos 5.1, cache reads drop to 2.5% of base. The savings are enormous when the cache is warm. The cost spike when it expires is equally enormous.
+
+<Callout type="info">
+Cache read rates vary by model family. Sonnet 5.5 and Opus 5.5 pay 0.05x base input. Fable 5.1 and Mythos 5.1 pay 0.025x. All other models pay 0.1x. These rates come from Anthropic's published pricing as of October 2026.
+</Callout>
+
+## Two Cache Lifetimes, One Silent Cliff
+
+Claude Code chooses between two cache TTLs per request:
+
+- **Five minutes** — the default for API key users, cloud provider billing, and subagent requests
+- **One hour** — the default for main-conversation requests on a Claude subscription within plan usage
+
+The one-hour TTL is the generous one. It means you can step away for a coffee, check Slack, review a PR, and come back without losing the cache. But an hour is also short enough that a lunch break, a meeting, or getting pulled into a different problem blows it.
+
+Before idle compaction, that expiry was silent. There was no warning, no indicator, no graceful degradation. You came back, typed a message, and the API reprocessed everything. The slower response time was the only clue.
+
+## What Idle Compaction Does
+
+When Claude Code detects that the session has been idle and the cache is about to expire, it sends a compaction request before the TTL runs out. This request:
+
+1. Reads the current conversation from the still-warm cache (cheap — it is a cache hit)
+2. Summarizes the full history into a much shorter context
+3. Replaces the conversation history with that summary
+
+When you come back, Claude Code sends the summary instead of the full history. The summary is short enough that reprocessing it from scratch is cheap even without a cache hit.
+
+The key insight is the timing. The compaction request itself benefits from the warm cache, so it is inexpensive. If Claude Code waited until after the cache expired, the compaction would reprocess the full history at uncached rates — the very cost it is trying to avoid.
+
+<Callout type="warning">
+Compaction discards detail. Claude can no longer see the exact contents of files it read earlier, the full output of commands it ran, or the precise wording of earlier exchanges. For most resumed sessions this is fine. If you need the full history, disable idle compaction before stepping away.
+</Callout>
+
+## The Settings
+
+Idle compaction is controlled by the `idleCompaction` setting, which appeared in Claude Code v2.1.290. Set it to `false` to disable it:
+
+```json
+{
+  "idleCompaction": false
+}
+```
+
+A related setting, `compact_on_return`, arrived in v2.1.300. Per the docs, it writes the summary in the background and applies it when you return. The distinction from `idleCompaction` is timing: one fires proactively before cache expiry, the other defers until you actually send a message.
+
+If you are on a Claude subscription and your sessions regularly go idle for more than an hour, `idleCompaction` is on by default and saves you money automatically. Check the docs for `compact_on_return` defaults.
+
+## The Math on an Illustrative Session
+
+To see how the economics work, assume a session with 80,000 tokens of accumulated context on Sonnet 5.5. These are round numbers for illustration — actual sessions vary.
+
+**Without idle compaction (cache expired):**
+- Full re-read at standard input: 80,000 × $2.00 / 1M = **$0.16**
+- Plus the cache write to warm the prefix again (1.25x or 2x depending on TTL)
+
+**With idle compaction (summary replaces history):**
+- Compaction request reads 80K from warm cache: 80,000 × $0.10 / 1M = $0.008
+- Compaction generates a summary (assume ~5K output tokens): 5,000 × $10.00 / 1M = $0.05
+- Your return message reads ~5K uncached: 5,000 × $2.00 / 1M = $0.01
+- **Illustrative total: ~$0.07** (compaction + return combined, before cache writes)
+
+The compaction path is meaningfully cheaper than a full cold re-read in this scenario. Both paths also pay cache-write costs, but the compaction path writes a much smaller prefix. On Fable 5.1 at $10/MTok input, the same 80K cold re-read costs $0.80, so the absolute dollar savings scale up on pricier models.
+
+## What Else Shipped This Week
+
+Idle compaction did not arrive alone. The same week — around October 14 — brought two other features that address session management at scale:
+
+### Nested Sessions
+
+Claude Code now supports [nested sessions](https://code.claude.com/docs/en/nested-sessions): parallel tasks that run in their own git worktrees within the same project. Each nested session gets its own conversation, its own cache, and its own branch. The parent session continues uninterrupted.
+
+This changes the economics of context accumulation. Instead of one session that grows without bound as you switch between tasks, you can spin up a focused session for each task. Smaller sessions mean smaller caches, cheaper compactions, and less wasted context when a session goes idle.
+
+### OpenTelemetry Tracing
+
+The [Claude Platform now exports OpenTelemetry traces](https://platform.claude.com/docs/en/observability/open-telemetry) in public beta for the Messages API, Managed Agents, and SDKs. Cache read and creation tokens are reported per request, which means teams can now measure cache hit rates across users and sessions.
+
+This is a platform-level feature, not a Claude Code release. But the implication for Claude Code users is direct: with OTel, an engineering manager can see which sessions are consistently missing the cache and which users are switching models mid-session (a cache invalidation that forces a full re-read).
+
+## What This Means for Your Workflow
+
+None of these features make the model smarter or more capable. They make it cheaper to use the capability that already exists. Idle compaction prevents the most wasteful scenario — paying full price to re-read context you already processed. Nested sessions reduce the blast radius of each session's cache. OTel tracing makes the invisible visible.
+
+<Callout type="tip">
+You can check your session's cache performance with `/usage`. Claude Code shows a `Prompt cache (main)` line with the hit ratio. This requires v2.1.251 or later.
+</Callout>
+
+If you are on a Claude subscription and use Claude Code for long sessions, the defaults are already working in your favor. Idle compaction is on, the one-hour TTL is active, and sessions compact before the cache expires.
+
+If you are on an API key or cloud provider billing, you get the five-minute TTL by default. The `promptCacheTtl` setting lets you opt into the longer cache — but note that the one-hour TTL pays a 2x cache-write premium, which breaks even after two cache reads per the docs. Once you are on the longer TTL, idle compaction covers the gaps.
+
+If you want to understand what your sessions actually cost, check `/usage` for per-session numbers or set up OTel tracing for organization-wide visibility.
+
+The most actionable advice has not changed: pick your model and effort level at the start of a session, avoid switching mid-task, and use `/compact` at natural breaks. Idle compaction is a safety net for the times you forget — or for the times a meeting runs long and you come back to a cold cache.
+
+## Why This Matters More Than It Looks
+
+Every agentic coding tool faces the same economic problem. Long sessions accumulate context. Context costs money. Cache expiry turns a cheap session into an expensive one without warning.
+
+Idle compaction is a background process that fires when you are not looking. But it addresses a cost that developers were absorbing silently — and for teams running Claude Code at scale with multiple developers and long-running agent sessions, the compounding effect across dozens of sessions per day is where the real savings land.
+
+---
+
+*Want more breakdowns of developer tooling that actually affects your workflow?*
+
+[Subscribe to the newsletter](/subscribe)
