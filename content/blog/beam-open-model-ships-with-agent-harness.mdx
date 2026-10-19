@@ -1,0 +1,117 @@
+---
+title: "Beam Didn't Just Ship Weights. It Shipped a Coding Agent."
+description: "Reflection's 501B sparse MoE ships under Apache 2.0 with Mirror CLI, an open-source agent harness developed alongside the model."
+date: "2026-10-19"
+category: "ai-tools"
+tags: ["open-models", "coding-agents", "beam", "reflection", "mirror-cli", "open-source", "mcp", "sparse-moe"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+501 billion parameters. 23 billion active per token. Apache 2.0. And a terminal-based coding agent called Mirror that shipped the same week.
+
+That last item is the one that matters. Reflection announced Beam on October 5, 2026, and released the weights on October 16. Alongside the model, they released Mirror CLI — an open-source coding agent developed in tandem with Beam, not bolted on afterward. The model and the harness arrived as a pair, and Reflection made the pairing a central part of the pitch.
+
+This is a notable move in the open-model space. The real choice for teams evaluating Beam is not just "which model" but "which model-plus-harness stack" — and Reflection is the first major open release to frame the question that way from day one.
+
+## Beam: 501B Sparse MoE Under Apache 2.0
+
+Beam is a sparse mixture-of-experts model. The headline numbers: 501 billion total parameters, but only 23 billion active per forward pass. That is the core efficiency claim behind sparse MoE — you get the knowledge capacity of a much larger model while paying the compute cost of a much smaller one.
+
+The architecture runs 52 layers deep with 256 experts per MoE layer. On each token, 8 experts are routed via DeepSeek-V3-style group-limited routing. Attention is hybrid: 43 layers use sliding-window attention at 512 tokens, and 9 layers use full global attention. The context window stretches to 1 million tokens.
+
+It ships under Apache 2.0. Text in, text out. No multimodal capabilities at launch. Reflection claims 3-4x less inference compute than comparable models — a claim worth watching as independent benchmarks arrive.
+
+<Callout type="info">
+The BF16 checkpoint weighs roughly 1 TB. Reflection recommends NVFP4 quantization on 4 NVIDIA B200 GPUs for inference. This is not a home-lab model — but with 40+ cloud providers offering day-one support (AWS, GCP, Azure, Fireworks, Together, OpenRouter, and more), teams with GPU access can get running quickly.
+</Callout>
+
+## Self-Reported Benchmarks: Strong Numbers, Pending Verification
+
+Reflection's self-reported BF16 benchmarks are aggressive. Here are the headlines:
+
+- **SWE-bench Verified**: 81.6%
+- **SWE-Bench Pro v1**: 66.1%
+- **GPQA Diamond**: 90.6%
+- **AIME 2026**: 97.7%
+- **Terminal Bench v2.1**: 80.1%
+- **LiveCodeBench**: 88.3%
+- **MCP Atlas**: 80.8%
+- **HLE with tools**: 51.1%
+
+These numbers would place Beam at or near the top of every leaderboard they touch. But they are all self-reported, and independent verification is pending. The weights have been public for less than a week as of this writing. SWE-bench Verified in particular will draw scrutiny — it is the benchmark most prone to divergence between internal and external runs.
+
+Beam also supports multiple reasoning levels — "low," "medium" (the default), "high," "xhigh," and "max" — so the reasoning budget behind each benchmark result matters, and Reflection has not broken out scores by level.
+
+Take the numbers as a strong signal that Beam is competitive. Treat them as settled only after independent runs confirm them.
+
+## Mirror CLI: The Open-Source Agent Harness
+
+Mirror CLI is an open-source coding agent for the terminal. You describe a task, and the agent reads your code, edits files, runs commands, and shows each step as it goes. It uses Beam by default.
+
+That description sounds like any number of existing coding agents. What makes Mirror different is that Reflection developed it alongside Beam — the model and the harness were designed to work together from the start, with Mirror's Rust-based agent core handling the agentic loop and a Python frontend managing the terminal interface.
+
+According to [Reflection's developer documentation](https://developers.reflection.ai/mirror-overview), Mirror's key design choices include:
+
+### Workspaces with Parallel Agents
+
+Mirror supports multiple workspaces within a single session. Each workspace gets its own agent, its own conversation history, and its own git worktree. Two agents can edit files in the same repository simultaneously without stepping on each other.
+
+Most coding agents today operate in a single linear conversation. Mirror's workspace model lets you run multiple threads of investigation in parallel, each isolated until you are ready to merge.
+
+### Manual-by-Default Approval
+
+Mirror runs in manual mode by default — it pauses before shell commands, file writes, and external tool calls for your approval. You can toggle to auto mode with F2, which lets the agent run without stopping. The documentation notes that approval mode is not a sandbox: approved commands run with your full account permissions.
+
+### Persistent, Branchable Conversations
+
+Every conversation is saved to `~/.mirror` automatically. The `/resume` command reopens a saved conversation. `/rewind` lets you pick an earlier prompt and branch from there — Mirror continues from that point as a new conversation branch, while files on disk stay as they are. You use version control to undo file changes, not the agent.
+
+<Callout type="warning">
+Mirror CLI is in early beta. Commands, behavior, and the MCP connection model may change between releases. Run `/help` to see what's available in your installed version.
+</Callout>
+
+### MCP and Extensions
+
+Mirror supports MCP (Model Context Protocol) connections to external services and a Python-based extension system for adding custom tools. This is expected from a modern coding agent, but it matters that Mirror ships with it from day one rather than promising it on a roadmap.
+
+## Beam and Mirror Are Not Locked Together
+
+The research notes from the launch mention that Beam has also been tested with other agent tools — Pi (from Earendil), OpenCode (from Anomaly), and Hermes (from Nous Research). Reflection is not forcing the Beam-plus-Mirror pairing.
+
+Beam ships under Apache 2.0, and Mirror is open source. Anyone can run Beam in a different harness or run Mirror with a different model. That openness is deliberate — it signals confidence in the integrated experience without creating the lock-in that would undermine the open-source credibility of the release.
+
+That said, independent comparisons of how Beam performs across different harnesses do not exist yet. The interoperability is real, but the evidence for whether Mirror is the best home for Beam (or vice versa) remains Reflection's own claim.
+
+## 40+ Launch Partners Across the Inference Stack
+
+Beam launched with over 40 integration partners. AWS, GCP, Azure, CoreWeave, Databricks, Fireworks, Together, OpenRouter, Cloudflare, Modal, Vercel, LM Studio, Ollama — the breadth covers cloud, on-prem, and local inference.
+
+On the framework side, Beam has day-one support in Hugging Face Transformers, vLLM, and SGLang. Reflection also ships a speculative decoding drafter model and provides recipes for SFT with TRL/LoRA, GRPO training with Miles, and self-distillation.
+
+<Callout type="tip">
+NVIDIA invested $800 million in Reflection. The partnership is visible at launch: NVIDIA NIMs support, optimized FP4 quantization targeting B200 hardware, and enterprise deployment paths through Dell and HPE.
+</Callout>
+
+## Why Shipping Model Plus Harness Changes the Frame
+
+For the past two years, the open-model conversation has been almost entirely about weights. Architecture papers, benchmark tables, license terms, quantization formats — all focused on the model itself.
+
+Beam shifts the frame. When you evaluate this release, you are not just comparing parameter counts or SWE-bench scores against Claude or GPT. You are comparing the integrated experience of Beam-plus-Mirror against Claude Code, Codex CLI, and the Gemini CLI. That is a different kind of competition — one that favors teams thinking about the full stack of model, harness, tooling, and developer experience as a single product.
+
+Whether Reflection is the first to do this or merely the most visible, the framing is what matters: the harness is as important as the model.
+
+## Three Things to Watch After Launch Week
+
+**Independent benchmark verification.** The self-reported numbers are strong, but trust follows reproducibility. When SWE-bench Verified results from independent teams land, the conversation either accelerates or quietly changes. A specific marker: if the 81.6% SWE-bench Verified score holds within 2-3 points on external runs, Beam's credibility is established.
+
+**Mirror CLI adoption beyond early adopters.** A coding agent is only as good as its daily-driver experience. Early beta means rough edges. The question is whether Mirror's workspace model and Rust agent core deliver a noticeably different workflow — and whether the extension system attracts contributors.
+
+**The 23B active parameter economics.** If Beam genuinely delivers frontier-competitive results at 23 billion active parameters per token, the cost-per-query math changes for teams running inference at scale. If Reflection's 3-4x compute efficiency claim holds under real workloads, it opens use cases where frontier models were previously too expensive.
+
+The model-plus-harness strategy is a bet that the era of shipping weights alone is ending. Whether Reflection is right depends on what these next few months look like. But the framing — that how you ship a model matters as much as what you ship — is the part already worth paying attention to.
+
+---
+
+*Want more analysis like this? [Subscribe to the newsletter](/subscribe) and get it in your inbox every week.*
