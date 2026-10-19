@@ -1,0 +1,106 @@
+---
+title: "Your AI Coding Agent Thinks It's Slower Than It Actually Is"
+description: "Evan You joked about it. A new paper measured it. Coding agents overestimate their own runtimes by 3x to 10x — and the fix changes how you plan."
+date: "2026-10-18"
+category: "ai-tools"
+tags: ["ai-agents", "coding-agents", "developer-productivity", "agent-time", "claude-code", "codex", "time-estimation"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+90 minutes predicted. 17.5 minutes actual. That was Codex's average on the ProgramBench suite — a flat guess that overshot reality by more than 4x.
+
+On Saturday, Evan You — the creator of Vue and Vite — posted a single line on X that captured the same phenomenon in plain language:
+
+> "Funny how frontier models still estimate a task to take 2 weeks when it literally proceeds to do it in 2 hours."
+
+It felt like a joke. But there is now a full research paper quantifying it across hundreds of tasks, and the implications go further than a funny anecdote.
+
+## Why Coding Agents Overestimate Task Time
+
+Two MATS researchers, Michael Ofengenden and Maksym Andriushchenko, published "Your Agents Are Not Time Aware" on LessWrong in August 2026. They tested Claude Code and Codex on programming tasks with a simple protocol: predict how long it will take, do the work, then report how long it actually took.
+
+On ProgramBench, both agents defaulted to a prediction of roughly 90 minutes regardless of task difficulty. Claude Code's model (Opus 4.8) actually averaged 85 minutes of runtime, so its flat guess happened to land close. But GPT-5.5 in Codex averaged just 17.5 minutes — making that same 90-minute guess off by more than 4x.
+
+Their AgentTime benchmark suite widened the picture. Fable 5 over-predicted by about 3x. GPT-5.6 Sol over-predicted by 7x or more. The error was consistent: both models gravitated toward a flat default guess of roughly 90 minutes regardless of actual task difficulty.
+
+<Callout type="info">
+The October 2026 AgentTime paper (arXiv 2610.09944) formalized these findings across 222 tasks from 18 benchmarks. It found that 83% of GPT-5.6 Sol's forecasts were too high, 66% for GPT-6 Astra, and 63% for Fable 5.1. The median forecast across all three models was 15 minutes, while actual runtimes ranged from 6 to 13 minutes — a typical miss of 2.6x to 3.8x.
+</Callout>
+
+## Three Theories for the Flat Guess
+
+The researchers surfaced several data points that suggest possible explanations, though none is fully proven. Here are three interpretations consistent with the evidence.
+
+**No internal clock.** Language models do not experience the passage of time. They process tokens, not seconds. When asked "how long will this take?" they are pattern-matching against training data, not introspecting on their own processing speed.
+
+**Anchoring on human timescales.** When the same agents were asked how long "a skilled human professional" would take, their estimates were far longer than for themselves. In one extreme case — rebuilding LuaJIT — Fable 5 predicted 480 minutes for itself and 240,000 minutes for a human. The gap suggests the models anchor on human effort as a baseline and partially adjust downward, but not nearly enough.
+
+**No awareness of generation speed.** An agent does not know whether its output took seconds or minutes of wall-clock time. Without timestamps in the conversation, retrospective estimates roughly doubled in error. When given a clock tool, agents became nearly exact at reporting elapsed time.
+
+<Callout type="warning">
+None of these explanations is proven. The human-timeline anchoring theory is the most intuitive, but the research has not yet isolated which factor dominates. All three may contribute.
+</Callout>
+
+## The Mirror Image: Humans Are Miscalibrated Too
+
+The agents overestimate how long they need. Humans, it turns out, overestimate how much AI helps them.
+
+METR's July 2025 randomized trial put 16 experienced open-source developers through 246 real coding tasks. When AI tools were allowed, developers took 19% longer to complete their work. They had expected a 24% speedup going in. And after the experiment, they still believed AI had made them about 20% faster.
+
+That is a 39 percentage-point gap between perception and reality.
+
+METR updated its findings in early 2026, noting that the results likely shifted since mid-2025 tools have improved, but the evidence for a current speedup was weak — partly because many developers declined to participate in the trial at all. The size of any current speedup remains unclear.
+
+Put the two findings together and you get a striking picture: Codex thinks a task will take 90 minutes when it takes 17. The developer thinks AI saved them hours when it cost them time. Neither the machine's estimate nor your gut is a reliable planning tool.
+
+## The Agent Harness Shapes the Numbers
+
+One underreported finding: the same benchmark produced very different runtimes depending on the software surrounding the model. Claude Code's model (Opus 4.8) averaged 85 minutes per task on ProgramBench. GPT-5.5 in Codex averaged 17.5 minutes on the same benchmark.
+
+Part of this is the models themselves — Opus 4.8 and GPT-5.5 are different model families. But the harness plays a role too: the researchers noted that Claude Code took substantially more steps per task than Codex did, suggesting that the tool-use loop and stopping conditions shape the runtime independently of the model.
+
+The practical implication: if you switch from one coding agent to another, your planning baselines do not transfer. Different model-and-harness combinations produce different runtimes on the same tasks.
+
+## Self-Assessment Is Broken Too
+
+Time estimation was not the only blind spot. The researchers also asked agents to grade their own work, and found self-grading was off by roughly 20 percentage points on average.
+
+An agent that completes a task quickly and reports high confidence might be right. Or it might be displaying the same calibration failure that makes it think a few minutes of work should have taken an hour. Speed of completion is not evidence of correctness. If you rely on an agent's self-reported confidence to decide whether to review its output, you are using a broken instrument.
+
+## What This Means for Benchmarks
+
+These findings also raise questions about how we evaluate coding agents. Most agent benchmarks measure pass rates — did the agent produce correct code? — but not whether the agent knows how long it took or how well it did. The AgentTime results suggest that an agent's internal model of its own performance is systematically wrong, which matters as soon as agents start making decisions about when to stop, retry, or escalate.
+
+An agent that thinks it has been working for an hour when it has been working for ten minutes might escalate prematurely, abandon a promising approach, or budget its remaining context window incorrectly. Time awareness is not just a curiosity — it is an input to the agent's own decision-making loop.
+
+## How to Plan in Agent Hours
+
+If agent time estimates are unreliable and human intuition about AI speedups is equally wrong, how do you actually plan?
+
+**Count sessions, not days.** A simple feature might be one agent session. A complex refactor might be several, with review time between each. The useful unit is "focused agent sessions plus my review time," not a calendar estimate the agent gave you.
+
+**Ask for two numbers.** When you need a time estimate from an agent, ask for both the "solo human time" and the "agent wall-clock time." The human estimate is useful for scoping and pricing — it maps to what a contractor would quote. The agent estimate is what you actually need to block on your calendar, and it will probably be lower than the agent says.
+
+**Budget slack for stalls.** Agents sometimes get stuck in CI fix loops, wrong architectural turns, or retry spirals. As Daniel Jeffries has observed, the overestimation effect can go the other way when an agent hits a wall. Plan for the median case, but leave room for runs that go sideways.
+
+<Callout type="tip">
+Give your agent a clock. The research showed that when agents had access to a tool reporting elapsed time, their retrospective estimates became nearly exact. If your agent framework supports timestamps or elapsed-time tools, enable them. It will not fix forward predictions, but it will make progress tracking more honest.
+</Callout>
+
+**Log your own baselines.** Instead of trusting the agent's first number, compare against your own history. After a few weeks of logging "what I asked, how long the agent said, how long it actually took," you will have a personal calibration curve that is far more useful than any single estimate.
+
+## The Calibration Gap Is Where Bad Plans Live
+
+Evan You's one-liner captures something real: the people building with AI and the AI itself are both miscalibrated about what AI actually costs in time.
+
+The agents think they are slower than they are. We think they make us faster than they do. The gap between these two wrong estimates is where unrealistic timelines and wasted budgets come from.
+
+The fix is not better models — it is better measurement. Track your actual agent session times. Compare against your actual review and verification time. Build your planning around observed data, not vibes from either side of the interface.
+
+Stop asking agents for ETAs. Ask for a session count. The code gets written fast — the bottleneck is verifying it, reviewing it, and integrating it. Plan around your attention, not the agent's typing speed.
+
+---
+
+**Want more data-driven takes on AI development tools?** [Subscribe to the newsletter](/subscribe) for weekly analysis of what actually works — tested, measured, and without the hype.
