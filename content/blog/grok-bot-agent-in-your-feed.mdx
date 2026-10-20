@@ -1,0 +1,135 @@
+---
+title: "Grok Bot Can Now Reply to Your X DMs. Who Gave It Permission?"
+description: "Grok Bot reads your X DMs, replies when you tag @bot, and is reachable from your lock screen. The permission question that still has no public answer."
+date: "2026-10-20"
+category: "ai-tools"
+tags: ["ai-agents", "grok-bot", "x", "social-media", "ai-agent-permissions", "android", "spacexsi"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Grok Bot can now read your X DMs and answer them. The announcement did not address whether you approve each reply first.
+
+On October 20, Matt Palmer — who works on Cursor and Grok Bot at SpaceXSI — walked through twelve changes in a five-minute video posted to X. The headline features: DM access, @bot tagging anywhere on the platform, and the option to make Grok Bot your default digital assistant on Android. Elon Musk had already been nudging users toward the DM connection since October 16, writing that it was the "Best way to use it."
+
+That nudge did not come with an explanation of what the bot is and is not allowed to say on your behalf. Neither did the video.
+
+## Grok Bot Now Reads and Replies to X DMs
+
+Palmer confirmed that Grok Bot can now read your X Chat DMs and respond to them. He said limits are in place — "you can't spam people" — but the video did not address whether each reply requires your approval before it goes out.
+
+That is not a small omission. A bot that drafts a message for you to review is one kind of product. A bot that sends one in your name without asking is a fundamentally different kind of product. Palmer's video, the primary source for this update, does not clarify which one shipped.
+
+## How @bot Tagging Works on X
+
+Tag @bot under any post on X, and the request goes straight to your personal Grok Bot. According to the official documentation at docs.x.ai, the bot posts a short confirmation on X and then the actual work happens inside the Grok Bot app. The documentation says "tagged requests start work automatically."
+
+<Callout type="info">
+Tagging requires your X account to be connected and based in a supported region. Australia, the UK, the EU, Iceland, Liechtenstein, and Norway are currently excluded, according to the official documentation.
+</Callout>
+
+The phrasing matters. "Start work automatically" means you tag it and it runs. There is no described approval step between the tag and the execution.
+
+## Grok Bot as Your Default Android Assistant
+
+Grok Bot can now be set as the default digital assistant on Android. The system warns that the app can read information about your apps, including what is on your screen.
+
+That is a level of access that the system itself warns about — the bot can read information about your apps, including what is on your screen. On October 19, SpaceXSI also added iPhone Action Button access, which means the bot is now reachable from both major mobile platforms.
+
+Basenor reported separately that Grok Bot is also reachable from the phone lock screen and from the Grok integration in Tesla vehicles. Between the DMs, the Android assistant, the lock screen, and the car, that is a lot of surface area for a single bot.
+
+## Speed, Connectors, Voice, and Email
+
+The rest of Palmer's twelve changes:
+
+**Speed.** The official @bot account said computer tasks now "finish 3x sooner on average."
+
+**Connectors.** Robinhood, Coinbase, Trello, PostHog, beehiiv, and eToro were announced alongside the update.
+
+**Voice calls.** A Bot now keeps the previous call and its full transcript when you call back. The memory lasts 30 minutes, which Palmer called "sort of short-lived."
+
+**Email aliases.** Plus-style addresses — receipts, newsletters, whatever you name — each with their own routines. Palmer said this gives a Bot "unlimited email addresses."
+
+**Other updates.** Highlighted draft edits, collapsed notifications, and team invite and access-list controls.
+
+## From Watcher to Speaker in Thirteen Days
+
+On October 7, Grok Bot gained built-in X search, reading, and monitoring. At the time, TeslaNorth reported that the bot "does not send DMs or cold-message people on X." Drafts were left for you to review and send yourself.
+
+Thirteen days later, that guardrail shifted. The bot now reads DMs and can respond to them. It takes tagged requests and acts on them without a described approval step.
+
+This is the shift from watcher to speaker — from an agent that monitors your feed to one that talks in it.
+
+<Callout type="warning">
+Palmer's video did not state whether DM replies require your approval before they are sent. The official @bot tagging documentation describes no approval step either. Until SpaceXSI publishes a clear answer, the cautious assumption is that replies may go out without your review.
+</Callout>
+
+## The Permission Gap
+
+The interesting question in this update is not which features shipped. It is the gap between what the bot can now do and what it is publicly allowed to do without asking.
+
+When an agent saves a bookmark on your behalf, the stakes are low. When it replies to a DM in your voice, the stakes change category. One is a convenience. The other is delegation of speech.
+
+Neither Palmer's video nor the official @bot documentation describes a permission framework for DMs or @bot actions. The tagging docs say tagged requests start work automatically. The DM feature shipped without a visible approval model.
+
+## The Regulatory Landscape Is Not Ready Either
+
+This gap is not unique to Grok Bot. The standards that would govern agent permissions are still in draft.
+
+An IETF draft from July 2026 proposes combining OAuth 2.0 extensions so AI agents can authenticate and act for users across domains. It is a technical specification, not a policy — it defines how an agent proves who it represents, not what it is allowed to say.
+
+Senator Warner's AI AGENT Act, introduced as a discussion draft in June 2026, would create an FTC registry of trusted agents and require them to act transparently in users' interests. It remains a discussion draft.
+
+The EU AI Act, which began requiring compliance in August 2026, now mandates disclosure when someone is talking to an AI. That covers transparency — not permission boundaries for what the AI does next.
+
+None of these are settled law or adopted protocol. Right now, the permission boundary for an AI agent acting on your behalf is whatever each company decides to ship.
+
+## Money Gets an Approval Gate. Speech Does Not.
+
+On October 11, SpaceXSI shipped Grok Bot v0.70.2 with shopping capabilities. Purchases require explicit user approval. The Stripe integration generates a single-use virtual card per transaction. Musk said that if Grok makes an error or leaks your card information, "SpaceX will make you whole."
+
+That is the right instinct for financial actions: explicit approval, scoped credentials, a liability backstop.
+
+The question is why that discipline does not extend to speech acts. A reply sent in your name to the wrong person, at the wrong time, in the wrong tone can do reputational damage that no refund fixes. Money has a permission gate and a liability promise. Speech, as of this update, appears to have neither.
+
+## A Framework Until the Standards Catch Up
+
+Until the standards arrive, here is one way to think about what an agent should and should not do without asking:
+
+**Auto — no approval needed:**
+- Save a post or bookmark
+- Summarize a thread
+- Search for information
+- Draft a message (without sending)
+- Monitor a topic and send you an alert
+
+**Draft — show me first:**
+- Reply to a DM
+- Post on my behalf
+- Send a message to someone I have not messaged before
+- Accept or decline an invitation
+
+**Block — never without explicit confirmation:**
+- Spend money
+- Change account settings
+- Grant access to another service
+- Delete content
+
+This is not a standard. It is a personal policy — the kind you should set for yourself now, because the platforms have not set one for you.
+
+## Where Grok Bot Goes From Here
+
+Grok Bot is now reachable from a DM, a tag in any X thread, your Android home screen, your iPhone's Action Button, your car, and a voice call. It has its own email addresses, your X account, and your connectors.
+
+The product is moving quickly and the breadth of integrations is genuine. But the permission architecture is either not built yet or not published yet, and neither answer is reassuring when the bot can already speak in your name.
+
+<Callout type="tip">
+If you use Grok Bot, check the X plugin settings now. Know what it can access, and decide for yourself what it should be allowed to do without asking. Do not wait for SpaceXSI to draw that line — draw it yourself.
+</Callout>
+
+The passive assistant era is ending. Your agent is not waiting for you to open an app anymore. It is in your feed, in your DMs, and on your lock screen. The only question left is how much of your voice it gets to use — and whether anyone asked you first.
+
+---
+
+*Want to follow how AI agents are reshaping the tools we use every day? [Subscribe to the newsletter](/subscribe) for a new post every week.*
