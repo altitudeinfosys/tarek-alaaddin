@@ -1,0 +1,131 @@
+---
+title: "Amazon and Reddit Are Locking Out AI Agents. What That Means."
+description: "Your agent can negotiate your cable bill, but it can't buy toilet paper on Amazon. The split web is arriving faster than anyone expected."
+date: "2026-10-19"
+category: "ai-tools"
+tags: ["ai-agents", "amazon", "reddit", "grok-bot", "meta-muse", "perplexity", "personal-agent-protocol", "web-access"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Your AI agent can summarize a legal brief, draft a contract, and negotiate your cable bill. But it cannot buy toilet paper on Amazon.
+
+That is the state of the agentic web in October 2026. The agents are powerful enough to shop for you. The stores just decided they don't want to let them in.
+
+## The Amazon Notice
+
+On October 14, a Grok Bot user named Nic Cruz Patane posted the error message his agent hit when it tried to place an Amazon order:
+
+> "Continued access by an unauthorized AI agent violates Amazon's Conditions of Use, to which our customers have agreed."
+
+His bots could no longer access Amazon for orders or anything else. The reports had actually started a few days earlier — on October 10, another user told Elon Musk on X that Amazon was blocking the bot. Musk's response: Grok would find another way, and he showed an order it placed on Lego's website instead.
+
+By October 15, Musk had a punchier line: "Just ask Grok @Bot to buy what you want someplace else and get a better deal." He floated the idea of starting "a competitor to Amazon" — and later hinted at something called "X Shop." Neither has materialized.
+
+He also made a promise: if Grok Bot botches a purchase or leaks your card, "SpaceX will make you whole." That sounds reassuring until you read SpaceXAI's consumer terms, which make users responsible for what their agents do and cap liability at the greater of fees paid or $100. A post on X is not a policy update.
+
+<Callout type="warning">
+Amazon has made no public statement about Grok Bot specifically. Its Conditions of Use (updated August 14, 2026) now have an "Agents" section: agents must identify themselves in the user-agent string, must not imitate human typing or bypass CAPTCHAs, and must answer truthfully if asked whether they are a computer. Amazon reserves the right to limit any agent "at our sole discretion."
+</Callout>
+
+## It's Not Just Grok
+
+Amazon is not singling out one agent. It is blocking them broadly.
+
+In September, Amazon asked Meta to remove Amazon from its Muse AI agent. Meta declined. Amazon blocked it on September 20. The customer-facing message was the same: unauthorized AI agents violate the terms of use.
+
+A Jefferies analysis found that roughly one-third of tested US websites now block Meta's Muse agent. And that is the agent backed by Meta, with brand partnerships at Walmart, Best Buy, and Sephora. Independent agents fare worse.
+
+Here is a partial list of what TechCrunch documented in early October:
+
+- **Delta and United** — no partnerships allowing third-party agents to book flights. Delta says any opening must reflect "security and the customer experience in mind."
+- **Yelp** — non-human traffic is barred unless the agent has paid for access through Yelp's data licensing program.
+- **eBay** — restricts unauthorized agents and says users have been suspended for using agentic AI.
+- **Google** — a user reported Google kicked out the Instinct agent while it was cleaning their Gmail inbox.
+- **Adidas, Pizza Hut** — users reported blocks; neither company responded to press inquiries.
+
+Even Walmart, a formal Muse partner, had users hitting human-verification walls. Walmart called those blocks "unintentional" — a nice way of saying their own anti-bot systems could not tell the difference between an authorized agent and a scraper.
+
+## The Perplexity Precedent
+
+This fight has already been to court.
+
+Amazon sued Perplexity AI in November 2025 over its Comet shopping agent, arguing that agents "should operate openly and respect service provider decisions whether or not to participate." A federal judge issued a preliminary injunction blocking Comet from Amazon's site in March 2026.
+
+Then the Ninth Circuit overturned that injunction in August 2026. The ruling was narrow but significant: the court found that Perplexity's agent operates as a tool acting on the user's instructions, and on the current record, Perplexity itself did not access Amazon's systems.
+
+It is the first federal appeals-court ruling to address whether AI agents acting on behalf of users can legally access online platforms. The court was careful to say the ruling is limited to the facts before it. But the logic — the agent is the user, not a separate actor — is exactly what every agent company will cite going forward.
+
+Amazon has filed an amended complaint. The case is back in the district court. Do not expect this to be settled quickly.
+
+## Reddit: What's Actually Happening
+
+Reddit's situation looks like the same story, but the mechanics are different.
+
+There is no confirmed block of Grok Bot or any specific AI agent by name. What Reddit is doing is a systematic lockdown of the channels that AI scrapers and agents use to reach its content:
+
+**RSS feeds die November 13.** Reddit says the feeds have become a major channel for bulk scraping. Outside communities you moderate, there is no replacement. Moderators get a Discord Relay app.
+
+**Public API access stops October 31.** New applications will no longer be accepted. Unregistered apps start losing access on January 12, 2027, and the legacy public API closes entirely in March 2027. Reddit wants developers to migrate to its Devvit platform.
+
+**Old Reddit goes behind a login wall.** Access will be limited to logged-in users who have been active in the last six months. Reddit says logged-out access to Old Reddit was the largest source of abusive scraping on the platform.
+
+<Callout type="info">
+Reddit's robots.txt already disallows all crawlers: "User-agent: * Disallow: /". The company points to its Public Content Policy for any entity that wants legitimate access. Meanwhile, it licenses its own content to AI companies like Google and OpenAI — a tension critics have not been slow to point out.
+</Callout>
+
+For AI agents, the practical effect is this: any agent that browses Reddit from a datacenter IP gets blocked or challenged. Grok Bot's own security FAQ acknowledges that "some services flag datacenter IP addresses." Logged-in API access through OAuth still works, but the window for that is narrowing too.
+
+## Why Platforms Are Doing This
+
+The charitable reading: fraud, security, and server load. An unidentified agent making purchases on someone's Amazon account is a genuine liability. An agent that scrapes vast amounts of Reddit content to train a model is a real cost to Reddit's infrastructure.
+
+The less charitable reading: money. Amazon's entire retail model depends on human eyeballs scrolling through search results, sponsored products, and impulse buys. An agent that goes straight to the cheapest option and checks out in seconds bypasses all of that. Yelp's model depends on human users seeing restaurant ads. Delta's depends on you seeing the upsells for extra legroom and priority boarding.
+
+Both readings are true at the same time. Platforms have real security concerns and real economic incentives to keep agents out. That is why this problem does not have an easy answer.
+
+## The Protocol Wars
+
+The industry is not standing still. On October 6, Sierra and Meta announced the Personal Agent Protocol — an open standard for how AI agents authenticate with businesses.
+
+The idea is straightforward: agents start as guests, and customers decide how much access to grant. Sessions run on OAuth. The business chooses whether the agent works through its website, through APIs using standards like MCP and OpenAPI, or through an agent of its own.
+
+Walmart, Shopify, Stripe, Genesys, and several others have signed on. Sierra plans to publish a v0.1 specification later in October.
+
+But that is not the only protocol. Visa has its own Trusted Agent Protocol, and Stripe and Shopify have joined that too. If the history of web standards is any guide, we will have competing specifications for a while before anything consolidates.
+
+And Cloudflare made things more complicated on September 15 by changing its default crawler settings. Sites that had blocked AI bots for security reasons were reportedly shifted to block AI agents on pages with ads — catching legitimate agents in the crossfire.
+
+## The Split Web Is Here
+
+What is emerging is not a complete lockout. It is a split:
+
+**Permissioned lanes** — where agents operate through official partnerships, verified protocols, and negotiated access. Meta's Muse works at Walmart because Walmart signed a deal. Shopify is opening its stores to agents. These lanes will grow.
+
+**Walled gardens** — where platforms block everything that is not a human browser session. Amazon, Yelp, Delta, United, and a growing number of retailers fall here. Entry requires either a partnership or a court ruling.
+
+**The gray zone** — where agents work until they don't. Community workarounds, proxy routing, and CAPTCHA-solving services exist. They also violate nearly every platform's terms of use, and they are exactly the kind of behavior that gives platforms ammunition to block agents more aggressively.
+
+For anyone building with or relying on AI agents, the practical takeaway is:
+
+1. **Use official APIs and connectors where they exist.** Reddit's OAuth API still works. Shopify is agent-friendly. Check before you send your agent to browse a website cold.
+2. **Expect a human step at checkout.** For high-value purchases, the safest pattern is to have the agent do the research and the human complete the transaction.
+3. **Don't use CAPTCHA-solving or proxy tricks.** They break terms of service, and they make the platform problem worse for everyone.
+4. **Watch the protocol space.** PAP and Visa's Trusted Agent Protocol are early, but they are the most likely path to agents getting legitimate access back.
+
+## The Real Question
+
+The question is not whether Amazon likes Grok. It is who decides how you interact with the internet: you, or the website.
+
+Platforms will argue they are protecting their customers and their infrastructure. Agent makers will argue the agent is just you with more hands. Courts will split the difference case by case, and the Perplexity ruling suggests they might land closer to the user side than platforms want.
+
+But while those fights play out, the agent is only as useful as the sites that let it in. That is the constraint no model upgrade can fix.
+
+<Callout type="tip">
+The agentic web is not being built. It is being negotiated — one blocked request, one court ruling, and one partnership announcement at a time.
+</Callout>
+
+---
+
+*This is the kind of shift I track every week — where AI tools actually work, where they break, and what it means for how we build and buy.* [Subscribe to the newsletter](/subscribe) *to get the next one in your inbox.*
