@@ -1,0 +1,125 @@
+---
+title: "Inception Mercury 3: The AI That Refines the Whole Draft at Once"
+description: "Inception's diffusion LLM generates text at 1,068 tokens per second by refining everything in parallel instead of writing one word at a time. The benchmarks are promising. The fine print matters."
+date: "2026-10-20"
+category: "ai-tools"
+tags: ["diffusion-llm", "inception", "mercury-3", "ai-inference", "language-models", "ai-speed", "llm-benchmarks"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Every language model you use today writes text one token at a time. It picks a word, commits, picks the next, commits again — a left-to-right march that never looks back.
+
+Inception's Mercury 3, released on October 19, 2026, does not work that way. It is a diffusion language model: it starts from noise and refines a whole block of output in parallel, iterating until the text resolves. Think of a photograph developing in a darkroom. The entire image sharpens at once.
+
+Inception says that approach is why Mercury 3 generates text at 1,068 tokens per second on NVIDIA GPUs — roughly 4x to 8x faster than the autoregressive models it competes with.
+
+The speed is real enough to matter. But the benchmarks are all self-reported, the model weights are closed, and there is no independent evaluation yet. So here is what we know, what we do not, and why diffusion models deserve attention regardless of whether Mercury 3 lives up to every claim.
+
+## How Diffusion Text Generation Works
+
+Autoregressive models — GPT, Claude, Gemini — produce one token after another. Each token depends on every token before it. That sequential dependency is what makes generation slow: you cannot parallelize the core loop.
+
+Diffusion models reverse the process. Instead of building text left to right, they start with random noise and iteratively denoise it. Each pass refines many tokens simultaneously. After enough passes, coherent text emerges.
+
+The idea originally powered image generation. Stable Diffusion and DALL-E both use it. Applying it to language is newer and harder, because text is discrete — you cannot blur a word the way you blur a pixel.
+
+<Callout type="info">
+Google DeepMind released DiffusionGemma in June 2026, a 26-billion-parameter open-weights diffusion LLM. It refines 256-token blocks in parallel and reports throughput above 1,000 tokens per second on a single H100. The fact that both a startup and Google are investing in the same approach is the real signal.
+</Callout>
+
+## What Mercury 3 Claims
+
+A benchmark table published at launch compares Mercury 3 against GPT-6 Luna and Claude Haiku 5.5. Mercury 3 leads 8 of the 12 benchmarks listed. Here is a summary of the key results:
+
+**Where Mercury 3 leads:**
+- GPQA Diamond: 89.23 vs. 86.36 (Luna) and 84.51 (Haiku 5.5)
+- SWE-Bench Atlas: 51.08 vs. 33.33 (Luna) and 32.26 (Haiku 5.5)
+- BrowseComp+: 55.18 vs. 50.50 (Luna) and 45.78 (Haiku 5.5)
+- IFBench: 76.84 vs. 61.82 (Luna) and 54.65 (Haiku 5.5)
+- MultiChallenge: 60.35 vs. 51.49 (Luna) and 52.48 (Haiku 5.5) (per Inception's published table)
+
+**Where it trails:**
+- DeepSWE v1: 46.31 — Claude Haiku 5.5 scores 51.62
+- MRCR v2: 75.50 — Haiku 5.5 scores 78.40
+- AA-Omniscience-Public: 46.44 — Luna edges it at 46.94 (per the published table)
+
+The SWE-Bench Atlas gap is the most striking. Mercury 3 at 51.08 versus Luna at 33.33 is a 17-point lead. If that holds under independent testing, it means a diffusion model can write code competitively — something that was an open question a year ago.
+
+## The Speed Advantage Is the Real Story
+
+The benchmark table is interesting, but the speed numbers are the strategic argument.
+
+Inception reports Mercury 3 at 1,068 tokens per second. For comparison, they clock Claude Haiku 5.5 at around 240 tokens/s and GPT-6 Luna at about 130 tokens/s.
+
+That matters most for agentic workflows. When a coding agent calls a model dozens of times per task — planning, generating, testing, fixing — the wall-clock time is dominated by inference latency. An agent running on a model that is 4x faster does not just save time. It changes what you attempt. You can afford more iterations, more alternative approaches, more verification steps.
+
+TinyFish AI tested Mercury 3 as a browser agent on 50 live Mind2Web navigation tasks. It completed 50% of them — which TinyFish said was "significantly more than GPT-6.1-Sol" at the same token volume and step count. Octen AI reported a median generation time of 0.9 seconds and a median end-to-end response of 2.2 seconds.
+
+<Callout type="warning">
+These speed figures have a caveat: Inception measured Mercury 3 on NVIDIA GPUs, but did not disclose how the competitor models were benchmarked. OpenRouter's page for Mercury 3 lists a P50 throughput of 221 tokens/s — not 1,068. Deployment conditions matter, and the gap between vendor-reported and real-world numbers is worth watching.
+</Callout>
+
+## Pricing: Cheaper Than It Looks (For Now)
+
+Mercury 3's list price is $0.20 per million input tokens and $0.70 per million output tokens. But there is a launch promotion cutting both by 50%:
+
+| Model | Input (per M tokens) | Output (per M tokens) |
+|-------|---------------------|-----------------------|
+| Mercury 3 (promo) | $0.10 | $0.35 |
+| Mercury 3 (list) | $0.20 | $0.70 |
+| GPT-6 Luna | ~$0.10 | ~$0.50 |
+| Claude Haiku 5.5 | ~$0.10 | ~$0.50 |
+
+At promo pricing, Mercury 3 undercuts both rivals on output. At list price, it costs more. Competitor pricing is approximate and based on publicly listed rates, which vary by plan and volume. Inception has not said when the promotion ends.
+
+For high-volume use cases — agent loops, classification pipelines, bulk content processing — the combination of speed and promotional pricing is compelling. But anyone building a production system needs to plan for the list price unless Inception commits to a timeline.
+
+The model also supports a 1-million-token context window, up from 260,000 tokens in the previous version. Cached input tokens get a 90% discount, which helps on long-context workloads.
+
+## The Fine Print
+
+Every number in this article that comes from Inception is self-reported. No independent evaluation has been published. Here is what that means in practice:
+
+**Benchmarks are vendor-run.** Inception selected the benchmarks, ran the tests, and reported the scores. They compared against specific competitors at specific settings. We do not know whether Mercury 3 was given advantages — longer thinking time, different sampling parameters, or cherry-picked configurations.
+
+**The parameter count is undisclosed.** Inception says Mercury 3 is "more than 40x larger than Mercury 1" but has not published a parameter count for either model. This makes efficiency claims hard to evaluate.
+
+**Weights are closed.** There are no open weights, no quantized community builds, no way to reproduce results independently. You can only test it through the API. Inception is led by CEO Stefano Ermon and backed by Menlo Ventures, M12, NVentures, Andrew Ng, Andrej Karpathy, and Eric Schmidt — credible names, but investor pedigree does not substitute for independent benchmarks.
+
+**Partner testimonials are anecdotal.** TinyFish and Octen are partners who tested the model. Their results are encouraging but not independent evaluations.
+
+<Callout type="info">
+Inception offers 100 million free tokens to new accounts with no payment details required. The API is OpenAI-compatible — model ID is `mercury-3` — and is available through OpenRouter, Baseten, and Vercel AI Gateway. Testing it yourself is straightforward.
+</Callout>
+
+## Is Diffusion the Next Paradigm Shift?
+
+Diffusion language models were a research curiosity not long ago. Today, Google DeepMind has released an open-weights diffusion LLM, Inception has scaled one to claim competitive benchmark scores against frontier models, and academic surveys are treating the approach as a serious alternative to autoregressive generation.
+
+The current consensus in the research community is nuanced. Diffusion models are significantly faster for long-form output but currently weaker on complex multi-step reasoning. Recent surveys have found that autoregressive models still lead in tasks requiring deep reasoning chains.
+
+That split suggests a future where both approaches coexist. Autoregressive models for deep reasoning chains. Diffusion models for speed-sensitive tasks: agent loops, real-time assistants, classification at scale, bulk generation.
+
+The LLaDA project scaled diffusion models to 100 billion parameters in late 2025. Mercury 3 is Inception's answer at production scale. DiffusionGemma is Google's open experiment. The trendline points in one direction: diffusion for language is not a novelty anymore.
+
+## What to Watch
+
+Mercury 3 is among the first diffusion LLMs to claim benchmark parity with frontier autoregressive models. Whether it holds up depends on independent testing.
+
+Three things to watch:
+
+1. **Artificial Analysis or LMSYS results.** Once Mercury 3 appears on an independent leaderboard, the benchmark claims either hold or they do not.
+2. **The promo pricing expiration.** If Inception keeps the 50% discount long-term, the economics are strong. If list price returns without notice, production costs double overnight.
+3. **Agent framework adoption.** If Mercury 3's speed advantage shows up in real-world agent benchmarks, it validates the thesis that diffusion speed changes what agents can attempt.
+
+The model is available now. The API is OpenAI-compatible. The free tier is generous. The claims are ambitious. The evidence is preliminary.
+
+That is where things stand.
+
+---
+
+*Want more analysis on the tools reshaping how developers build with AI?*
+
+[Subscribe to the newsletter](/subscribe)
