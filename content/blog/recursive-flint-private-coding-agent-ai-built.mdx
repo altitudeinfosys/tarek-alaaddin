@@ -1,0 +1,124 @@
+---
+title: "Recursive Flint: A Private Local Coding Agent AI Helped Build"
+description: "Recursive's Flint is a 40B open-weight coding model that runs offline at 131 tokens per second. AI built most of it, and two bills would restrict that."
+date: "2026-10-22"
+category: "ai-tools"
+tags: ["recursive", "flint", "local-ai", "coding-agents", "open-source", "recursive-self-improvement", "ai-safety", "mixture-of-experts"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Your code leaves your laptop every time you call a cloud-hosted coding agent. Every prompt, every file, every half-finished function ships to someone else's GPU cluster, gets processed, and comes back. You pay per token, you need a connection, and you trust the provider not to train on your work.
+
+Recursive just shipped an alternative. Flint is a 40-billion-parameter coding model that runs offline on a MacBook with 48 GB of RAM. No API key. No meter. No network required. And the most interesting part is not the model itself — it is how the model was made.
+
+## What Flint Actually Is
+
+Flint is a mixture-of-experts (MoE) model with 39.8 billion total parameters. Only about 2.5 billion are active per token, which is how it runs fast on consumer hardware instead of requiring a data-center GPU.
+
+The architecture has 49 layers: 2 dense and 47 MoE. Each MoE layer has 256 routed experts, 6 selected per token, plus 1 shared expert. The context window is 262,144 tokens, with the model card claiming up to 512K but recommending staying within 256K for best results.
+
+Weights are on Hugging Face under Apache 2.0. You can download and run it through Ollama — about a 23 GB download. No sign-up required.
+
+<Callout type="info">
+For perspective: Meta's Muse Spark Open has 816 billion parameters and needs at least 1 TB of memory. Flint runs on a laptop you can buy at the Apple Store. The trade-off is obvious — Flint is not going to match the biggest models on the hardest tasks — but the gap is narrower than you would expect.
+</Callout>
+
+## The Speed Numbers
+
+TechCrunch measured about 131 tokens per second on an M4 Pro MacBook Pro. Recursive's own claims cite 125+ on the same hardware and over 150 on Nvidia's RTX Spark at short contexts.
+
+For comparison, TechCrunch says similar-size models like Gemma 4 and Nemotron 3.5 Lightning clock in at 58 to 69 tokens per second on the same machine. So Flint is roughly twice as fast as the competition in its weight class.
+
+That speed matters more than the raw number suggests. A coding agent that responds quickly feels like a tool. One that makes you wait feels like a distraction. For agentic workflows where the model runs dozens of steps autonomously, the difference compounds.
+
+## Benchmarks — With a Caveat
+
+Recursive reports the following scores:
+
+- **SWE-bench Verified**: 74.2%
+- **SWE-bench Pro v2**: 89.7%
+- **Terminal-Bench 2.1**: 54.9%
+
+Recursive says these numbers outperform other sub-50B models on coding benchmarks.
+
+The caveat is loud: every one of these numbers comes from Recursive. No independent lab has verified them. The SWE-bench Pro v2 score of 89.7% is notably higher than the Verified score of 74.2%, which is worth scrutinizing — that gap is unusual and deserves outside confirmation.
+
+<Callout type="warning">
+Treat vendor-reported benchmarks as marketing until someone else reproduces them. Recursive has an incentive to pick the benchmark variant and prompting strategy that makes Flint look best. That does not mean the numbers are wrong — it means you should wait for independent tests before planning around them.
+</Callout>
+
+## One Reviewer's Hands-On Test
+
+WIRED's Will Knight ran Flint on a 48 GB Mac and gave it three tasks: building a command-line to-do list, a web-search research tool, and a simple explanatory website. He wrote that Flint "nailed my coding requests every time."
+
+That is one reviewer running three small tasks. It is not a comprehensive evaluation. But it is a real human using the model on real code, offline, with no tricks, and getting clean results. For a free model running on a laptop, that is a meaningful data point.
+
+## The Eureka Machine: AI That Builds AI
+
+This is the part that makes Flint genuinely different from another open-weight release.
+
+Recursive says Flint was built in under four months by a small team, with their automated research system called the Eureka Machine contributing heavily to the process. According to TechCrunch, the Eureka Machine discovered:
+
+- A sparser model architecture that keeps quality high with fewer active parameters
+- Low-bit training techniques that shrank Flint by 71% with almost no quality loss
+- Custom inference kernels optimized for specific hardware
+
+The long-term goal, according to Socher, is full recursive self-improvement — AI systems that get better at making themselves better — with human oversight.
+
+Whether the Eureka Machine is genuinely improving with each iteration, or whether it is a sophisticated hyperparameter search that a good team could replicate manually, is a claim Recursive has not backed with outside evidence.
+
+## The Privacy Argument
+
+The most practical reason to care about Flint has nothing to do with benchmarks or self-improvement. It is privacy.
+
+When you use a cloud-hosted coding agent, your code transits through someone else's infrastructure. Most providers say they do not train on API inputs, and most are probably telling the truth. But "probably" is not a security posture. Enterprises, solo developers working on proprietary code, and anyone handling regulated data have a legitimate reason to keep their code off the wire.
+
+Flint runs entirely on your machine. The code never leaves. The model file sits on your disk and processes tokens against your local CPU or GPU. There is no terms of service to parse, no trust boundary to evaluate.
+
+That alone is worth watching, even if Flint turns out to be mediocre compared to the best cloud models. A decent local model with zero data exposure beats a great cloud model that you cannot use because compliance says no.
+
+## The Money Behind It
+
+Recursive is not a side project. The company raised over $650 million at a $4.65 billion valuation, with investors including GV (formerly Google Ventures), Greycroft, Nvidia, and AMD Ventures. In June 2026, they signed a $410 million compute deal with AWS.
+
+The investor list is notable. Nvidia and AMD are both backing a company whose product runs on consumer hardware without requiring expensive cloud GPUs. That makes sense if you believe the future of AI includes a strong local tier alongside the cloud, and that selling hardware people actually buy is good business.
+
+## Two Bills in Congress Would Restrict the Technique
+
+While Recursive ships a model built by recursive self-improvement, two bills in Congress would restrict or ban the practice.
+
+**The Human Control Over AI Act**, proposed by Rep. Ro Khanna in September 2026, would ban AI systems from being trained or modified to improve themselves until a federal agency approves the activity. It would also create an FDA-style AI safety agency and impose criminal penalties.
+
+**The Ban Artificial Superintelligence Act**, from Sen. Bernie Sanders and Rep. Greg Casar (H.R. 10538), is broader. It defines a mandatory pause that would bar training, modifying, or fine-tuning covered systems through recursive self-improvement.
+
+Neither bill has passed a chamber. But the fact that they exist at all changes the risk calculus for anyone building on recursive self-improvement.
+
+## What This Means for Developers
+
+If you are a developer evaluating Flint, here is the breakdown:
+
+**Use it for:** Private code assistance on a well-equipped Mac or GPU workstation. Quick coding tasks, code generation, refactoring, and debugging where you want zero data exposure. Situations where network latency or API costs are friction.
+
+**Do not use it for:** Replacing your primary cloud-based coding agent on complex, multi-file tasks. Recursive themselves say Flint needs more guidance than large paid assistants and recommend breaking big tasks into smaller steps.
+
+**Hardware reality:** TechCrunch tested on a machine with 48 GB of RAM, which CryptoBriefing describes as workable for agentic coding. That is the high end of consumer laptops.
+
+**Day-one support:** llama.cpp, Ollama, LM Studio, vLLM, SGLang, and Recursive's own rec engine. The model has a knowledge cutoff of June 2026.
+
+## Why Local Coding Models Like Flint Matter
+
+Flint is interesting not because it is the best coding model — it almost certainly is not — but because of what it represents. A small team, backed by serious money, used an AI system to build another AI system in four months, and released it for free.
+
+The code stays on your laptop. The weights are Apache 2.0. The speed is genuinely fast for local inference. And the technique that made it possible is the same technique that two bills in Congress aim to restrict.
+
+<Callout type="tip">
+The question is not whether Flint is better than Claude or Codex today. It is whether a free, private, fast-enough local model changes which coding tasks you are willing to hand to AI in the first place. When there is no API bill and no data leaves your machine, the calculus shifts.
+</Callout>
+
+That shift is already happening. Flint is one of the most ambitious entries yet in a growing category of local coding models that do not need permission from a cloud provider to run. Whether the technique that built it survives the legislative process is a different question — and one that every AI lab building on recursive self-improvement should be watching.
+
+---
+
+*Want to stay on top of developments like this? [Subscribe to the newsletter](/subscribe) for weekly breakdowns of the tools, models, and shifts that matter for developers building with AI.*
