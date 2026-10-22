@@ -1,0 +1,135 @@
+---
+title: "OpenAI's 12-Hour Prompt Cache. Long Agent Sessions Just Got Cheap."
+description: "OpenAI extended prompt caching from 30 minutes to 12 hours in the API. For agents that pause between tasks, this one setting can cut input costs by 78 percent."
+date: "2026-10-21"
+category: "ai-tools"
+tags: ["openai", "prompt-caching", "ai-agents", "cost-optimization", "llm-pricing", "anthropic", "gpt-5"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Every time an AI agent takes a step, it resends the entire conversation — system prompt, tool definitions, all prior turns — and the model rereads every token from scratch. You pay full price for that rereading, every single time.
+
+Prompt caching changes the economics. The model saves the unchanged prefix of your request and reuses it on the next call. When it hits, you pay a fraction of the normal input cost.
+
+On October 20, OpenAI announced a 12-hour cache lifetime option in the API. The previous ceiling was 30 minutes. For agents that work in bursts — a coding session interrupted by lunch, a nightly pipeline that picks up where it left off, a support bot that goes quiet between tickets — this is the difference between caching that helps and caching that hurts.
+
+## What the Cache Actually Does
+
+When you send a request to a model, the input has two parts: the prefix (everything that has not changed since the last call) and the new content appended to the end.
+
+Without caching, every token in both parts is processed at full cost. With caching, the model recognizes the unchanged prefix and skips the expensive recomputation. You still pay for the cached tokens, but at a steep discount.
+
+The catch: the prefix must match exactly. Change your system prompt, swap a tool definition, edit an earlier message, or alter the reasoning effort parameter, and the cache breaks. The model starts over.
+
+<Callout type="info">
+Think of the cache like a bookmark in a long book. The model remembers where it left off, but only if you have not rewritten any of the earlier pages. Change one word on page three and everything from that point forward has to be reprocessed.
+</Callout>
+
+## The 30-Minute Problem
+
+Until now, OpenAI's default cache lifetime was 30 minutes. For fast, back-to-back API calls in a single coding session, that works fine — the prefix is still warm when the next request arrives.
+
+But many agent workflows have gaps. A scheduled pipeline runs every few hours. A coding agent waits while the developer reviews a diff. An overnight batch job pauses between stages. In each case, the 30-minute cache has expired by the time the next request arrives, and the model does a fresh write — which actually costs *more* than no caching at all.
+
+Here is the math, using multipliers from OpenAI's documentation for GPT-5.6 and later:
+
+- **Cache writes** (the cost of saving the prefix): 1.25x the uncached input price for a 30-minute lifetime, or 2.5x for the new 12-hour lifetime.
+- **Cache reads** (the cost of reusing a saved prefix): 0.1x the uncached input price. On GPT-6.1 Sol, reads drop to 0.05x.
+- **These replace the normal price.** A write is not a surcharge on top of the uncached rate. Each input token is billed at exactly one rate: uncached, cache-write, or cache-read.
+
+## The Worked Example That Tells the Whole Story
+
+Picture an agent with a 100,000-token stable prefix — a large system prompt, tool definitions, and accumulated conversation history. It makes 20 requests over a workday, each separated by more than 30 minutes.
+
+| Scenario | Cost (as a multiple of one uncached read of the prefix) |
+|---|---|
+| No caching | 20 × 1 = **20x** |
+| 30-minute cache (expires between bursts) | 20 × 1.25 = **25x** |
+| 12-hour cache | 2.5 + (19 × 0.1) = **4.4x** |
+| 12-hour cache on GPT-6.1 Sol | 2.5 + (19 × 0.05) = **3.45x** |
+
+The 30-minute cache is *worse* than no caching when every request triggers a new write. The 12-hour cache saves 78 percent. On GPT-6.1 Sol, it saves 83 percent.
+
+At an illustrative $1 per million input tokens, that 100K-token prefix costs $2.00 per day uncached, $2.50 with the 30-minute cache that keeps expiring, and $0.44 with the 12-hour cache.
+
+<Callout type="warning">
+A 12-hour lifetime makes your prefix *eligible* for the read price — it does not guarantee a cache hit. The prefix still needs to match exactly, and OpenAI's documentation is clear that published hit rates are not guaranteed.
+</Callout>
+
+## How to Use It
+
+The 12-hour option is available in the Responses API for GPT-5.6 and later models. You set it with one parameter:
+
+```json
+{
+  "prompt_cache_options": {
+    "ttl": "12h"
+  }
+}
+```
+
+The default is `"30m"`. Those are the only two values the API accepts.
+
+A few details that matter:
+
+- **Minimum cacheable prefix**: 1,024 tokens. Anything shorter is processed without caching.
+- **Up to 4 cache breakpoints per request.** You can control exactly where the cache boundary falls using explicit mode (`prompt_cache_options.mode: "explicit"`), or let the system place one automatically in implicit mode.
+- **Upgrading from 30 minutes to 12 hours** on an existing cached prefix incurs a new write charge at the 2.5x rate.
+- **A 30-minute read refreshes the timer** to at least 30 minutes at no extra cost. The 12-hour option does not get this free refresh — it is write-once for the duration.
+- **Pre-warming** is available: set `prewarm: true` to write the cache without generating any output, billed at the write rate.
+
+## The "Forever Cache" for Codex and Work
+
+Alongside the API announcement, OpenAI's Tibo Sottiaux posted on X that Codex and Work keep the cache indefinitely for logged-in users — no penalty for returning to an old conversation.
+
+This is a different offer from the API's 12-hour option. Codex and Work handle caching internally. The promise is that returning to an existing conversation costs nothing extra because the context is already warm.
+
+For developers building on the API, the 12-hour TTL is what you get. The indefinite cache is a product-level feature for logged-in users of OpenAI's own applications.
+
+## How the Competition Stacks Up
+
+Prompt caching is not an OpenAI exclusive. Every major provider now offers some version of it, and the pricing structures are converging toward the same basic shape.
+
+**Anthropic (Claude)** offers a 5-minute default cache with a 1.25x write cost — identical to OpenAI's 30-minute default write price. Reads cost 0.1x, matching OpenAI. For the latest models (Opus 5.5 and Sonnet 5.5), reads drop to 0.05x.
+
+Anthropic's longer-lived option is a 1-hour cache at 2x the base input price. That is cheaper than OpenAI's 12-hour write (2.5x), but the lifetime is also shorter. The 5-minute default refreshes on each use at no cost, which is a meaningful difference for high-frequency agent loops — a conversation that stays active never pays the write cost again.
+
+The minimum cacheable prefix on Claude's latest models is 512 tokens, half of OpenAI's 1,024-token floor.
+
+**Google (Gemini)** takes a different approach. Instead of automatic prefix matching, you create an explicit cache object with a chosen lifetime and pay a per-hour storage fee. The model is that you are renting memory, not benefiting from an automatic optimization. For workloads that reuse the same context across many separate requests over hours or days, the explicit model can be efficient, but it requires more planning.
+
+<Callout type="tip">
+The research paper "Don't Break the Cache" tested prompt caching across OpenAI, Anthropic, and Google on long agent sessions. Their finding: caching cut API costs by 41 to 80 percent across providers. The most reliable savings came from caching the system prompt alone — not the entire conversation history.
+</Callout>
+
+## Five Rules for Not Breaking Your Cache
+
+The research reinforces something practitioners already know: cache invalidation is the hard part. The savings only materialize if your prefix stays intact between requests.
+
+**1. Put stable content first.** System prompts, tool definitions, and reference documents go at the top. Dynamic content — timestamps, user messages, tool results — goes at the end. The cache matches from the beginning of the prefix forward. One changed character at position 500 invalidates everything after it.
+
+**2. Do not change your tool set between requests.** Adding, removing, or reordering tool definitions breaks the prefix match. If your agent has optional tools, include them all every time and let the model ignore the ones it does not need.
+
+**3. Append, do not rewrite.** Each new turn should add to the end of the conversation. Editing or summarizing earlier messages destroys the cached prefix. If you need to compact a long conversation, do it deliberately and accept that you are paying for a new write.
+
+**4. Watch your compaction strategy.** Many agent frameworks automatically summarize old messages when the context gets long. Every compaction event breaks the cache. For 12-hour caching, consider letting the context grow longer before compacting, or placing explicit cache breakpoints before the compaction boundary.
+
+**5. Match your TTL to your usage pattern.** The 30-minute default is fine for rapid-fire interactions. The 12-hour option pays for itself when your agent has gaps longer than 30 minutes but shorter than 12 hours. If your agent is always active with no gaps, the 30-minute cache at 1.25x is cheaper than the 12-hour cache at 2.5x.
+
+## What This Actually Means
+
+Prompt caching is infrastructure, not a feature you show off. Nobody tweets about their cache hit rate. But it is the quiet reason that always-on agents are financially viable.
+
+Before the 12-hour option, there was a dead zone: agents that worked in bursts — active for 10 minutes, quiet for an hour, active again — paid more for caching than they saved. The 30-minute lifetime looks like it was designed for chatbots, not for the asynchronous, event-driven agent workflows that are becoming standard.
+
+The 12-hour cache closes that gap. A scheduled pipeline that runs every few hours keeps its context warm. A coding agent that waits for CI to finish does not lose its cache. An overnight batch job that processes documents in stages can reuse the same prefix across all of them.
+
+The competitive pressure is real. Anthropic already offers a 1-hour cache with a cheaper write cost and a lower token minimum. Google lets you create explicit cache objects with configurable lifetimes. OpenAI's move to 12 hours, plus the indefinite cache for Codex and Work users, reads as a direct response to the market realizing that agent sessions are not chatbot sessions — they last hours, not minutes.
+
+The rule of thumb: put your stable content first, append instead of rewriting, and set the longest TTL that your provider offers for any prefix you expect to reuse across hours. The savings compound with every request that hits warm cache instead of cold input.
+
+---
+
+*Want to stay current on the tools and economics of building with AI? [Subscribe to the newsletter](/subscribe) for a new breakdown every week.*
