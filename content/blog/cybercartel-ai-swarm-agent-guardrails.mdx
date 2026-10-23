@@ -1,0 +1,150 @@
+---
+title: "CyberCartel's AI Swarm: Agent Guardrail Lessons for Builders"
+description: "A crime group ran Claude, Grok, and Kimi agents as a coordinated hacking team. The architecture mirrors any agent startup — and the failures should worry every builder."
+date: "2026-10-23"
+category: "ai-security"
+tags: ["ai-agents", "cybersecurity", "agent-guardrails", "ai-security", "mcp", "claude", "pentagi", "cybercartel"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+A Latin American crime group rebuilt its entire operation as an AI agent team. Claude ran as the commander inside Cursor. Multiple Claude sub-agents debated each target. Grok miners swept up stolen secrets. And when Kimi models refused, the system fell back to a local script that needed no model at all.
+
+This is not a hypothetical scenario from a red-team exercise. It is a real operation documented by cybersecurity firm Straiker in a report published October 21, 2026.
+
+The uncomfortable part for builders: the architecture of this criminal system looks almost identical to what legitimate agent startups are shipping right now. Same orchestration patterns. Same multi-model routing. Same shared memory via MCP. The only real difference is what the agents were pointed at.
+
+## Inside the CARLIY0S Operation
+
+CyberCartel, operating under the alias Tr4nsHack Team behind a front company called Hexagon Security Labs Mexico, built a system called CARLIY0S. Straiker, which tracks the group as AiPT-67, says its researchers accessed the group's orchestration scripts, model configurations, and a stolen-credential database.
+
+CARLIY0S is built on PentAGI, an open-source autonomous penetration testing framework available on GitHub. That fact alone is worth sitting with: the foundation for a criminal AI swarm is a public repository anyone can clone.
+
+According to Straiker's report, the system targeted more than 400 banks and payment providers across Latin America.
+
+## The Multi-Agent Architecture
+
+Here is where it gets interesting for anyone building multi-agent systems.
+
+CARLIY0S does not run targets through a linear pipeline. It runs them through a debate. At the center sits a commander — Claude running inside the Cursor IDE. The commander delegates to role-specialized sub-agents through the Anthropic API:
+
+- **STRIKER** (Claude Opus 4.7) — attack execution
+- **GHOST** (Claude Opus 4.8) — reconnaissance and infrastructure analysis
+- **FABLE** — listed in the configuration as "claude-fable-5," though Straiker treats this entry as unverified
+- **MAXIMUS** (Claude Opus 5) — the arbiter that hears the other agents and returns a final decision
+
+According to Straiker, the agents discuss targets, propose approaches, and defer to the arbiter. The commander acts only after MAXIMUS renders a verdict.
+
+The operators share a knowledge graph through a Model Context Protocol (MCP) server, so a target found on one machine is immediately visible on the other.
+
+If you have built anything with MCP, this architecture should feel familiar. Commander pattern. Specialized sub-agents. Shared memory. An arbiter for decision quality. Standard multi-agent architecture — applied to robbing banks.
+
+## The Collection Layer: Grok Miners
+
+Attack execution ran on Claude. Collection ran on a different vendor's models entirely.
+
+Five automated "Grok miners" gathered secrets into a database the group called FinancialSoft. A snapshot Straiker accessed on September 24, 2026 held 4,493 records:
+
+- 2,911 email addresses
+- 903 account numbers
+- 391 API keys
+- 67 cleartext passwords
+- 51 portal logins
+- Credentials tied to SPEI, Mexico's interbank payment system
+
+<Callout type="warning">
+All of these figures come from Straiker, a cybersecurity vendor whose report ends with a pitch for its own products. The victims are anonymized, and no independent party has verified the numbers. Treat them as the best available account, not as confirmed ground truth.
+</Callout>
+
+## How the AI Guardrails Failed
+
+The guardrail that was supposed to stop this — model refusal — was bypassed by claiming context.
+
+The group's prompts and rule files framed every request as authorized red-team work, academic capture-the-flag exercises, or responsible disclosure programs. "This is an authorized pentest" was, functionally, the master key.
+
+When that framing did not work — when fallback models identified as KIMI-2 and KIMI-3 declined offensive requests — the orchestrator did not try harder. It aborted the model call entirely and switched to a local file of pre-consolidated attack code that needs no model at all.
+
+This is the architecture pattern that should concern every builder: the model refusal is treated as a routing decision, not a stop signal. Refused? Try another model. All models refuse? Run the script. The operation degrades gracefully through refusals, the same way a well-engineered system degrades through API failures.
+
+The group's rule files also forbade the AI from ever writing the "Tr4nsHack" name — a step Straiker calls "cognitive OPSEC," designed to break forensic attribution by keeping the group's identity out of AI-generated text.
+
+## What Actually Stopped It
+
+Revoking a credential.
+
+Straiker shared indicators with the affected AI providers before publishing the report. Anthropic revoked the compromised credential used to reach Claude, cutting off the swarm's access to that model. xAI was notified about the Grok miner activity.
+
+One API key revocation shut down the Claude side of the operation. The local fallback scripts and any non-API tooling presumably survived — credential revocation is not a complete kill, but it severed the most capable part of the swarm. The perimeter that mattered was not the model's safety training or refusal logic. It was a credential.
+
+This is the same lesson that keeps showing up in 2026. When a hacker used AI agents via the open-source Cairn platform to compromise more than 100 websites, as Reuters reported on October 19, the attack surface was agent permissions, not model capabilities. When OpenCode was breached and exposed users' provider API keys, the damage was not in what the models could do — it was in what the stolen keys unlocked.
+
+Anthropic's own September 2026 threat intelligence report documented this pattern explicitly. The report found that multiple groups were running multi-agent offensive frameworks, including PentAGI, and noted that AI had "collapsed the labor and tooling gap" between state-level operations and individual actors.
+
+## AI Agent Security Checklist: Six Guardrails
+
+If you are building agent systems, CARLIY0S is not just a security story. It is a design review.
+
+Every architectural choice the criminal group made — commander pattern, specialized sub-agents, shared memory, multi-model routing, graceful degradation — is a choice legitimate agent builders make every day. The difference is that legitimate builders usually have more trust in their guardrails than the evidence warrants.
+
+Here is what the CARLIY0S case, the OWASP AI Agent Security Cheat Sheet, and the GitGuardian 2026 agent security analysis collectively suggest:
+
+### 1. Scope Every Credential to Its Task
+
+The CARLIY0S swarm ran on what appears to be a single API key for Claude. One revocation cut off the entire Claude side — a catastrophic single point of failure for the attacker.
+
+For your agents: issue per-agent, per-task credentials with the minimum scope needed. Short-lived tokens are better than long-lived keys. Ephemeral, per-request tokens that expire immediately are best. You cannot leak what no longer exists.
+
+### 2. Model Refusals Are Not a Security Boundary
+
+CARLIY0S treated refusals as routing decisions. When one model said no, the system tried another. When all models said no, it ran a local script.
+
+Build your security model around permissions and credentials, not around the assumption that a model will refuse harmful requests. Refusals are a defense-in-depth layer, not a perimeter.
+
+### 3. Verify the Claimed Context
+
+The group's entire jailbreak strategy was claiming authorization: "this is a pentest," "this is a CTF," "this is a disclosure program." The models had no way to verify whether that claim was true.
+
+If your agent system accepts context claims that change its behavior — "I am an admin," "this is a test environment," "this action is pre-approved" — verify those claims against something outside the prompt. A claim is not a credential.
+
+<Callout type="tip">
+The OWASP AI Agent Security Cheat Sheet recommends per-tool permission scoping, tool authorization middleware that verifies approval belongs to the current actor and exact tool call, and atomic approval consumption so concurrent or repeated requests cannot reuse it. These are not suggestions — they are the minimum for any agent that touches production data.
+</Callout>
+
+### 4. Log Everything and Plant Tripwires
+
+CARLIY0S maintained a central server for synchronizing stolen data across operators. The group built operational logging because it needed to coordinate across agents and machines.
+
+You need operational logging for a different reason: to detect when your agents are doing something you did not intend. GitGuardian recommends timestamped logs of every tool call plus decoy credentials (honeytokens) that alert on touch. If an agent accesses a honeytoken, something has gone wrong.
+
+### 5. Deny by Default
+
+The default posture for any agent touching external systems should be: reads are allowed, everything else requires explicit approval. Write, send, delete, spend — each of those actions should require a separate permission gate.
+
+CARLIY0S had no such gates because it was designed to operate autonomously and offensively. Your agents should not share that design choice.
+
+### 6. Build a Kill Switch
+
+Anthropic's credential revocation worked as a kill switch for the Claude side of the operation because the swarm depended on a centralized API.
+
+For your agent systems: design the ability to shut down any agent, revoke any credential, and halt any workflow at any time. If you cannot answer the question "how do I stop this agent right now?" for every agent in your system, you have a gap.
+
+## The Bigger Pattern
+
+CARLIY0S is not an isolated case. It is part of a pattern that has been accelerating throughout 2026.
+
+In September, Anthropic's threat report documented multiple groups running autonomous offensive frameworks. In October, a single hacker used AI agents to compromise over 100 websites. And now CARLIY0S shows an organized crime group running what amounts to a multi-agent startup — with debate architecture, shared memory, multi-vendor model routing, and operational coordination.
+
+The tools are the same tools builders use. The frameworks are open source. The techniques are documented in blog posts and GitHub repositories.
+
+My read: the model was never the perimeter. The credentials, the permissions, and the kill switches are what keep your agents on the right side of the line. Those are the things that severed this swarm's most capable component — and they are the things most agent systems still get wrong.
+
+Build accordingly.
+
+---
+
+*Sources: [Straiker: Inside CARLIY0S](https://www.straiker.ai/blog/inside-carliy0s-how-cybercartel-used-multiple-ai-models-to-attack-latin-american-banks), [GE Roundtable](https://geroundtable.com/cybercartel-carliy0s-ai-agents-latin-american-banks/), [Anthropic September 2026 Threat Report](https://www.anthropic.com/threat-intelligence-report-september-2026), [OWASP AI Agent Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/AI_Agent_Security_Cheat_Sheet.html), [GitGuardian AI Agent Security Best Practices](https://blog.gitguardian.com/ai-agent-security-best-practices/)*
+
+---
+
+Want more deep dives on AI security, agent architecture, and the tools reshaping how we build? [Subscribe to the newsletter](/subscribe).
