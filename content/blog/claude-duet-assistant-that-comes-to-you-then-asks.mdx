@@ -1,0 +1,118 @@
+---
+title: "Claude Duet: The Assistant That Comes to You, Then Asks"
+description: "Anthropic's Claude Duet is a proactive AI agent that briefs you each morning and works in the background, but asks before it acts."
+date: "2026-10-22"
+category: "ai-tools"
+tags: ["claude-duet", "anthropic", "ai-agents", "proactive-ai", "claude-opus", "meta-muse", "openai-dots", "personal-ai"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Every AI company is racing to build you a personal agent. Meta shipped Muse in September. OpenAI launched Dots at DevDay a few weeks later. Now Anthropic is entering the race with Claude Duet, and its pitch is not that the agent does more — it is that the agent *asks* more.
+
+That distinction matters more than it sounds.
+
+## What Claude Duet Actually Is
+
+Claude Duet is a standalone app — iOS, Android, and web — where Claude operates as a proactive agent. It launched October 21, 2026 as a research preview for Pro and Max subscribers in the United States, with access granted through a waitlist.
+
+The product is built on Claude Opus 5.5, Anthropic's latest and most capable model. Opus 5.5 costs 40 percent less to run than Opus 5 and generates output 30 percent faster. On CursorBench, it beats GPT-5.6 Sol by 11 points at roughly a third of the cost per task. It also scored highest on Anthropic's behavioral audit, which tests whether the model stays within boundaries and resists prompt injection.
+
+That last point is not a footnote — it is the foundation of the product.
+
+## How It Works Day to Day
+
+Each morning, Duet sends a brief covering the most important items from your connected apps. Throughout the day, it checks those apps every few hours and messages you only when something needs attention. You can also assign it tasks ranging from scheduling meetings to building dashboards, creating financial forecasts, and prototyping web apps.
+
+The key difference from a regular Claude conversation: Duet has its own virtual machine with a browser. It does not need your laptop or phone to be on. Assign it a task, and it figures out which apps to use and what steps to take, running in the background. You get a notification when the work is done or needs review.
+
+<Callout type="info">
+Duet carries over your memory, skills, and connected apps from your existing Claude account. Setup is minimal — what changes is the interaction model. Instead of you starting conversations, Duet starts them.
+</Callout>
+
+## The Permission Layer Is the Product
+
+Here is where Duet diverges from the competition. Before sending a message, making a payment, signing a document, or deleting anything, Duet shows you exactly what it is about to do and waits for approval. A few actions — trading securities, moving money between accounts — are off-limits even with your approval.
+
+This is not a limitation. It is a design choice, and it reflects Anthropic's broader approach to agent safety.
+
+Duet ships with a new dedicated classifier and safety system prompt that guards sensitive information. Credit card numbers and government IDs are blocked automatically.
+
+The safety stack runs deep:
+
+- **Trustworthy agents framework** — the same research that guides Claude Code and Claude in Chrome
+- **Credential isolation** — Duet never directly sees your passwords or sign-in tokens, using the same design as Claude Managed Agents
+- **Auto mode classifier** — the safeguard from Claude Code that prevents unintended actions
+- **Prompt injection defenses** — drawn from Anthropic's browser-use research
+- **Adversarial testing** — red-teamed, penetration-tested, and covered by Anthropic's public bug bounty
+
+An agent that reads your email and sends messages on your behalf is making decisions about where information flows constantly. The question is not whether the agent can take the action. It is whether the agent should. Duet's answer is to default to asking.
+
+## The Marketplace Connection
+
+Duet plugs into the Claude Marketplace, which now has over 6,000 connectors and plugins. The practical list covers what most professionals and small business owners actually need:
+
+- **Email and messaging**: Gmail and Slack for reading, replying, and catching missed messages
+- **Finance**: Intuit QuickBooks and Stripe for unpaid invoices, Gusto for payroll
+- **Sales and CRM**: HubSpot for deal history and follow-up drafts
+- **Documents and e-signatures**: Docusign for agreements
+- **Hiring**: draft and post job listings to LinkedIn
+- **Design and marketing**: Canva for social campaigns
+- **E-commerce**: Shopify store setup and management
+
+For purchases, Duet uses Link (Stripe's digital wallet) and Shop Pay (Shopify). 1Password integration is coming soon, which will let Duet sign in to sites with your saved logins.
+
+<Callout type="warning">
+This is a research preview. Anthropic says Duet might still misread a thread or miscalibrate what is urgent. Personal errands are weaker than workplace tasks.
+</Callout>
+
+## How Early Testers Are Using It
+
+Anthropic shared three profiles from small business owners in the preview:
+
+A real estate broker gets a morning rundown from Duet. One day, without being asked, it caught a wrong date on her calendar. A restaurant owner with 110 employees uses Duet across the business. A brand strategist had Duet proactively detect a calendar conflict and flag it before it became a problem.
+
+The pattern: Duet's value comes not from completing spectacular tasks, but from catching the things that fall through the cracks. The wrong date on a calendar. The overlooked invoice. The scheduling conflict nobody noticed.
+
+These are exactly the tasks that burn time for small business owners and solo professionals — the people Anthropic is targeting first. The connector list confirms it: QuickBooks and Gusto for back-office finance, HubSpot for sales follow-ups, Docusign for contracts, Shopify for e-commerce. This is not a consumer concierge. It is a back-office assistant.
+
+## Where Duet Fits in the Agent Race
+
+Three major players, three different strategies:
+
+**Meta Muse** launched September 8, 2026 and already has more than 10 million users in the US and Canada, according to Mark Zuckerberg on Meta's Q3 earnings call. Muse is consumer-first — recipes from Instagram reels turned into grocery lists, party planning, travel booking. It runs on Muse Spark and Muse Secure VM, with a Sentinel agent acting as a security layer. Free for basic use, subscription tiers for more.
+
+**OpenAI Dots** launched at DevDay on September 29, 2026. Dots are "always-on agents" inside ChatGPT, powered by GPT-6 Astra. They run on cloud computers and keep working on assigned tasks between conversations. Currently available on the $100/month Pro plan.
+
+**Claude Duet** is the newest entry and the most explicitly professional. Its early testers are small business owners, its connectors skew toward work apps, and it foregrounds the approval step rather than minimizing it.
+
+The strategic differences are clear. Meta wants Muse to be the AI agent for everyone — the agent that orders groceries, plans trips, and handles personal errands at scale. OpenAI is straddling enterprise and consumer. Anthropic is betting that professionals and small business owners want an agent they can trust with sensitive information, and that trust means asking before acting.
+
+## The Question Behind the Product
+
+Every proactive agent confronts the same tension: usefulness requires autonomy, but autonomy requires trust, and trust is hard to build and easy to destroy.
+
+Meta's answer is scale and consumer appeal — Muse already has more than 10 million users, and the number keeps climbing. OpenAI's answer is capability — build the most powerful always-on agent and let power create adoption. Anthropic's answer is restraint — build the agent that checks with you first, even when it could act alone.
+
+None of these strategies is obviously right. An agent that asks too often becomes annoying. An agent that does not ask enough becomes dangerous. The calibration matters more than the architecture.
+
+<Callout type="tip">
+Opus 5.5, the model powering Duet, offers a 1-million-token context window and 128K max output at $4 input / $20 output per million tokens — 40 percent cheaper than Opus 5. Those economics matter when a background agent is making dozens of calls a day on your behalf.
+</Callout>
+
+## What to Watch
+
+Three things will determine whether Claude Duet succeeds:
+
+**Judgment quality.** The morning brief is only useful if the prioritization is good. Sending an alert for every Slack message is worse than sending no alerts. Duet checks every few hours, not continuously — the filtering has to be sharp enough to justify the interruption.
+
+**Connector depth.** Six thousand plugins sounds impressive, but what matters is whether the five apps you actually use work reliably. A Shopify connector that handles most of what you need is worth more than a hundred connectors you never touch.
+
+**The approval balance.** Too many approval requests and Duet becomes a notification engine that adds work instead of removing it. Too few and it becomes risky. Getting this right is the core product challenge, and Anthropic's behavioral audit scores on Opus 5.5 suggest they are at least measuring the right thing.
+
+Duet is available as a research preview for Pro and Max subscribers in the US, with access through a waitlist. If you qualify, it is worth trying to see whether a proactive agent that defaults to asking is the one you actually want.
+
+---
+
+*Want more breakdowns of the tools reshaping how we work? [Subscribe to the newsletter](/subscribe).*
