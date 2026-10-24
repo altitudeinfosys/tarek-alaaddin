@@ -1,0 +1,142 @@
+---
+title: "Claude Stops Asking Permission. An Automated Checker Decides Instead."
+description: "Anthropic is making auto mode the default across Claude web, desktop, and mobile. Humans caught 13.6% of dangerous commands. The classifier caught 89%."
+date: "2026-10-24"
+category: "ai-tools"
+tags: ["claude", "anthropic", "auto-mode", "ai-safety", "approval-fatigue", "claude-code", "permission-prompts", "ai-agents"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Starting the week of October 26, Claude sessions in the web, desktop, and mobile apps will run in auto mode by default on Pro, Max, and Team plans. Instead of asking you to approve every action, an automated classifier decides which ones are safe to run and which ones to block.
+
+Anthropic announced the change on October 22. Claude Code already made the switch on August 14. Now the rest of the product line follows.
+
+The argument behind this is straightforward and hard to argue with: you were not actually reviewing those prompts. Anthropic's data says you were clicking "yes" 97% of the time. That is not a safety check. That is a habit.
+
+## The Problem Auto Mode Solves
+
+Permission prompts were supposed to keep you in control. Every time Claude wanted to run a command, read a file, or make a change, it asked. You approved. In theory, that meant nothing happened without your consent.
+
+In practice, the prompts became wallpaper. Anthropic's internal data from Claude Code tells the story:
+
+- Users approve **97% of permission prompts**.
+- But they reject **39% of plans** — the high-level descriptions of what Claude intends to do.
+- **49.5%** of active CLI users have created a Bash allow-rule to skip prompts entirely.
+- **25%** of interactive sessions start in bypass mode.
+- The allow-rule and bypass-mode numbers grow by about 5 percentage points every 5 weeks.
+
+The pattern is clear: people read the plan, then rubber-stamp every step. That makes individual permission prompts close to meaningless as a safety measure.
+
+<Callout type="info">
+If you reject 39% of plans but only 3% of individual permission requests, the plan is where your judgment actually fires. The per-action prompt is where your attention dies.
+</Callout>
+
+## The 13.6% vs. 89% Study
+
+Anthropic ran a controlled test with 1,053 paid professional testers. According to their blog post, a dangerous command was injected into each session to measure whether the tester would catch it.
+
+The results:
+
+- **Humans caught 13.6%** (143 of 1,053 dangerous commands)
+- **Auto mode's classifier caught 89%** (937 of 1,053)
+- Head to head: Auto mode blocked **800 commands** that humans approved. Humans blocked **6** that auto mode would have let through.
+
+The human block rate decayed over time: about 17% early in a session, falling to about 5% after 50 or more prior prompts.
+
+This is a vendor-run study, and that matters. Anthropic designed the test, picked the prompts, and reported the numbers. Independent replication would strengthen the case. But the direction of the result — that humans habituate to repetitive approval prompts and machines do not — is well established in attention research.
+
+## How the Classifier Works
+
+Every tool call in auto mode passes through a server-side classifier before it runs. The classifier evaluates the action against a few criteria:
+
+- **Is it irreversible?** Destructive operations get flagged.
+- **Is it out of environment?** Actions that reach outside your workspace — network calls, external pushes, data exfiltration — get scrutiny.
+- **Does it match the user's intent?** The classifier checks whether the proposed action aligns with what you actually asked for.
+
+Safe actions run. Risky ones are blocked, and Claude either finds a safer alternative or asks you. In Claude Code specifically, three blocks in a row or twenty across a session send it back to full manual approvals.
+
+Your existing permission rules still apply before the classifier runs, with one exception: broad allow-rules that permit arbitrary code execution (like `python:*`) are set aside in auto mode. They stay in your settings file — they just do not bypass the classifier.
+
+## What the Classifier Never Allows
+
+Some categories are hard-denied regardless of context:
+
+- **Data exfiltration** — sending code or secrets to external destinations.
+- **Destructive git operations** — force-pushes, hard resets, and similar irreversible actions.
+- **External content injection** — content returned by tools is screened for hidden prompt-injection instructions.
+
+<Callout type="warning">
+Auto mode does not eliminate risk. For high-stakes production infrastructure changes, you should still be reviewing Claude's actions yourself.
+</Callout>
+
+## Real-World Data: Fewer Harmful Actions
+
+Beyond the controlled study, Anthropic looked at flagged sessions from May to June 2026. Among sessions where serious unintended harm was flagged:
+
+- **6.3%** of manually approved sessions had a harmful action the user had not explicitly requested.
+- **2.4%** of auto mode sessions had the same.
+
+The gap is large enough to matter, though the severity threshold and flagging methodology are Anthropic's own. They also report that auto mode users among Teams and Enterprise adopters ship about 25% more pull requests — a productivity signal, though one that could partly reflect the type of user who opts in early.
+
+## Red-Teaming and Prompt Injection
+
+Two external evaluations add context:
+
+**Apollo Research** ran a two-week red-teaming pilot with synthetic attacks. After hardening based on the first results, the classifier's miss rate dropped from 12% to 7% across shared and held-out attack sets. On the held-out set, auto mode caught about half of previously missed attacks and missed about 2% of attacks it had previously caught. Anthropic is clear that the 7% figure applies to this adversarial set and is not a real-traffic miss rate.
+
+**Trajectory Labs** ran 72 indirect prompt-injection scenarios, each executed 10 times, in a July 2026 evaluation. None of the 720 attack attempts succeeded against Claude Fable 5, Opus 5, or Sonnet 5 running auto mode. For comparison, GPT-5.6 Sol in Codex Auto-review mode had a 5.83% success rate, and 19.03% in Full Access mode. Claude models in bypass mode averaged 0.09%.
+
+The caveat: these attacks were optimized against Claude Opus 4.7, which was not in the reported model set. And browser safeguards in first-party Chrome extensions were not tested, so the results reflect the models rather than the full deployment stack.
+
+Simon Willison supports the approval-fatigue argument but wrote on his blog that he is "not yet convinced" the classifier solves prompt injection. His concern is supply-chain attacks — a malicious package that instructs the agent to run a second package that exfiltrates data.
+
+## Who Gets Auto Mode and When
+
+| Surface | Plan | Default Since |
+|---------|------|---------------|
+| Claude Code | Pro, Max, Team | August 14, 2026 |
+| Claude web, desktop, mobile | Pro, Max, Team | Week of October 26, 2026 |
+| Enterprise | All surfaces | Opt-in (admins notified before any change) |
+| API, Cloud platforms (AWS, Bedrock, Google, Microsoft) | N/A | Opt-in |
+
+If you already pinned a default mode, the rollout does not change it. If you have not, new sessions start in auto mode and you get the option to switch.
+
+## How to Switch Back
+
+Auto mode is not mandatory. You can return to manual approval at any time:
+
+- **Claude Code CLI**: Press **Shift+Tab** to toggle modes.
+- **Desktop app**: Use the mode dropdown.
+- **Admin controls**: Set `defaultMode` in managed settings to pin an org-wide default, or set `disableAutoMode` to turn it off entirely.
+
+Anthropic's blog post documents the Claude Code controls. The exact UI path for the web and mobile apps was not detailed at the time of writing.
+
+<Callout type="info">
+The extra tokens the classifier uses per tool call are no longer charged to Pro, Max, or Team users. You pay nothing extra for auto mode.
+</Callout>
+
+## Where This Gets Interesting
+
+The shift from "human approves every step" to "classifier approves routine steps, human reviews the plan" is a philosophical change in how we interact with AI agents. It is also a bet that Anthropic's classifier is better than your attention span.
+
+The data supports that bet for the specific threat of accidental damage — clicking "yes" on a command that deletes the wrong directory, runs an unintended migration, or pushes to the wrong branch. Humans are demonstrably bad at catching those in a stream of rapid permission prompts. The classifier is demonstrably better.
+
+The harder question is adversarial attacks. A classifier that catches 89% of staged dangerous commands and blocks all 720 prompt-injection attempts in a controlled evaluation is promising. But the controlled environment is not the internet. Supply-chain attacks, novel injection vectors, and attacks optimized against the classifier itself are the frontier risks that controlled tests do not fully capture.
+
+The right mental model is layered defense: the classifier handles the routine actions that humans rubber-stamp anyway, hard limits cover the things that must never happen (data exfiltration, destructive operations without context), and humans review the decisions that actually matter — the plans, the architecture choices, the "should we do this at all" questions.
+
+## The Bottom Line
+
+Approval fatigue is real and measurable. A "yes" button you click 97% of the time is not a safety check — it is a formality that erodes your attention when you actually need it. Replacing that with a classifier that maintains consistent vigilance is almost certainly an improvement for most users in most situations.
+
+The open question is not whether auto mode is safer than the status quo. Anthropic's data — even accounting for vendor bias — makes a strong case that it is. The question is whether the remaining gaps (the 11% miss rate in the controlled study, the 7% in adversarial red-teaming) are acceptable for your specific use case.
+
+For everyday development work, the answer is probably yes. For production infrastructure with real consequences, you should still be reading the plan and reviewing the critical actions yourself.
+
+Auto mode does not mean unattended mode. It means the machine handles the parts you were not paying attention to anyway, and you keep the parts where your judgment matters.
+
+---
+
+*Want more breakdowns like this delivered to your inbox? [Subscribe to the newsletter](/subscribe) for weekly analysis of AI tools, agent workflows, and what actually matters in the noise.*
