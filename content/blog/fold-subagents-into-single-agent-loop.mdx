@@ -1,0 +1,149 @@
+---
+title: "Fold Your Subagents Into One Agent Loop: Anthropic's Guide"
+description: "Anthropic's guide to replacing multi-agent systems with a single agent loop. Five failure modes, a migration kit, and when to keep subagents."
+date: "2026-10-26"
+category: "ai-tools"
+tags: ["ai-agents", "anthropic", "claude", "multi-agent", "single-agent-loop", "agent-architecture", "progressive-disclosure", "mcp", "skills"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Most multi-agent orchestrators are workarounds for older models. That is the argument Anthropic's Applied AI team made on October 22, and it is harder to dismiss than it sounds.
+
+Diane Sarkis published a post arguing that most enterprise multi-agent systems should be collapsed into a single agent loop. It comes with a migration kit on GitHub and a set of Claude API skills that automate parts of the transition. This is not a research paper. It is field notes from helping enterprise customers ship agents — and a clear signal about where Anthropic thinks the architecture is heading.
+
+The core claim: your subagents are probably doing work the model no longer needs done for it. One clear system prompt, a handful of data tools, and firm output guardrails cover most of the use case.
+
+## Five Multi-Agent Failure Modes in Enterprise Deployments
+
+Anthropic describes five recurring patterns in enterprise agent deployments that use the orchestrator-plus-subagents design:
+
+**Context management** — deciding what context moves between agents, and losing details in every handoff. Each exchange is a lossy summary. The more agents in the chain, the more signal degrades.
+
+**Subagent sprawl** — every team ships its own subagent. You end up with dozens of overlapping specialists with no enforced standards and no clear owner.
+
+**The Frankenprompt** — every team adds a sentence to the system prompt. The result is conflicting rules and no consistent voice.
+
+**Unvetted, overly localized evals** — everyone adds their own eval set, optimized for their subtask. Nobody owns the end-to-end picture. Leadership makes decisions based on watered-down scores.
+
+**Latency** — multi-agent architectural complexity adds round trips. Anthropic says one customer that benchmarked their multi-agent harness against a single agent loop saw roughly 2x faster runtime with the latter.
+
+<Callout type="info">
+Anthropic calls out Conway's Law directly: agent architectures become copies of the org chart. Each team gets a subagent, each subagent gets its own prompt and context, and the system turns into a bureaucracy of models passing memos to each other.
+</Callout>
+
+## Single Agent Loop vs Multi-Agent: The Architecture Shift
+
+The design Anthropic recommends is straightforward:
+
+- One model, one context window, running an open-ended tool loop.
+- Each turn, the model emits a batch of tool calls. The harness runs them in parallel and returns raw results. The model decides the next step.
+- The loop stops when the model answers or hits a budget (turn limit, cost cap, or both).
+- The model writes its plan in context on the first turn and revises it as results arrive.
+
+The key shift: the model that writes the plan is also the one carrying it out. In a multi-agent system, the planner hands off to specialists who cannot easily revise the plan. In a single loop, the agent adapts mid-task because everything stays in one context window.
+
+## Progressive Disclosure Is the Enabler
+
+The obvious objection: a single agent with every team's tools and instructions loaded into one system prompt would be a mess. That is true. The answer is progressive disclosure.
+
+**Skills** replace subagent prompts. Instead of a dedicated "shipping specialist" subagent with its own context, you write a skill — a folder of instructions, scripts, and resources — that the agent loads only when it needs that domain knowledge. The agent sees a short description of each skill and loads the full content on demand.
+
+**Tool search** replaces bloated tool lists. Instead of loading every tool definition into the system prompt, the agent sees a search interface and loads tool schemas when it needs them. Anthropic's article notes that tool choice tends to degrade once you exceed 30 to 50 tool definitions in the prompt. Progressive loading sidesteps that ceiling.
+
+The article cites a concrete number: Anthropic reduced Claude Code's system prompt for more advanced models by over 80%, partly through progressively disclosing skills and tools. That is not a hypothetical. Claude Code is their own production agent, and they cut four-fifths of its prompt.
+
+## Why Single-Loop Agents Work Now
+
+Three reasons this design was not viable a year ago and is viable today:
+
+**Shared context produces better answers.** When one agent sees the results of every earlier step, it can connect them. A set of summaries handed back by subagents is always a lossy compression of what actually happened.
+
+**Progressive disclosure prevents context bloat.** This removes the main reason teams previously split work across subagents — not wanting to overload a single prompt.
+
+**Models are more capable.** Starting with Opus 4.5, according to Anthropic, models became capable of managing far more in a single loop than most teams expected. You cannot turn off thinking on Opus 5.5 and Fable 5.1 — the models narrate their progress and check their work as they go. That makes some harness-level planning and verification redundant.
+
+<Callout type="warning">
+Every new model lets you move more decision-making out of the harness and into the model itself. A simpler loop is also easier to migrate to the next model. Rigid multi-agent structures are often what blocks the new model from doing more of the work.
+</Callout>
+
+## When to Keep Subagents (Three Cases)
+
+Anthropic is not saying subagents are dead. The article lists three clear cases where they remain the right choice:
+
+1. **Context bloat** — a single agent loop hits measurable performance degradation from an overloaded context window.
+2. **Parallel work** — multiple tasks need fresh context windows that can be discarded when done.
+3. **Tool conflicts** — a single agent struggles to select appropriate tools, or there are conflicting instructions in the system prompt.
+
+If none of those conditions apply, the subagent is probably doing work the model can handle on its own.
+
+## Migrating Multi-Agent to Single Loop: Measure, Combine, Fold
+
+The companion migration kit on GitHub walks through a three-step process. The repository includes a support-desk example with a router and six specialist subagents — a realistic starting point.
+
+**Step 1: Measure.** Build a small end-to-end eval set before you change anything. The article says even a set of 10 golden examples is enough to start. Track routing accuracy while the orchestrator still exists, then switch to tracking whether the agent loads the right skill or calls the right tool after folding.
+
+**Step 2: Combine.** Merge specialists that chain on each other's output, touch the same data, or are frequently called together. If a significant share of production traffic is one specialist followed by a second, that is a tightly coupled pair and a merge candidate.
+
+**Step 3: Fold.** Turn each remaining subagent's prompts into skills and its API calls into MCP tools. Compare eval performance with and without the subagent. Keep it only if the folded version scores worse.
+
+The article includes a warning from their own testing: folding one subagent into a support agent lowered latency but broke a process that had been passing. The main agent held the order lookup tool and answered on its own, without consulting the shipping specialist for the delivery date. The fix was not to unfold — it was to add that test case to the eval set and iterate.
+
+## The Tooling They Shipped
+
+Anthropic released a set of Claude API skills designed to accelerate this work:
+
+- **/claude-api build-eval** — creates end-to-end eval sets or smaller sets that ship with each skill.
+- **/claude-api prompt-audit** — flags instructions written for older models in your prompts, skills, and tool descriptions. Proposes fixes as a diff.
+- **/claude-api hillclimb** — iteratively improves an app against an existing eval. Useful for the "folded vs. kept" comparison.
+- **/claude-api cost-optimize** — profiles where calls go and proposes savings from prompt caching, token trimming, effort adjustment, and model choice.
+
+They also mention **/skill-creator** for authoring new skills and **/skill-doctor** for auditing existing ones — checking cost, usage frequency, and pruning dead weight.
+
+## Multi-Team Ownership in a Single Loop
+
+One concern with collapsing to a single agent: how do multiple teams contribute without stepping on each other?
+
+Anthropic's answer: domain reasoning moves into skills and tools, each owned by the team that knows that domain. One small central team owns the system prompt and end-to-end quality, vetting every new skill, tool, and eval before it ships.
+
+**Tools** are the right fit when the agent needs to take an action, read live data, or return a result in a fixed shape. Group them by user intent, not one tool per API. Use tool search with deferred loading.
+
+**Skills** are the right fit when the agent needs to know how a team does work — the steps, rules, and judgment calls that a specialist subagent's prompt used to hold.
+
+**Knowledge bases** are the right fit for reference material the agent only needs some of the time. Facts, policies, and product specs sit behind a search or lookup tool the model calls.
+
+## What This Means for Your Architecture
+
+If you are building a multi-agent system right now, this post is worth reading as a checklist of things to try before committing to the complexity:
+
+1. Can one agent with skills handle the breadth? Progressive disclosure means you do not have to choose between breadth and prompt quality.
+2. Are your subagents chaining on each other's output? That is a merge candidate.
+3. Is your orchestrator mostly routing by intent? The model can do that natively — one system prompt section per domain is often enough.
+4. Are you building subagents because different teams own different domains? That is Conway's Law, not an architecture requirement. Skills with team-level ownership solve the same organizational problem without the context-loss tax.
+
+<Callout type="tip">
+The migration kit is open source (Apache 2.0) at github.com/anthropics/single-agent-loop-kit. It includes a support-desk example with a router and six specialist subagents that walks through the full measure-combine-fold cycle.
+</Callout>
+
+## What Anthropic Is Not Saying
+
+Before you tear down your orchestrator: this guidance has a vendor-shaped hole in it.
+
+Anthropic is telling you to collapse your agent into a single Claude loop with Claude skills, Claude tools, and the Claude API. That is convenient advice from the company selling Claude API calls. The architecture may be sound — the performance data and the migration kit suggest it is — but the incentive alignment is worth naming.
+
+There are also cases where a single loop is the wrong call even if the model is capable enough. Compliance-heavy workflows where every step needs an auditable, isolated context. Systems where different teams need hard permission boundaries between what each agent can access. Environments where the central team that owns the system prompt becomes a bottleneck worse than the coordination cost of subagents.
+
+The article acknowledges some of these with its three "keep the subagent" conditions. But the framing skews toward folding. If your system is working, your evals are passing, and your latency is acceptable, the right move might be no move at all.
+
+## The Bigger Signal
+
+Every generation of model makes more harness logic redundant. Intent classifiers, fixed reasoning pipelines, separate recommendation branches — these were workarounds for models that could not hold enough context or make enough decisions in a single pass.
+
+The useful takeaway is not "use fewer subagents." It is: measure what your harness actually does, and check whether the model can do it now. If it can, the harness is overhead. If it cannot, keep the harness and check again next model.
+
+That principle outlasts any one architecture.
+
+---
+
+*Want more breakdowns of how AI agent architectures are evolving? [Subscribe to the newsletter](/subscribe) to get new posts as they publish.*
