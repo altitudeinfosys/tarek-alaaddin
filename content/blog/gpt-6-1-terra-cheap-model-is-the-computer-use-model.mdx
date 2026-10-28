@@ -1,0 +1,122 @@
+---
+title: "GPT-6.1 Terra: The Cheap Model Is Now the Computer-Use Model"
+description: "OpenAI's mid-tier model matches Astra on computer use at a tenth of the price. What the numbers say and three tasks worth trying first."
+date: "2026-10-27"
+category: "ai-tools"
+tags: ["openai", "gpt-6-1-terra", "computer-use", "ai-agents", "ai-pricing", "benchmarks"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Computer use used to be the thing you paid frontier prices for. OpenAI reserved it for Astra, the most expensive model in the lineup. The implicit message was clear: if you want an AI that interacts with real software, budget accordingly.
+
+GPT-6.1 Terra flips that. Announced October 26, 2026, it is OpenAI's mid-tier model — and it is now the one they are pitching as the computer-use model. By their own benchmarks, it matches Astra on professional software tasks at a tenth of the per-token cost and finishes three times faster.
+
+That matters less for the benchmarks themselves and more for what it signals about where computer use is heading on the price curve.
+
+## The Benchmark Claims
+
+The headline numbers from [OpenAI's announcement](https://openai.com/index/introducing-gpt-6-1-terra/):
+
+- **Agents' Last Exam** (professional software tasks like converting architectural drawings to 3D models): Terra at medium effort scores 15 points higher than GPT-5.6 Terra at roughly one-third the cost, and performs on par with GPT-6 Astra at one-tenth the per-token price.
+- **Speed**: Completes tasks over three times faster than both Astra and Sol.
+- **vs. Claude Opus 5.5** (OpenAI's claim, not Anthropic's): at max effort, Terra is over three times as token-efficient and one-fourth the per-token price, resulting in roughly 9x lower cost per task.
+- **Factual accuracy**: Internal error rate at low effort dropped from 53.6% (GPT-5.6 Terra) to 16.7%. At max effort, down to 4.3%.
+- **Terminal-Bench 4.0** (command-line coding tasks): 50.3% at max effort, more than double GPT-5.6 Terra's 21.5%.
+
+The pricing tells the story most directly:
+
+| | Input | Cached Input | Output |
+|---|---|---|---|
+| GPT-6.1 Terra | $1 / 1M tokens | $0.05 / 1M tokens | $5 / 1M tokens |
+
+According to OpenAI, that is 50% below GPT-5.6 Terra. For batch and Flex usage, another 50% lower. The context window is roughly 1.05 million tokens with 128K max output.
+
+## The Pricing Story
+
+The per-token numbers matter, but the comparison frames matter more. OpenAI uses different baselines depending on which number sounds best — per-token versus per-task, medium effort versus max effort, one competitor versus another. Read the claims with that in mind.
+
+## The Fine Print Worth Reading
+
+Every benchmark comparison has a frame, and OpenAI picked frames that favor Terra. Here is what to watch:
+
+<Callout type="warning">
+"Matches Astra on computer use" comes specifically from Agents' Last Exam — OpenAI's benchmark. On MMMU-Pro, a visual reasoning test, Terra only "nearly matches" Astra and Sol. No independent evaluation of Terra's computer-use performance existed at the time of writing.
+</Callout>
+
+**Per-token vs. per-task pricing.** The "10x cheaper" figure compares per-token prices against Astra. The "9x cheaper" figure compares per-task cost against Claude Opus 5.5 at max effort. These are different measurements. A model that uses more tokens per task narrows the per-task gap even if per-token pricing is dramatically lower.
+
+**Critical cybersecurity threshold.** OpenAI says Terra meets the Critical threshold under its Preparedness Framework — the same level as Astra. A cheaper, more widely accessible model now sits at the tier OpenAI reserves for models that could pose cybersecurity risks if misused.
+
+**Desktop-only for ChatGPT users.** Computer use in ChatGPT requires the desktop app (macOS or Windows), a plugin installation, and OS-level permissions for screen recording and accessibility. It is not available in the web interface or on mobile. Some regions are excluded entirely.
+
+**Not a replacement for Sol or Astra on hard tasks.** OpenAI says it directly: for the most complex coding tasks and deep research, Sol and Astra remain the better choice. Terra is positioned for volume, not ceiling.
+
+## What This Actually Changes
+
+The interesting shift is not the benchmark numbers. It is the economics.
+
+Computer use has been available from multiple providers for a while now. But broad adoption has not followed, and the likely reason is straightforward: it costs too much for the tasks where it would matter most. At frontier pricing, the economics do not work for most of the mundane tasks that eat up human hours.
+
+At Terra's pricing, the math starts working for a different class of tasks:
+
+- **High-volume form filling** — insurance claims, data entry across systems, invoice processing. The per-task cost drops enough that automation pencils out even when the task itself is low-value.
+- **Multi-app chores** — copying data between apps that do not integrate with each other. The kind of thing you currently do with three browser tabs and a spreadsheet.
+- **Settings and configuration** — bulk changes across software dashboards that expose no API. The model clicks through the UI because there is no other way.
+
+The 3x speed improvement matters as much as the cost reduction here. A slow computer-use agent is a curiosity. A fast one is a tool.
+
+<Callout type="tip">
+OpenAI's own examples include reading invoices and entering details into accounting software, and navigating multi-step workflows across applications. They are selling Terra as the model for boring, repetitive screen work — not creative or analytical tasks. That positioning tells you where they think the demand is.
+</Callout>
+
+## How to Try It
+
+For ChatGPT users: open the desktop app (macOS or Windows) and switch to **Work** mode or open **Codex**. Select **GPT-6.1 Terra** from the model picker — some users may already see it in the default Power preset. Computer use requires a plugin installation and OS-level permissions; check OpenAI's setup guide for the current steps, as the UI is still rolling out.
+
+For developers: the API model ID is `gpt-6.1-terra`. Computer use is a supported tool type via the Responses API. The model is also available on Amazon Bedrock as of launch day.
+
+For Codex CLI users: `codex -m gpt-6.1-terra`.
+
+## Three Tasks Worth Testing First
+
+If you want to see whether Terra's computer use is real or benchmarkware, start with scoped tasks where you know what success looks like:
+
+**1. Invoice entry.** Take a PDF invoice and have Terra enter the line items into your accounting software. You will know immediately whether it reads the numbers correctly and navigates the forms without getting lost.
+
+**2. Multi-tab data transfer.** Give it a task that requires reading data from one web app and entering it into another — something like copying contact details from a CRM into a spreadsheet, or transferring expense categories between systems.
+
+**3. Settings migration.** Have it change a configuration in a software dashboard — something you would normally do by clicking through five screens of UI. A notification preference, a permission setting, a display option across multiple user accounts.
+
+The goal is not to test whether Terra can do something impressive. It is to test whether it can do something boring, correctly, faster than you can.
+
+## What to Watch
+
+**Independent benchmarks.** Agents' Last Exam is OpenAI's own benchmark. Real-world reliability data from outside OpenAI does not exist yet. How well benchmark performance translates to messy, real-desktop workflows remains an open question for every computer-use model.
+
+**Plan budget consumption.** OpenAI says your ChatGPT plan goes further with Terra. The question is how much further. A 3x speed improvement and 50% cost reduction sounds like your allowance covers 2-3x more tasks — but actual token consumption per task will vary.
+
+<Callout type="info">
+On Windows, computer use takes over the foreground — you cannot use that session while Terra is working. On macOS, you need to keep the target app visible. This is not a background agent. It is a model that literally occupies your screen.
+</Callout>
+
+**The cybersecurity question.** A model rated Critical for cybersecurity risks is now cheap enough for mass automation. OpenAI says it uses the same safeguard stack as Astra. But the risk profile changes when a model is ten times cheaper — the same capability is now accessible to a much wider set of use cases, including adversarial ones.
+
+## The Bigger Picture
+
+Computer use moving from the expensive tier to the cheap tier is the kind of price signal that changes adoption curves. The technology has been possible for a while. What has been missing is the economics.
+
+Terra does not solve the hard problems — it does not make computer use reliable on complex, unpredictable workflows. But it makes it cheap enough to try on the boring ones. And for a lot of businesses, the boring ones are where the hours go.
+
+The bet OpenAI is making: if you reduce the cost and speed of computer use by an order of magnitude, people will find tasks worth automating that they never would have considered at Astra pricing. Whether that bet pays off depends less on benchmarks and more on whether Terra can reliably navigate the messy, inconsistent interfaces of real business software.
+
+Try it on one scoped task. Compare the result to doing it yourself. That single test will tell you more than any benchmark chart.
+
+---
+
+*GPT-6.1 Terra was announced October 26, 2026 and is rolling out now. All benchmark numbers cited are from OpenAI's announcement. Independent evaluations were not available at the time of writing.*
+
+---
+
+Want more breakdowns like this? [Subscribe to the newsletter](/subscribe) for weekly analysis of AI tools, pricing shifts, and what actually works in practice.
