@@ -1,0 +1,134 @@
+---
+title: "Anthropic Rewrote Its API in Rust. Claude Wrote the Code."
+description: "Anthropic ported its Messages API from Python to Rust with zero Rust developers. Claude wrote the code. Shadow traffic proved it worked."
+date: "2026-11-01"
+category: "ai-tools"
+tags: ["anthropic", "claude", "rust", "python", "code-migration", "ai-code-migration", "ai-engineering"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Zero Rust developers. That was the starting point.
+
+The team behind Anthropic's Messages API — the service that routes requests to Claude — decided to rewrite it from Python to Rust. They had nobody on the team who had shipped production Rust. And they decided that Claude would write the code.
+
+The result, [described on the Latent Space podcast](https://latent.space/p/how_anthropic_ships_the_1_llm_in_the_world_safely_separating_the_brain_from_the_hands/) on October 27, 2026, by Anthropic's Katelyn Lesse and Angela Jiang: roughly 40–50% less CPU and 10–20% faster time to first token. As of late October 2026, the Rust version is fully rolled out in production.
+
+This is not a research demo. An AI wrote the production code for the API that serves Claude.
+
+## The Problem: A CPU Wall
+
+The Messages API was a Python monolith, and Python was burning more CPU than the team could justify for request handling at this scale. The team needed each request to be fundamentally cheaper to serve.
+
+They chose Rust.
+
+<Callout type="info">
+The performance numbers cited here — roughly 40–50% CPU savings and 10–20% faster time to first token — are spoken ballpark estimates from the Latent Space interview, not published benchmarks. There is no Anthropic blog post, whitepaper, or formal methodology behind them. Treat them as directional.
+</Callout>
+
+## The Bet: Rust Without Rust Developers
+
+The team had zero Rust experience when they committed to the rewrite. They later hired a couple of people with Rust backgrounds, but at the point of commitment, nobody on the team had shipped production Rust.
+
+What made it work was a clear division of labor: Claude writes the code, humans design the system and verify the result.
+
+This was not a case of an AI generating boilerplate while engineers did the real work. Claude was the primary author of the Rust codebase. The humans designed the distributed system architecture, wrote the migration plan, and built the verification pipeline. But the line-by-line translation from Python to Rust — that was Claude's job.
+
+## The Recipe: Plan, Port, Shadow, Flip
+
+The methodology is simple enough to fit on an index card. But every step matters, and skipping any of them turns a migration into a disaster.
+
+**Step 1: Humans write the plan.** The architecture, the service boundaries, the verification strategy — all of this was human work. As described in the interview, the two things that mattered most were the plan and the verification.
+
+**Step 2: AI does a straight port.** This is the critical constraint. It was a pure port. The team explicitly "resisted the urge" to add new features, change behavior, or redesign anything. A port means the output should do exactly what the input did, nothing more. Any deviation is a bug.
+
+**Step 3: Shadow traffic proves parity.** The team built a complete Rust fork of the entire API — not a piecemeal migration, not a gradual rollout of individual endpoints. They ran copies of production requests through both systems simultaneously and compared outputs. When the Rust system's outputs matched the Python system's outputs, it was ready.
+
+**Step 4: Feature flags handle the cutover.** Real traffic moved to Rust gradually, controlled by feature flags. This is a progressive rollout — if something went wrong, the team could dial back to Python.
+
+<Callout type="warning">
+A piecemeal migration — converting one endpoint at a time — would have taken "years and years," according to the Latent Space discussion. Building the complete fork first and proving it with shadow traffic avoided that timeline. The tradeoff is higher upfront effort.
+</Callout>
+
+## Why the Straight Port Matters
+
+The single most important decision was to resist adding features. This sounds obvious. It is not.
+
+When you are rewriting a system, the temptation to improve it along the way is overwhelming. Every engineer who touches the code sees things they would do differently. The Python version had workarounds, legacy patterns, technical debt. The urge to clean it all up during the port is nearly irresistible.
+
+But every improvement is a deviation from the original behavior. Every deviation means the shadow traffic comparison is no longer apples-to-apples. And once you lose the ability to mechanically verify that new equals old, you are back to testing by hand, which means you are back to a multi-year slog.
+
+The recipe works precisely because it separates the translation from the improvement. Port first, verify, ship. Then improve the Rust version as a second project, with the confidence that comes from a production-proven baseline.
+
+## Static Analysis as a Safety Net
+
+While the port team worked, the rest of the API team kept building new features in Python. This creates a moving-target problem: every new Python feature that ships while the port is in progress is another thing the Rust version needs to handle.
+
+The team solved this with static analysis that flagged new Python features which had not been accounted for in the Rust codebase. Without it, the port team would have been perpetually chasing a moving finish line.
+
+## The Numbers, With Caveats
+
+The performance improvements, as described on the podcast:
+
+- **CPU savings**: "Ballpark, somewhere like 40 to 50 percent."
+- **Time to first token**: "Somewhere between like 10 and 20 percent improvements."
+A few things to note. The interviewer floated an "order of magnitude" CPU improvement. The actual figure from the discussion was 40–50%, which is substantial but not 10x. Do not round up.
+
+These are spoken estimates in a podcast interview, not controlled benchmarks. There is no published paper, no methodology, no before-and-after profiling data from Anthropic. The numbers are directional — Rust is faster than Python for CPU-bound request handling, which is expected — but the exact magnitudes are unverified.
+
+## This Is Part of a Bigger Pattern
+
+Anthropic's Messages API port is not an isolated event. It is part of a wave of AI-assisted rewrites hitting production in 2026.
+
+**Bun (Zig to Rust):** Jarred Sumner used Claude Code to port roughly a million lines of Zig to Rust in under two weeks, at a reported $165K in API cost. All existing tests passed before merge. [Anthropic's write-up](https://claude.com/blog/ai-code-migration) describes the methodology.
+
+**OpenAI's Habitat service (Python to Rust):** Two engineers ported the storage service using Codex and GPT-5.5. OpenAI claims six times less CPU and 15 times less memory.
+
+The common thread: none of these teams started with deep expertise in the target language. They started with a clear plan, a test suite that defines correct behavior, and an AI that can translate at volume. The humans own the architecture and the verification. The AI owns the translation.
+
+## The Anthropic Migration Playbook
+
+Anthropic published a [detailed guide to AI-assisted code migrations](https://claude.com/blog/ai-code-migration) that formalizes the pattern. The guide describes a six-step process built around a rulebook, stress-testing, and verification — front-loading human effort on the plan and the success criteria, then letting the AI handle the translation at volume.
+
+The key insight: if the plan is wrong or the verification is weak, scaling the translation just produces wrong code faster. The humans define what correct looks like. The AI does the work of getting there.
+
+## What This Means for Your Legacy Service
+
+The recipe is general. It does not require Anthropic's scale, Anthropic's budget, or even Anthropic's AI. It requires:
+
+1. **A clear target language with a reason to migrate.** Rust for CPU efficiency, TypeScript for developer velocity, Go for concurrency — pick the language that solves your actual bottleneck.
+
+2. **A test suite or parity harness.** If you cannot mechanically verify that the new code produces the same outputs as the old code, stop and build that first. Without it, every other step is guesswork.
+
+3. **The discipline to do a straight port.** No feature additions, no redesigns, no "while we're in here" improvements. Port, verify, ship. Improve later.
+
+4. **Shadow traffic or equivalent.** You need to prove parity under real-world conditions, not just unit tests. Run both systems on real inputs and diff the outputs.
+
+5. **Feature flags for the cutover.** Make rollback trivial. If something goes wrong, you can dial traffic back to the old system.
+
+If your legacy Python service is hitting a CPU wall and you have been putting off the rewrite because "it would take years" — this is the playbook that compresses "years" into something a small team can ship.
+
+<Callout type="tip">
+The recipe is not "use AI to rewrite your code." It is "write the plan and the verification criteria yourself, then use AI to do the translation at volume." The distinction matters. AI without a plan produces plausible-looking code that fails in production. A plan without AI produces correct code that takes years to write. The combination is what ships.
+</Callout>
+
+## The Uncomfortable Question
+
+Anthropic used Claude to rewrite the infrastructure that serves Claude. The AI wrote the code that the AI runs on.
+
+It worked. The Rust API is in production, routing requests to Claude's models. But it raises a question that does not have an easy answer: when the AI is both the author and the subject of the system, who catches the bugs that the AI cannot see?
+
+Anthropic's answer, at least for this project, was shadow traffic. Mechanical verification. Diff the outputs. Trust the process, not the author. That is the right answer for a port. Whether it scales to more complex changes — where the correct output is not already known — is a different question entirely.
+
+## The Takeaway
+
+Anthropic did not rewrite its API in Rust because Rust is trendy. They did it because Python was burning CPU they needed for other things, and the old rewrite playbook — hire language experts, migrate piece by piece over years — was too slow.
+
+The new playbook: write the plan, let the AI translate, prove parity with shadow traffic, ship behind a feature flag. The language expertise is optional. The plan and the verification are not.
+
+If you are sitting on a legacy service that is hitting its ceiling, this is the template. Not "throw AI at it and hope." Plan, port, shadow, flip. In that order.
+
+---
+
+*Want more breakdowns of how teams are actually using AI in production? [Subscribe to the newsletter](/subscribe) for weekly analysis of the tools and techniques that are shipping real software.*
