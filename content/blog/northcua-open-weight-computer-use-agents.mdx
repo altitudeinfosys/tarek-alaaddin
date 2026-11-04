@@ -1,0 +1,140 @@
+---
+title: "NorthCUA: Open-Weight Computer-Use Agents in Three Sizes, With a Catch"
+description: "NorthCUA ships open-weight models from 9B to 397B with strong computer-use benchmarks. But the scores carry an asterisk."
+date: "2026-11-03"
+category: "ai-tools"
+tags: ["computer-use", "open-source", "northcua", "agents", "benchmarks", "osworld"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+A 397-billion-parameter model that uses only 17 billion parameters per token. A 35-billion-parameter model that activates just 3 billion. A dense 9-billion-parameter model that fits on a single GPU. All three released under Apache-2.0, all three trained to drive desktops and browsers like a human operator.
+
+NorthCUA dropped on November 1, 2026, accompanied by a 123-page technical report and an open-source harness. The self-reported benchmark numbers would make it the top open-weight computer-use agent family — and competitive with some closed-model offerings.
+
+But there is a caveat buried in the model cards that changes how you should read every number. More on that in a moment.
+
+## What NorthCUA Actually Is
+
+NorthCUA is a family of three multimodal models, all built on Qwen3.5 and released by a 30-author team led by Chaoyun Zhang. The [technical report](https://arxiv.org/abs/2611.02102) landed on arXiv on November 1, 2026. The models take screenshots, interaction history, and user instructions as input, then generate reasoning and tool calls that drive desktop and browser environments.
+
+The two larger models use mixture-of-experts (MoE) architecture; the smallest is dense:
+
+| Model | Total Parameters | Active Per Token | Architecture | Disk Size |
+|-------|-----------------|-----------------|--------------|-----------|
+| **Nano** | 9B | 9B | Dense | ~18 GB |
+| **Mini** | 35B | 3B | MoE | ~70 GB |
+| **Pro** | 397B | 17B | MoE | ~794 GB |
+
+The MoE design is the key engineering choice here. Pro has 397 billion parameters on disk, but only routes each token through 17 billion of them — roughly the compute footprint of a mid-size model, while carrying the representational capacity of something much larger. Mini pushes this further: 35 billion parameters total, but only 3 billion active. The per-token compute is small, but you still need ~70 GB to load the full weight file — MoE cuts your FLOP bill, not your memory bill.
+
+All three models are Apache-2.0 licensed and available on Hugging Face. The weights are downloadable today.
+
+## The Benchmark Numbers — And Why You Should Read Them Carefully
+
+Here is where NorthCUA makes its case. The self-reported numbers across standard computer-use benchmarks:
+
+| Benchmark | Nano (9B) | Mini (35B/3B) | Pro (397B/17B) |
+|-----------|-----------|---------------|----------------|
+| ScreenSpot-Pro | 72.87% | 92.41% | 93.30% |
+| OSWorld-G (best of 3) | 82.98% | 87.94% | 90.96% |
+| OSWorld-Verified | 78.90% | 85.30% | 88.64% |
+| WebArena-Verified | 67.16% | 70.43% | 73.89% |
+
+On OSWorld 2.0 — the harder, long-horizon benchmark — NorthCUA-Pro reports 66.80% mean partial credit across 108 tasks with a 500-step budget.
+
+<Callout type="info">
+**How those numbers stack up:** On the OSWorld-Verified leaderboard as of late October 2026, Qwen3.8 Max leads at 86.1%, followed by Claude Fable 5 and Claude Mythos 5 at 85%. NorthCUA-Pro's 88.64% would top the board if independently verified. NorthCUA-Mini's 85.30% would match the Anthropic entries. On OSWorld 2.0 partial credit, Claude Opus 5.5 leads at 81.8%, Claude Fable 5.1 sits at 77.9%, and GPT-6 Astra is at 72.6% — NorthCUA-Pro's 66.80% trails all three.
+</Callout>
+
+Now the caveat. Buried in each model card is this sentence:
+
+> "These research results have not been tied to an exact checkpoint export."
+
+That means the benchmark scores were produced during the research process — potentially by intermediate checkpoints, internal configurations, or evaluation setups that may differ from the publicly released weights. The numbers on the model cards may not be reproducible by downloading the Hugging Face weights and running the same benchmarks yourself.
+
+This is not necessarily a problem — it is common in research releases where the final exported weights are prepared after the benchmark runs. But it means every number above should carry an asterisk until independent reproductions confirm them. The caveat appears in the model cards themselves, which is at least transparent. The OSWorld-G scores use "best of three complete runs" rather than mean, which further inflates the headline numbers compared to single-run reporting.
+
+## The Training Pipeline: Experience at Scale
+
+The technical report describes a training system built around three interlocking components.
+
+**The Experience Flywheel** generates diverse executable tasks and feeds them to the NorthCUA Harness — a runtime environment that sustains long desktop and browser interactions, records every decision, and checks task outcomes. The Flywheel uses those recorded trajectories to curate verified training data.
+
+For tasks the model cannot solve, a recursive self-improvement loop kicks in: the system evolves reusable skills and preserves verified milestones so that later attempts can build on earlier partial progress rather than starting from scratch.
+
+**Staged Learning** combines this experience with grounding data through three phases:
+
+1. **Mid-training**: 100,000+ trajectories across 4 million interaction steps, building baseline GUI competence
+2. **Supervised fine-tuning**: ~3,000 verified trajectories across 310,000 GUI steps, teaching long-horizon task completion
+3. **Reinforcement learning**: ~1,500 desktop tasks and ~500 web tasks, using joint desktop-web RL to close the loop between data generation and policy improvement
+
+The scale numbers are notable. Most open computer-use agent projects train on hundreds or low thousands of trajectories. NorthCUA's mid-training alone uses 100,000+.
+
+## The Harness Ships Too
+
+Most model releases drop weights and a model card. NorthCUA also ships its evaluation and execution harness as open-source code.
+
+The NorthCUA Harness — released under Apache-2.0 at [github.com/beipo-ai/NorthCUA](https://github.com/beipo-ai/NorthCUA) — is model-agnostic. You can plug in any vision model that supports structured tool calls. It handles:
+
+- Desktop and browser tool execution (screenshots, mouse, keyboard, DOM interaction)
+- Long-horizon context management with compaction and working notes
+- Independent evaluation: an evaluator inspects artifacts and the workspace before cleanup
+- Batch execution with resume, retry bounds, and persistent state
+
+The harness is built on NexAU and requires Python 3.12+. You can run a local tutorial without an API key, using a bundled deterministic endpoint, to verify the integration works before connecting a real model.
+
+This is arguably as significant as the model weights. Computer-use agents need infrastructure — not just a model that can look at screenshots, but a runtime that manages sessions, recovers from failures, and evaluates outcomes. Making that infrastructure open lowers the barrier for everyone building in this space.
+
+<Callout type="warning">
+**The training pipeline is not open.** The Experience Flywheel, data generation system, and staged training code are described in the paper but not released. The open-source release covers the inference harness and evaluation tools. The data and training infrastructure remain closed.
+</Callout>
+
+## Where NorthCUA Fits in the Computer-Use Landscape
+
+The computer-use agent space in late 2026 is increasingly crowded, with a clear split between closed and open approaches.
+
+**Closed-model leaders** include Claude's computer-use stack (Opus 5.5 at 81.8% on OSWorld 2.0), GPT-6 Astra (72.6% on OSWorld 2.0), and Qwen3.8 Max (86.1% on OSWorld-Verified). On OSWorld v1, Holo3-35B-A3B holds 80.4%. These systems benefit from massive compute budgets, proprietary training data, and tight integration with their respective platforms.
+
+**Open-weight contenders** have been gaining ground. ByteDance's UI-TARS-2 reached 88.2% on Online-Mind2Web. NorthCUA stands out for shipping a complete family spanning three capability tiers with a unified training methodology and an open evaluation harness — though the repo is two days old with 2 stars and 9 commits, so community adoption is still at zero.
+
+The size ladder is the practical innovation. Need a desktop agent that runs on a single consumer GPU? Nano at 9B. Want better accuracy and have a workstation? Mini at 35B total, 3B active. Running inference at scale and can afford the memory? Pro at 397B total, 17B active.
+
+## What the MoE Architecture Means in Practice
+
+Mixture-of-experts is not new, but its application to computer-use agents deserves attention.
+
+When NorthCUA-Pro processes a token, it routes through 17 billion active parameters out of 397 billion total. The other 380 billion parameters sit in memory but do not fire. This means:
+
+- **Inference cost** scales with active parameters (17B), not total parameters (397B)
+- **Memory cost** scales with total parameters — you still need ~794 GB of disk and corresponding GPU memory to load the model
+- **Quality** benefits from the larger parameter space: more expert subnetworks mean more specialized knowledge pathways
+
+For Mini, the ratio is even more aggressive: 3 billion active out of 35 billion total. The per-token compute looks like a 3B model, but you need ~70 GB of VRAM to load it. That is the fundamental MoE tradeoff — and anyone claiming Mini runs on "edge hardware" is ignoring the memory side of the equation.
+
+The deployment question comes down to where your bottleneck sits. If you have the VRAM to load the model, tokens per second will scale with active parameters, not total parameters. If VRAM is the constraint, the nominal parameter count is what matters.
+
+## The Questions That Matter Now
+
+**Will independent reproductions match the self-reported scores?** The "not tied to an exact checkpoint" caveat is the single most important thing to watch. If the released weights reproduce within a few points of the reported numbers, NorthCUA-Pro is a genuine open-weight SOTA for computer-use agents. If they fall significantly short, the research contribution remains valuable but the practical impact shrinks.
+
+**How does the harness compare to existing open infrastructure?** Projects like SWE-bench, WebArena, and OSWorld provide benchmark harnesses. NorthCUA's harness is designed for execution, not just evaluation — it manages long-running tasks with context compaction, working notes, and batch recovery. Whether the community adopts it depends on how well it integrates with existing model serving stacks.
+
+**What happens when someone fine-tunes these weights?** Apache-2.0 means anyone can take the NorthCUA weights, specialize them for a vertical (say, QA testing automation or IT helpdesk workflows), and deploy them commercially. The Qwen3.5 base has a growing ecosystem, and MoE fine-tuning techniques are improving — though the memory requirements for loading these models during training remain substantial.
+
+**Does the training methodology transfer?** The Experience Flywheel and recursive self-improvement system are described in detail in the 123-page report. Even without the code, teams with sufficient compute could implement similar pipelines. The staged learning approach — mid-training on massive trajectory data, SFT on verified completions, RL on fresh attempts — is a recipe that others can follow.
+
+## The Bottom Line
+
+NorthCUA is among the most ambitious open-weight computer-use agent releases to date. Three model sizes, a unified training story, competitive benchmark claims, and an open execution harness — all under Apache-2.0.
+
+The asterisk on the benchmarks is real and matters. Self-reported numbers from unspecified checkpoints are not the same as independently verified results. But even with that caveat, the architecture choices (MoE for compute efficiency, staged learning with RL), the training scale (100K+ trajectories), and the harness release make this a significant contribution.
+
+For teams building computer-use agents, the immediate value may be the harness more than the weights. A model-agnostic runtime with long-horizon support, batch execution, and built-in evaluation is infrastructure the entire space needs. The fact that it ships with three tiers of open weights to plug in is a bonus.
+
+The closed-model providers are not going to lose sleep over a research release with unverified benchmarks. But they should pay attention to the direction: open-weight computer-use models are getting better, faster, and more complete with every release. NorthCUA's contribution is showing that an open team can build the full stack — models, harness, and evaluation — and put it all on the table.
+
+---
+
+[Subscribe to the newsletter](/subscribe) for weekly breakdowns of the AI tools and models that matter.
