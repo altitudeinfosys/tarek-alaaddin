@@ -1,0 +1,134 @@
+---
+title: "Claude Message Threads: Stop Resending the Whole Conversation"
+description: "Anthropic's message threads API keeps conversation state server-side so agent loops send only new messages each turn. Here's how it works."
+date: "2026-11-04"
+category: "ai-tools"
+tags: ["anthropic", "claude", "api", "agents", "message-threads", "performance", "developer-tools"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Every agent loop has the same dirty secret. Each turn re-uploads the entire conversation — system prompt, tool definitions, every previous message — to an API that already processed all of it moments ago. On a long Claude Code session, that means shipping hundreds of kilobytes of JSON per request, most of it identical to the last one.
+
+On November 2, 2026, Anthropic shipped [message threads](https://platform.claude.com/docs/en/build-with-claude/message-threads) as a public beta. The idea is simple: send the full conversation once, then send only the new messages on each subsequent turn. The API keeps the rest on the server.
+
+According to [@ClaudeDevs on X](https://x.com/ClaudeDevs/status/2117332451231956997), the impact in Claude Code is dramatic: the median request dropped from about 800 KB to 1.8 KB. On requests between 500K and 1M tokens, median time to first token fell by roughly 35 percent. These are self-reported numbers from Anthropic's developer account, not independent benchmarks — but the magnitude makes sense given how much redundant data the old model ships.
+
+Those are transport-layer numbers, not model-quality improvements. But for anyone running agentic workloads, the transport layer is where the pain lives.
+
+## How Threads Work
+
+The API change is minimal. You add one field — `thread` — to your Messages API request.
+
+**Turn 1 (create):** Send your full conversation as you do today, with `system`, `tools`, and all messages, plus `"thread": {"type": "create"}`. The API stores everything, including Claude's response, under the response `id`.
+
+**Turn 2+ (continue):** Send only the new messages — typically a `user` message or `tool_result` blocks — plus `"thread": {"type": "continue", "previous_message_id": "<response id>"}`. Leave `system` and `tools` out entirely. The API rebuilds the full conversation before it calls the model.
+
+That is the whole protocol. The response format does not change.
+
+<Callout type="info">
+Message threads require the beta header `message-threads-2026-08-12` on every request. The SDKs add it automatically when you use the thread helper.
+</Callout>
+
+## The SDK Thread Helper
+
+The raw API works, but Anthropic also ships a thread helper in every SDK — Python, TypeScript, Go, Java, C#, PHP, and Ruby. It handles the bookkeeping:
+
+```python
+client = anthropic.Anthropic()
+
+thread = client.beta.messages.thread(
+    model="claude-opus-5-5",
+    max_tokens=1024,
+    system="You are a support agent. Keep replies short.",
+)
+
+# Turn 1: creates the thread, sends everything
+thread.send({"role": "user", "content": "What's the status of order #1234?"})
+
+# Turn 2: continues the thread, sends only this message
+response = thread.send(
+    {"role": "user", "content": "Can you expedite it?"}
+)
+```
+
+The helper also auto-replays. If a continue request gets a 404 because the thread expired, the helper re-sends the full conversation in a new create request and picks up where it left off. Your code never has to handle the replay logic.
+
+## Why This Matters for Agents
+
+Agent loops are the worst case for the old model. A typical Claude Code session might involve dozens of tool calls — each one a full round trip. With extended thinking enabled and a large system prompt, each request can carry hundreds of thousands of tokens of context.
+
+Every one of those tokens gets re-validated and re-tokenized by the API on every request. Even with prompt caching, the HTTP payload still has to be assembled, compressed, transmitted, decompressed, and parsed. On a session running 500K to 1M tokens of context, that serialization overhead adds measurable latency before the model even starts generating.
+
+Threads eliminate most of that work on the continue path. The API already has the conversation in memory. The continue request carries just the delta.
+
+<Callout type="warning">
+Threads are ephemeral. A thread expires 5 minutes after its last request and is deleted within 1 hour of its last use. Your application must keep its own copy of every message. Threads are a transport optimization, not a persistence layer.
+</Callout>
+
+## Threads and Prompt Caching Are Complementary
+
+A common first reaction: "Doesn't prompt caching already solve this?"
+
+Prompt caching and threads attack different bottlenecks:
+
+| | Prompt Caching | Message Threads |
+|---|---|---|
+| **What it reduces** | Model-side recomputation of the KV cache | Request-size and API-side validation overhead |
+| **Where it helps** | Time to first token from the model | Time to first token from the network and API |
+| **What you still send** | The full conversation every time | Only the new messages |
+| **Pricing** | Write: 1.25x base; Read: 0.1x base | No separate charge |
+
+You can use both together. Send a top-level `cache_control` on every request of a thread, and each turn reads the earlier conversation from the prompt cache while the HTTP payload carries only the new messages. The thread shrinks the pipe; the cache shrinks the compute.
+
+## What Threads Cannot Do
+
+The feature has clear boundaries:
+
+- **No persistence.** Thread contents live in memory, encrypted, never written to durable storage. There is no API to list, read, or delete threads.
+- **Append-only.** You cannot edit or remove earlier messages. To branch or rewrite, start a new thread with a create request.
+- **No compaction-on-demand.** If you need to summarize earlier turns to stay within context, you do it yourself and start a fresh thread with the summary.
+- **Not eligible for ZDR or HIPAA.** Organizations with zero data retention or HIPAA readiness cannot use threads.
+- **No batch processing.** Message Batches do not support threads.
+- **Fixed fields are fixed.** `model`, `tool_choice`, `thinking`, and a few others must stay the same for the life of a thread. Change any of them and you need a new thread.
+
+## The Practical Tradeoffs
+
+Threads trade statefulness for speed. That introduces failure modes:
+
+**Thread expiration.** Five minutes of idle time kills the thread. Agent loops that pause for user input or long-running tool calls can hit this easily. The SDK helper replays automatically, but a replay on a 500K-token conversation is not free — it is the same cost as the original create request.
+
+**Exactly-once semantics.** Each response `id` can be continued once. If your stream drops before `message_stop`, sending the same continue request again might fail with `thread_already_continued`. The safe path is to replay in a new create request.
+
+**Fallback model complications.** If you use server-side fallback and a fallback model writes the response, the API does not store that turn. Your next continue request gets a 404, and you need to replay. Sticky routing can keep sending you to the fallback model for up to an hour.
+
+These are manageable, and the SDK helper handles most of them. But they mean threads work best when you do not need to reason about them — wrap them in the helper and let it manage the state machine.
+
+<Callout type="info">
+The SDK's beta tool runner uses a thread by default. If you're already using the tool runner for your agent loop, you may be getting thread benefits without any code changes after updating the SDK.
+</Callout>
+
+## Who Should Adopt This Now
+
+**Agent framework builders:** If your framework manages a Messages API loop, adding thread support gives every downstream agent a latency improvement for free. The integration is one field on create, one field on continue, and a replay handler.
+
+**High-context applications:** RAG systems, code assistants, and document-analysis tools that routinely work with large context windows will see the biggest absolute improvement in time to first token.
+
+**Long-running agents on a budget:** While threads do not reduce token costs (the model still processes the full context), the reduced network overhead and faster turnaround time mean your agent completes its work sooner, which can matter for wall-clock-sensitive workloads.
+
+**Who can wait:** Chatbots with short conversations will not notice a meaningful difference. The overhead threads eliminate is proportional to conversation length — short conversations have little overhead to begin with.
+
+## What This Signals
+
+Message threads are plumbing. But plumbing tells you where the water pressure is heading.
+
+Anthropic built this because agent loops are now a dominant API workload pattern, and the old request model — upload everything, every time — does not scale with context length. As context windows grow, the redundant data per turn grows with them. Without threads, a long agent session re-uploads the same conversation dozens of times over.
+
+The broader pattern: as models get longer context windows, the API layer has to evolve to avoid making that context a liability. Prompt caching was the first step — reduce compute. Threads are the second — reduce transport. Expect the next step to be some form of server-side conversation management that outlives a five-minute window.
+
+For now, the practical advice is simple: if you run an agent loop on the Messages API, add the thread helper. It is a few lines of code, the SDK handles the edge cases, and the latency improvement on long conversations is substantial.
+
+---
+
+*Want more breakdowns of the tools and infrastructure behind AI development? [Subscribe to the newsletter](/subscribe) to get them in your inbox.*
