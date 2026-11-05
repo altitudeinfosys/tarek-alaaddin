@@ -1,0 +1,120 @@
+---
+title: "Claude Code's Game-Cloning Rule and the Invisible Guardrails"
+description: "Anthropic added two sentences to Claude Code's prompt to block game cloning. Here's what it reveals about server-pushed rules in AI agents."
+date: "2026-11-05"
+category: "ai-tools"
+tags: ["anthropic", "claude-code", "ai-agents", "intellectual-property", "developer-tools", "ai-policy", "gaming"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Two sentences now stand between Claude Code and "build me Flappy Bird." They arrived silently, with no changelog, no release note, and no toggle to turn them off. And they expose something about AI coding agents that most developers haven't thought about yet.
+
+On October 27, 2026, Anthropic pushed a new rule into Claude Code's system prompt for Opus 5.5. The rule reads:
+
+> "Do build original games, games in a genre, and games built from your own designs and assets. Don't build a recreation of a specific existing game, even if it is renamed or called original."
+
+On October 30, X user [@chasmmmmmmmmmmm](https://x.com/chasmmmmmmmmmmm/status/2116062991686721968) posted the discovery. The same day, Anthropic's [Addy Osmani confirmed it](https://x.com/addyosmani/status/2116213240363729013): "We added two sentences to Claude Code's prompt on Opus 5.5 to steer it away from recreating someone else's specific game because using Claude to infringe IP is against our usage policy."
+
+That confirmation matters less for its content than for what it reveals about the machine sitting in your terminal.
+
+## The Rule Itself Is Narrow
+
+Credit where it's due: this isn't a blanket ban on game development. Original games are fine. Genre games are fine. Games built from the user's own designs and assets are fine. The rule targets one thing — recreating a *specific existing game*, even if you rename it.
+
+That's a defensible line. Multiple outlets have reported a recent surge in AI-assisted game cloning and decompilation of retro titles. Digital Sun, the studio behind Moonlighter, reportedly delayed a public playtest of its upcoming game ReVamp over fears that AI tools could clone it faster than the team could ship it. Anthropic's stated goal is narrow: steering Claude away from recreating specific existing games, because doing so would violate their usage policy's prohibition on IP infringement.
+
+<Callout type="info">
+The restriction lives in Claude Code's prompt layer on Opus 5.5 only. If you call the Claude API directly with your own system prompt, these sentences aren't there. This is a product decision, not a model-level change.
+</Callout>
+
+## Where It Breaks Down
+
+The problem isn't the policy — it's the execution. Within days of the rule going live, developers started hitting false positives.
+
+The most documented case comes from [GitHub issue #106167](https://github.com/anthropics/claude-code/issues/106167): a developer at Conflict Simulations LLC was building personalized digital board-wargame modules. These are commissioned by paying customers who own the physical games. The code is original. The assets are customer-supplied. Claude Code refused anyway.
+
+In a [follow-up post on X](https://x.com/addyosmani/status/2117848568535106001), Osmani acknowledged the false positives: "Last week some of you ran into Claude Code pushing back on game projects it should have just built." He said Anthropic would "continue to iterate to strike the right balance."
+
+Other reports are murkier but consistent. [Tom's Hardware](https://www.tomshardware.com/tech-industry/artificial-intelligence/anthropic-confirms-new-claude-code-limits-to-prevent-game-cloning-users-report-opus-5-5-is-also-actively-blocking-reverse-engineering-tasks) found that Opus 5.5 was also blocking reverse-engineering tasks that have nothing to do with cloning — crash dump analysis, security audits, anti-cheat reviews on games the developer owns. Whether that's the game rule misfiring or a separate guardrail is unclear.
+
+## The Delivery Mechanism Is the Real Story
+
+Here's what makes this interesting beyond gaming. The rule was pushed to Claude Code silently, through a server-side mechanism that most users don't know exists.
+
+According to third-party reverse-engineering by [CellCog](https://cellcog.ai/blog/claude-code-game-recreation-rule/) and analysis on the [DEV Community](https://dev.to/toniantunovic/claude-code-has-a-remote-instruction-channel-here-is-what-that-means-for-your-workflow-111m), Claude Code appears to call a bootstrap endpoint at startup — `api.anthropic.com/api/claude_cli/bootstrap` — that injects additional instructions into the system prompt. A background polling loop via GrowthBook reportedly activates or deactivates feature flags in active sessions without a restart. Anthropic has not officially documented this mechanism.
+
+The game rule arrived under the internal flag name `tengu_heron_brook`. Server-side changes like this take effect without a version bump or release note — the versions current at the time (v2.1.312, v2.1.316) shipped no mention of the rule. There is no user-facing setting to disable it.
+
+This means your AI coding agent runs with rules you can't inspect and can't opt out of, and those rules can change between sessions — or even mid-session — with no notice.
+
+<Callout type="warning">
+Server-pushed prompt rules are not unique to the game restriction. The same mechanism can deliver any behavioral change to Claude Code. Today it's game cloning. Tomorrow it could be anything Anthropic decides the tool shouldn't help with.
+</Callout>
+
+## What No Other Tool Does
+
+As of November 2026, no other major AI coding tool appears to have implemented a comparable restriction.
+
+GitHub Copilot has a duplicate-code filter and offers IP indemnity on Business and Enterprise plans, but nothing game-specific. Cursor has no documented IP restrictions. No evidence of a comparable policy was found for Windsurf, either. Open-weight models like Llama or Mistral don't carry the restriction — users control their own system prompts.
+
+Anthropic is the first AI coding tool vendor to draw a domain-specific IP line. That's a policy choice, not a technical inevitability. And it raises the question: if one vendor can silently restrict game cloning, what stops another from restricting, say, ad-blocker development, or tools that compete with their own products?
+
+To be clear, there's no evidence Anthropic has done or plans to do anything like that. But the mechanism is there. And it works.
+
+## The Irony Nobody Wants to Talk About
+
+[Gizmodo put it bluntly](https://gizmodo.com/software-is-dead-unless-anthropic-says-otherwise-2000833871): AI companies trained their models on creators' work — code, art, games, music — scraped at scale, often without permission, and used it to build products that can now replicate those same creators' output. And now one of those companies is adding rules to prevent its tool from doing too much of that replication.
+
+That's not hypocrisy exactly — there's a legal argument that training is distinct from output-level copying, and some courts have drawn that line. But the tension is unresolved. The companies that built the machines are now deciding which copies are acceptable. The creators who supplied the training data don't get a vote on where the line goes.
+
+## The Legal Backdrop
+
+The legal landscape is catching up, slowly:
+
+- **Thaler v. Perlmutter**: The Supreme Court denied certiorari in March 2026. Purely AI-generated works lack copyright protection in the US. If you clone a game with Claude, you might not even own the clone.
+- **Doe v. GitHub (No. 24-7700)**: The Ninth Circuit reportedly ruled in September 2026 that AI coding output is a "newly generated work" and not a DMCA §1202(b) violation, though training-data and direct-infringement claims continue separately. (This ruling has not been independently verified against court records as of this writing.)
+- The **Copyright Office** won't register machine-made works without meaningful human creative input.
+
+None of this directly addresses whether an AI tool can *refuse* to generate something on IP grounds. That's a terms-of-service question, not a legal one. Anthropic can put whatever they want in their usage policy. The [Anthropic Usage Policy](https://www.anthropic.com/legal/aup) prohibits using Claude to "infringe, misappropriate, or violate the intellectual property rights of a third party." The game rule is just a prompt-level enforcement of that general clause.
+
+<Callout type="tip">
+The AUP has no game-specific language. The two sentences in Claude Code's prompt are an interpretation of the policy — one that Anthropic's team made, pushed live, and can change at any time.
+</Callout>
+
+## The Loopholes Are Obvious
+
+The rule "steers" — it doesn't hard-block. And as [Gizmodo noted](https://gizmodo.com/software-is-dead-unless-anthropic-says-otherwise-2000833871), the gaps are easy to spot:
+
+- It may not cover unreleased games (a sequel nobody's built yet isn't a "specific existing game")
+- It may not cover knockoffs of an entire franchise rather than one title
+- It doesn't cover non-game software (a Photoshop clone is fine, apparently)
+- Open-weight models don't carry the restriction at all
+- The rule is in the prompt, not the model — determined users can and will work around it
+
+This isn't a criticism of the rule. It's a recognition that prompt-level IP enforcement is inherently leaky. The rule probably deters casual cloning — the person who types "build me Tetris" on a whim. It won't stop anyone motivated enough to rephrase, use a different model, or strip the system prompt.
+
+## What This Means for Developers
+
+If you build with Claude Code, three things are now true:
+
+**1. Your tool has opinions you didn't choose.** Claude Code ships with behavioral rules beyond its base training. These rules arrive silently, change without notice, and can't be turned off. The game rule is the one we noticed because it triggered visible refusals. There may be others.
+
+**2. You should log refusals.** When Claude Code declines to do something, note what you asked and when. If the refusal doesn't match your understanding of the rules, report it — Osmani explicitly asked for this. But also keep the log for yourself. If rules change between sessions, the log is how you notice.
+
+**3. The vendor owns the boundary.** This is true of every SaaS tool, but it hits differently for a coding agent. A coding agent has access to your codebase, your terminal, and your development environment. The rules it follows aren't just about what it produces — they shape what it's willing to help you build. When those rules change silently, you're building on ground that can shift without warning.
+
+## The Bigger Picture
+
+The game rule is minor in isolation. Two sentences. A narrow restriction on a specific use case. Anthropic probably made the right call on the policy itself — nobody benefits from a flood of AI-cloned games.
+
+But the delivery mechanism matters more than the content. AI coding agents are becoming central to how software gets built. If those agents run with invisible, mutable, vendor-controlled rules, developers need to know that. Not because the current rules are bad, but because the next rules might be, and you won't get a changelog.
+
+The question isn't whether Anthropic should prevent game cloning. It's whether the developer using the tool should know what rules it's following — and have a say in them.
+
+Right now, the answer to both is no. Though it's worth noting that Osmani has [asked developers to report](https://x.com/addyosmani/status/2117848568535106001) legitimate projects that get refused — a signal that Anthropic wants to get the line right, even if the process of drawing it is opaque.
+
+---
+
+*Want more analysis on AI developer tools and the policies shaping them? [Subscribe to the newsletter](/subscribe) for weekly breakdowns.*
