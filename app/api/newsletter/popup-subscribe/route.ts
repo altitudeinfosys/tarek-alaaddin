@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { upsertSubscriber } from '@/lib/db/subscribers'
 import { resend, FROM, REPLY_TO } from '@/lib/email/resend'
 import { renderWelcomeEmail } from '@/lib/email/templates'
+import { syncContactUpsert } from '@/lib/email/audience'
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -27,6 +28,12 @@ export async function POST(request: NextRequest) {
       email,
       firstName: firstName?.trim() || null,
       source,
+    })
+
+    // Mirror into Resend audience — best-effort, must not block signup.
+    await syncContactUpsert({
+      email: result.subscriber.email,
+      firstName: result.subscriber.firstName,
     })
 
     if (result.isNew || result.wasReactivated) {

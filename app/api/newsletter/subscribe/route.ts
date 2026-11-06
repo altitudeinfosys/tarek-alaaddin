@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { upsertSubscriber } from '@/lib/db/subscribers'
 import { resend, FROM, REPLY_TO } from '@/lib/email/resend'
 import { renderWelcomeEmail } from '@/lib/email/templates'
+import { syncContactUpsert } from '@/lib/email/audience'
 
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY
 
@@ -54,6 +55,13 @@ export async function POST(request: NextRequest) {
         ai: !!topics.ai,
         marketing: !!topics.marketing,
       },
+    })
+
+    // Mirror into Resend audience so the dashboard count stays live. Failures
+    // here must not block the subscribe response — the DB is source of truth.
+    await syncContactUpsert({
+      email: result.subscriber.email,
+      firstName: result.subscriber.firstName,
     })
 
     if (result.isNew || result.wasReactivated) {

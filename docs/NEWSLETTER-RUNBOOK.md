@@ -323,3 +323,46 @@ Subscribe a test email (e.g., `tarek+test@tarekalaaddin.com`), then force-send t
 | `subscribers` | One row per email. Status, source, unsubscribe token, interests. |
 | `sends` | One row per post-broadcast. Gates whether a post re-emails. |
 | `sent_to` | Join table — which subscribers got which send. Enables idempotent retries. |
+
+---
+
+## Resend audience sync
+
+The site DB is the source of truth. The Resend audience ("General") is a **mirror**, kept in sync so the Resend dashboard shows live counts and you can see / search subscribers there without hitting the DB.
+
+### How it stays in sync
+
+- **On subscribe** (via `/subscribe`, footer form, or popup): after the DB upsert, `syncContactUpsert` is called and creates/updates the Resend contact. Failures are logged, not surfaced to the user.
+- **On unsubscribe**: after the DB status flip, `syncContactUnsubscribe` flips the Resend contact to `unsubscribed`.
+- **No background job** does this continuously — the sync happens inline on each event.
+
+### When to re-backfill
+
+Run the backfill script if:
+- You've just deployed the audience-sync code for the first time.
+- You suspect drift (e.g. Resend had an outage during a signup, or the Resend audience was wiped manually).
+- You changed `RESEND_AUDIENCE_ID` and want the new audience populated.
+
+```bash
+vercel env pull .env.local
+node scripts/sync-audience-backfill.mjs --dry-run   # counts only, no API calls
+node scripts/sync-audience-backfill.mjs             # actually push
+```
+
+The script is idempotent. It sends every subscriber's current state (active or unsubscribed) to Resend, so a second run just updates existing contacts.
+
+### Changing the audience
+
+Set `RESEND_AUDIENCE_ID` in Vercel to a different audience ID, redeploy, then re-run the backfill script against the new audience. The old audience is left alone (you can delete it manually in the Resend dashboard).
+
+---
+
+## Recent sends tracking
+
+The admin dashboard (`/admin/newsletter?key=$CRON_SECRET`) shows a **Recent sends** table with a direct deep-link to Resend Logs filtered by that post's slug tag.
+
+Every email the cron sends is tagged with:
+- `kind=newsletter`
+- `slug=<post-slug>`
+
+So in Resend Logs, filter by `slug:<post-slug>` to see opens / clicks / bounces for one specific newsletter send.

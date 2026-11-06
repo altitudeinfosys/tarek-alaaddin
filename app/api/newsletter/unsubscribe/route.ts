@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { markUnsubscribed } from '@/lib/db/subscribers'
+import { syncContactUnsubscribe } from '@/lib/email/audience'
 
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token')
@@ -19,6 +20,9 @@ export async function GET(request: NextRequest) {
       false
     )
   }
+
+  // Mirror unsubscribe into Resend so dashboard counts stay accurate.
+  await syncContactUnsubscribe(result.email)
 
   return renderHtml(
     'Unsubscribed',
