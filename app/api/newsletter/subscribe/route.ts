@@ -55,6 +55,9 @@ export async function POST(request: NextRequest) {
         ai: !!topics.ai,
         marketing: !!topics.marketing,
       },
+      // Turnstile was verified above, so this path is allowed to clear a
+      // prior unsubscribe. Honeypot-only paths (popup/footer) must not.
+      allowReactivate: true,
     })
 
     // Mirror into Resend audience so the dashboard count stays live. Failures

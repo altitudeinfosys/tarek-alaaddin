@@ -12,12 +12,28 @@ export interface UpsertSubscriberInput {
     ai?: boolean
     marketing?: boolean
   }
+  /**
+   * Whether the calling path is allowed to clear a prior unsubscribe. Set
+   * true only when the request has strong consent verification (Turnstile on
+   * /subscribe). For honeypot-only paths (popup/footer), the default false
+   * preserves a recorded opt-out: a bot or attacker submitting an opted-out
+   * email cannot silently reactivate the subscriber or trigger a welcome.
+   *
+   * Default false.
+   */
+  allowReactivate?: boolean
 }
 
 export interface UpsertResult {
   subscriber: Subscriber
   isNew: boolean
   wasReactivated: boolean
+  /**
+   * True when an existing non-active row was found and the caller wasn't
+   * allowed to reactivate it. Callers can use this to show a friendly
+   * "please confirm via /subscribe" message instead of a generic success.
+   */
+  reactivationBlocked?: boolean
 }
 
 export async function upsertSubscriber(input: UpsertSubscriberInput): Promise<UpsertResult> {
@@ -28,6 +44,13 @@ export async function upsertSubscriber(input: UpsertSubscriberInput): Promise<Up
     const row = existing[0]
     if (row.status === 'active') {
       return { subscriber: row, isNew: false, wasReactivated: false }
+    }
+    // Row exists but is unsubscribed/bounced/complained. Only clear that
+    // recorded intent if the caller has verified consent — otherwise an
+    // unverified submit (honeypot-only popup/footer) could silently
+    // resubscribe someone who opted out.
+    if (!input.allowReactivate) {
+      return { subscriber: row, isNew: false, wasReactivated: false, reactivationBlocked: true }
     }
     const [updated] = await db
       .update(subscribers)

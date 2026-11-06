@@ -24,11 +24,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Valid email is required' }, { status: 400 })
     }
 
+    // Honeypot-only path: allowReactivate stays false (the default). Upserting
+    // an already-unsubscribed email will return reactivationBlocked=true and
+    // leave the DB row and status untouched — no welcome email, no mirror.
     const result = await upsertSubscriber({
       email,
       firstName: firstName?.trim() || null,
       source,
     })
+
+    if (result.reactivationBlocked) {
+      // Return the same "success" shape so a honeypot-bypass bot can't tell
+      // the difference between "subscribed" and "silently ignored". A real
+      // visitor who previously unsubscribed can re-subscribe via /subscribe
+      // (which runs Turnstile).
+      return NextResponse.json({ success: true })
+    }
 
     // Mirror into Resend audience — best-effort, must not block signup.
     await syncContactUpsert({
