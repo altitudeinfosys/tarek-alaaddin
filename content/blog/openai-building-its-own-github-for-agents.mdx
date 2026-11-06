@@ -1,0 +1,131 @@
+---
+title: "OpenAI's Pando and Pierre: Building a GitHub Rival for AI Agents"
+description: "OpenAI built Pando in 10 weeks, then acquired Pierre. The company that makes the models now wants to own the code infrastructure too."
+date: "2026-11-05"
+category: "ai-tools"
+tags: ["openai", "github", "ai-agents", "developer-tools", "pando", "pierre", "cursor-origin", "entire", "git", "code-infrastructure"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+On November 2, OpenAI published a blog post about Pando — a custom Git backend it built for its internal monorepo. Two days later, it announced the acquisition of Pierre, a startup that makes code review and storage tools. And on the same day, Axios ran a headline framing the whole thing as OpenAI taking aim at Microsoft's GitHub.
+
+Three events in 48 hours. None of them subtle.
+
+OpenAI didn't just decide it needs better internal tooling. It's laying the foundation for a developer platform that competes directly with the infrastructure most of us push code to every day. And it's not the only one. Cursor launched Origin in August. Thomas Dohmke's Entire just shipped a full GitHub alternative in October. Anthropic described rebuilding its own source control system.
+
+The developer platform that has dominated for a decade is suddenly surrounded.
+
+## What Pando Actually Is
+
+Pando is OpenAI's Git-compatible storage backend. It was built by a single engineer leading teams of AI coding agents — and it went from first commit to production in [10 weeks](https://openai.com/index/pando/).
+
+The numbers are striking. Median push latency dropped roughly 5x compared to what OpenAI was running before. The system delivers about 1 petabyte of Git data per day. In a single hour, it can serve over 57 terabytes of packfiles, with 99% or more coming from local cache hits. It's written in Rust.
+
+Pando uses causal consistency — ordering guarantees per branch rather than across the whole repository. That's a deliberate tradeoff: it means two branches can temporarily disagree about state, but individual branches always see a correct, ordered history. For a monorepo serving large teams of AI agents making concurrent pushes, that tradeoff buys significant throughput.
+
+The architecture uses an LSM-style compaction model with five tiers (L0 through L4) for packfile storage, plus Express regional caches that serve packfiles via Git's `packfile-uri` protocol extension. The combination means most reads never hit the central store.
+
+<Callout type="info">
+OpenAI says GPT-6 Astra wrote formal verification proofs in Lean and TLA+ for parts of Pando's consistency model. An AI building the proofs that verify the infrastructure that other AIs use to write code — that's the kind of recursion that makes 2026 feel distinctly different from 2024.
+</Callout>
+
+The team behind Pando — Aaron Friel, Taylor Blau (a well-known Git contributor), and Ted Nyman — also noted they're contributing improvements back upstream to Git itself and exploring making Pando available externally.
+
+## The Pierre Acquisition
+
+Two days after the Pando post, OpenAI [announced it was acquiring Pierre](https://openai.com/index/openai-acquires-pierre/), a startup that builds developer tools for code storage, file navigation, change review, and syntax highlighting.
+
+Pierre's product lineup maps directly to what you'd need on top of a raw Git backend:
+
+- **Code Storage** — the hosting layer
+- **Trees** — file navigation and browsing
+- **Diffs** — change review with an edit mode
+- **Highlights** — a streaming syntax highlighter
+
+Pierre's tools were already integrated into OpenAI's Codex product. OpenAI says the open-source components stay open-source and existing Code Storage customers will keep access post-closing. The deal is subject to regulatory approval.
+
+No financial terms were disclosed. But the strategic logic is clear: Pando handles Git storage and throughput at scale. Pierre provides the developer-facing layer on top. Together, they form the core of a code hosting platform.
+
+## Why Now?
+
+The timing isn't accidental. GitHub is under more pressure than it's been in years — and it's pressure that comes directly from the AI coding wave GitHub helped start.
+
+GitHub reported that developers and agents made [7.38 billion commits](https://www.geekwire.com/2026/former-github-ceo-launches-rival-platform-built-for-ai-coding-agents/) in September 2026 alone. The platform has had several significant outages in recent months, including one in August that lasted nearly eight hours. GitHub is in the process of [migrating from its own data centers to Microsoft's Azure cloud](https://www.geekwire.com/2026/microsoft-2-5-github-coo-kyle-daigle-on-stitching-the-developer-universe-together/).
+
+The criticism from the AI-native crowd has been pointed: GitHub was "built for humans." When your agents are making thousands of commits per day and your CI pipelines are running continuously, the assumptions baked into a platform designed for human-paced development start to crack.
+
+OpenAI has a specific version of this problem. Its monorepo — serving the teams that build GPT models, Codex, and the API — needed a backend that could handle agent-scale throughput. Pando was the answer for internal needs. But once you've built something that can serve a petabyte of Git data per day, the question of whether to offer it externally is a business strategy question, not a technical one.
+
+<Callout type="warning">
+Microsoft owns roughly 25% of OpenAI. OpenAI building infrastructure that competes with Microsoft's GitHub is the kind of corporate tension that makes investor relations meetings interesting. The Axios report framed it directly: OpenAI is targeting Microsoft's GitHub.
+</Callout>
+
+## The Competitive Landscape
+
+OpenAI isn't moving into empty space. The "GitHub for agents" thesis has attracted serious competition in 2026.
+
+### Cursor Origin
+
+Anysphere, the SpaceX-owned company behind Cursor, [launched Origin](https://siliconangle.com/2026/08/17/cursor-launches-origin-code-hosting-service-to-compete-with-github/) in August 2026 — a code hosting service designed to integrate tightly with the Cursor editor. The pitch: if your IDE already understands your code better than any platform, why not host the code there too?
+
+Origin went from announcement in June to beta in August. It represents the IDE-outward approach: start with where developers write code, then absorb the hosting layer.
+
+### Entire
+
+Thomas Dohmke — former CEO of GitHub — launched [Entire](https://www.geekwire.com/2026/former-github-ceo-launches-rival-platform-built-for-ai-coding-agents/) with a $60 million seed round at a $300 million valuation in February 2026, led by Felicis with participation from Madrona, Basis Set Ventures, and Microsoft's own venture arm M12.
+
+In October, Entire [shipped its full platform](https://www.geekwire.com/2026/former-github-ceo-launches-rival-platform-built-for-ai-coding-agents/) with a direct pitch: replace GitHub. The centerpiece is **Trails**, a replacement for the pull request. According to Entire, multiple AI agents check the quality of each code change, so developers can merge without reading every line. The pull request "has become an audit log that only the agent reads," Dohmke wrote in a blog post announcing the launch.
+
+<Callout type="tip">
+Entire claims it can handle up to 89 times as many code pushes per second as GitHub, based on its own benchmarks. Self-reported numbers from a challenger should always come with a grain of salt, but the direction of the bet is clear: agent-scale throughput is the differentiator.
+</Callout>
+
+Entire now has 50 employees and supports private repositories in the US, Europe, India, and Australia.
+
+The company also introduced **Continuous Memory**, which lets AI agents search past coding sessions for context behind earlier changes — cutting token usage by up to 71% in Entire's testing.
+
+### Anthropic
+
+Anthropic [described rebuilding](https://www.anthropic.com/research/redesigning-source-control) its own source control system as the number of code changes it merged daily grew from about 2,500 in May to more than 30,000 in September 2026. That's roughly a 12x increase between May and September, driven almost entirely by AI agents.
+
+## What This Means for Developers
+
+Here's what's actually happening beneath the headlines: the companies that build AI models are discovering they can't rely on existing developer infrastructure. The scale at which agents produce code — and the patterns of that production — are fundamentally different from human development workflows.
+
+A human developer might push code a few times a day. An agent fleet can generate changes at a pace that dwarfs that entirely. GitHub's architecture, optimized over a decade for human-paced workflows, isn't designed for that. Neither are its review tools, its CI triggers, or its pricing model.
+
+So the model companies are building their own stacks. OpenAI has Pando and Pierre. Anthropic has its custom source control. Cursor has Origin. And Dohmke, who used to run GitHub, is betting his next company on the thesis that the incumbent can't adapt fast enough.
+
+The question for individual developers and teams is practical: **do you need to care right now?**
+
+For most teams, the answer is not yet. GitHub still hosts over 420 million repositories. GitLab holds roughly 36% market share. The ecosystem of Actions, integrations, and tooling built on GitHub is enormous. You don't rip that out because someone published good benchmarks.
+
+But if you're running agent fleets at scale — if your AI coding tools are generating hundreds or thousands of changes per day — you should be watching this space closely. The pull request model that has defined code review for a decade was designed for a world where a human writes a change, another human reviews it, and a third human merges it. That world is disappearing faster than most people realize.
+
+## The Deeper Pattern
+
+The most interesting thing about this wave isn't any single product. It's that multiple AI companies have independently arrived at the same conclusion: **the existing developer platform stack isn't keeping up**.
+
+OpenAI didn't build Pando because it wanted to compete with GitHub. It built Pando because its monorepo needed agent-scale throughput. Anthropic didn't redesign source control for competitive advantage. It did it because daily merges grew from 2,500 to over 30,000 in a matter of months.
+
+The competition with GitHub is a consequence, not a goal. But that makes it more dangerous for the incumbent, not less. Products built to solve your own painful problem tend to be better than products built to capture a market.
+
+GitHub's response will matter enormously. It has the user base, the integrations, and Microsoft's infrastructure behind it. But it also has the hardest migration path — you can't rebuild a platform serving hundreds of millions of developers without breaking things. The challengers get to start clean.
+
+## What to Watch Next
+
+Three things to track over the next six months:
+
+1. **Whether OpenAI makes Pando available externally.** The blog post mentioned exploring this. If Pando becomes a service, it's the clearest signal that OpenAI is serious about competing in developer infrastructure, not just solving internal problems.
+
+2. **GitHub's response at and after Universe.** Entire timed its launch two days before GitHub Universe. The pressure is public and deliberate. GitHub needs to show it can handle agent-scale workloads without the outages that have plagued it.
+
+3. **Convergence of IDE and hosting.** Cursor with Origin, OpenAI with Codex plus Pando plus Pierre, Entire with Trails — the pattern is the same: collapse the distance between where code is written and where it lives. The company that nails that integration wins.
+
+The era of one dominant code hosting platform may be ending. Not because GitHub got worse, but because the nature of software development changed underneath it. When agents write most of the code, the infrastructure needs to be built for agents. And the companies building the agents are deciding to build that infrastructure themselves.
+
+---
+
+*Want to follow the developer platform wars as they unfold? [Subscribe to the newsletter](/subscribe) for weekly analysis of the tools reshaping how we build software.*
