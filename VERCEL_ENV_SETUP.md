@@ -15,7 +15,8 @@ For day-to-day newsletter operations see [`docs/NEWSLETTER-RUNBOOK.md`](docs/NEW
 | `RESEND_SENDER` | optional | From-address for emails. Default: `newsletter@tarekalaaddin.com`. |
 | `RESEND_REPLY_TO` | optional | Reply-to address. Default: `tarek@tarekalaaddin.com`. |
 | `DATABASE_URL` | ✅ | Neon Postgres connection string. Source of truth for subscribers. |
-| `CRON_SECRET` | ✅ | Bearer token guarding the cron, the admin dashboard, the subscribers API, and the sends API. |
+| `CRON_SECRET` | ✅ | Bearer token guarding the cron, the subscribers API, the sends API, and the detailed health check. Send it only in the `Authorization` header, never in a URL. |
+| `ADMIN_VIEW_KEY` | ✅ | Key for the admin dashboard and operator guide URLs (`?key=`). It can view subscribers but can't trigger sends. |
 | `NEWSLETTER_CUTOFF_DATE` | ✅ | ISO date. Posts dated before this NEVER email. Delete this var to pause all sends. |
 | `NEXT_PUBLIC_SITE_URL` | ✅ | `https://www.tarekalaaddin.com`. Used in email links and canonical URLs. |
 

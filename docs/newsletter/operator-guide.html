@@ -185,9 +185,9 @@
   <div class="panel">
     <h3 style="margin-top:0"><span class="pill ok">Easiest</span> Your admin dashboard</h3>
     <p>Open in a browser:</p>
-    <pre>https://www.tarekalaaddin.com/admin/newsletter?key=<em>&lt;CRON_SECRET&gt;</em></pre>
+    <pre>https://www.tarekalaaddin.com/admin/newsletter?key=<em>&lt;ADMIN_VIEW_KEY&gt;</em></pre>
     <p class="meta">Shows total/active/inactive counts, a Recent sends table, and the full subscriber list with email, name, status, and signup date.</p>
-    <p>Get the key: <code>vercel env pull .env.local</code> &rarr; grep for <code>CRON_SECRET</code>.</p>
+    <p>Get the key: <code>vercel env pull .env.local</code> &rarr; look for <code>ADMIN_VIEW_KEY</code>.</p>
   </div>
 
   <div class="panel">
@@ -338,7 +338,8 @@
 <dl class="kv">
   <dt><code>RESEND_API_KEY</code></dt><dd>Resend Pro key &mdash; powers all sending and audience sync</dd>
   <dt><code>DATABASE_URL</code></dt><dd>Neon Postgres connection string &mdash; source of truth</dd>
-  <dt><code>CRON_SECRET</code></dt><dd>Bearer token for cron, admin dashboard, subscribers API, sends API</dd>
+  <dt><code>CRON_SECRET</code></dt><dd>Bearer token for cron, subscribers API, sends API. Header only, never in a URL.</dd>
+  <dt><code>ADMIN_VIEW_KEY</code></dt><dd>Key for the admin dashboard and guide URLs. Can view subscribers, cannot trigger sends.</dd>
   <dt><code>NEWSLETTER_CUTOFF_DATE</code></dt><dd>ISO date, posts before this never email. Delete to pause.</dd>
   <dt><code>TURNSTILE_SECRET_KEY</code></dt><dd>Server-side Turnstile verification for <code>/subscribe</code></dd>
   <dt><code>NEXT_PUBLIC_TURNSTILE_SITE_KEY</code></dt><dd>Client widget key</dd>
@@ -365,7 +366,7 @@
   </tr>
   <tr>
     <td>Admin dashboard shows 404 or <code>Unauthorized</code></td>
-    <td><code>CRON_SECRET</code> query param doesn't match the Vercel env value. Run <code>vercel env pull .env.local</code> to refresh.</td>
+    <td>The <code>key</code> value doesn&rsquo;t match <code>ADMIN_VIEW_KEY</code> in Vercel. Run <code>vercel env pull .env.local</code> to refresh.</td>
   </tr>
   <tr>
     <td>Dry-run shows 0 processed but I just published</td>

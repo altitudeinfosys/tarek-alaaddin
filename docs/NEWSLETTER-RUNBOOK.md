@@ -23,7 +23,7 @@
 | Main form | `/subscribe` → `POST /api/newsletter/subscribe` | Turnstile |
 | Popup (exit intent) | `POST /api/newsletter/popup-subscribe` | Honeypot |
 | Unsubscribe | `GET /api/newsletter/unsubscribe?token=…` | token-based |
-| Admin dashboard | `/admin/newsletter?key=$CRON_SECRET` | query-param key |
+| Admin dashboard | `/admin/newsletter?key=$ADMIN_VIEW_KEY` | query-param key |
 | Cron | `/api/cron/newsletter` | `Authorization: Bearer $CRON_SECRET` |
 | Subscribers list | `GET /api/newsletter/subscribers` | `Authorization: Bearer $CRON_SECRET` |
 
@@ -41,7 +41,8 @@
 **Env vars (Vercel)**
 ```
 DATABASE_URL            — Neon connection string
-CRON_SECRET             — Bearer token for cron + admin + subscribers list
+CRON_SECRET             — Bearer token for cron + subscribers list
+ADMIN_VIEW_KEY          — Query-param key for the admin dashboard and guide; cannot trigger sends
 RESEND_API_KEY          — Resend Pro key
 NEWSLETTER_CUTOFF_DATE  — ISO date; posts older than this never email
 TURNSTILE_SECRET_KEY    — Cloudflare Turnstile (spam guard on main form)
@@ -143,7 +144,7 @@ curl -sS -X GET "https://www.tarekalaaddin.com/api/cron/newsletter" \
 
 Browser:
 ```
-https://www.tarekalaaddin.com/admin/newsletter?key=<paste-CRON_SECRET-here>
+https://www.tarekalaaddin.com/admin/newsletter?key=<paste-ADMIN_VIEW_KEY-here>
 ```
 
 API (for exports / jq):
@@ -325,7 +326,7 @@ Subscribe a test email (e.g., `tarek+test@tarekalaaddin.com`), then force-send t
 | Production site | https://www.tarekalaaddin.com |
 | RSS feed | https://www.tarekalaaddin.com/feed.xml |
 | Subscribe page | https://www.tarekalaaddin.com/subscribe |
-| Admin dashboard | https://www.tarekalaaddin.com/admin/newsletter?key=$CRON_SECRET |
+| Admin dashboard | https://www.tarekalaaddin.com/admin/newsletter?key=$ADMIN_VIEW_KEY |
 | Cron endpoint | `GET/POST /api/cron/newsletter` |
 | Subscribers API | `GET /api/newsletter/subscribers` |
 | Resend dashboard | https://resend.com/emails |
@@ -378,7 +379,7 @@ Set `RESEND_AUDIENCE_ID` in Vercel to a different audience ID, redeploy, then re
 
 ## Recent sends tracking
 
-The admin dashboard (`/admin/newsletter?key=$CRON_SECRET`) shows a **Recent sends** table with post title, send time, and recipient count.
+The admin dashboard (`/admin/newsletter?key=$ADMIN_VIEW_KEY`) shows a **Recent sends** table with post title, send time, and recipient count.
 
 To find one post's emails in Resend, open [resend.com/emails](https://resend.com/emails) and search for the post title. The account is shared with other apps, so unfiltered views include their mail.
 
