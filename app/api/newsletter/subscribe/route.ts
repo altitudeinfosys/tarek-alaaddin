@@ -59,10 +59,14 @@ export async function POST(request: NextRequest) {
 
     // Mirror into Resend audience so the dashboard count stays live. Failures
     // here must not block the subscribe response — the DB is source of truth.
-    await syncContactUpsert({
-      email: result.subscriber.email,
-      firstName: result.subscriber.firstName,
-    })
+    // allowReactivate=true because this route is Turnstile-verified above.
+    await syncContactUpsert(
+      {
+        email: result.subscriber.email,
+        firstName: result.subscriber.firstName,
+      },
+      { allowReactivate: true }
+    )
 
     if (result.isNew || result.wasReactivated) {
       try {

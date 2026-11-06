@@ -16,54 +16,81 @@ export interface AudienceContactInput {
   firstName?: string | null
 }
 
+export interface SyncOptions {
+  /**
+   * Whether this call is allowed to clear a prior unsubscribe on an existing
+   * contact. True only when the request has strong consent verification
+   * (e.g. Turnstile on /subscribe). For honeypot-only paths (popup/footer),
+   * leave Resend's recorded opt-out intact: a bot/attacker cannot use an
+   * unverified signup to re-subscribe someone who opted out.
+   *
+   * Default false.
+   */
+  allowReactivate?: boolean
+}
+
 /**
- * Mirror a subscriber into the Resend audience so Resend's dashboard shows live
- * counts. Best-effort — the site DB is the source of truth and a Resend failure
- * must never block the caller.
+ * Mirror a subscriber into the Resend audience so Resend's dashboard shows
+ * live counts. Best-effort — the site DB is the source of truth and a Resend
+ * failure never blocks the caller.
  *
- * Strategy: try create; on failure assume it already exists and update to make
- * sure the state (firstName, unsubscribed=false) is in sync.
+ * Checks the SDK's `{ data, error }` return (which does NOT throw on API
+ * errors); logs and moves on rather than silently fail-open.
  */
-export async function syncContactUpsert(input: AudienceContactInput): Promise<void> {
+export async function syncContactUpsert(
+  input: AudienceContactInput,
+  opts: SyncOptions = {}
+): Promise<void> {
   if (!enabled()) return
   const email = input.email.trim().toLowerCase()
   const firstName = input.firstName?.trim() || undefined
+  const allowReactivate = opts.allowReactivate ?? false
 
   try {
-    await resend.contacts.create({
+    const { error: createErr } = await resend.contacts.create({
       email,
       firstName,
       unsubscribed: false,
       segments: [{ id: AUDIENCE_ID }],
     })
-    return
-  } catch (createErr) {
-    try {
-      await resend.contacts.update({
-        audienceId: AUDIENCE_ID,
-        email,
-        unsubscribed: false,
-        ...(firstName ? { firstName } : {}),
-      })
-    } catch (updateErr) {
-      console.error('[audience] upsert failed', { email, createErr, updateErr })
+    if (!createErr) return
+
+    // Create failed — contact likely already exists in the audience. Only
+    // reactivate (clear unsubscribed) if the calling path has verified consent.
+    // Unverified paths leave Resend state alone so a prior opt-out is preserved.
+    if (!allowReactivate) return
+
+    const { error: updateErr } = await resend.contacts.update({
+      audienceId: AUDIENCE_ID,
+      email,
+      unsubscribed: false,
+      ...(firstName ? { firstName } : {}),
+    })
+    if (updateErr) {
+      console.error('[audience] upsert update failed', { email, createErr, updateErr })
     }
+  } catch (err) {
+    console.error('[audience] upsert threw', { email, err })
   }
 }
 
 /**
  * Flip a contact to unsubscribed in Resend so the dashboard count reflects the
- * site DB. Idempotent; silent on failure.
+ * site DB. Idempotent; failures are logged, never swallowed silently.
  */
 export async function syncContactUnsubscribe(email: string): Promise<void> {
   if (!enabled()) return
+  const e = email.trim().toLowerCase()
   try {
-    await resend.contacts.update({
+    const { error } = await resend.contacts.update({
       audienceId: AUDIENCE_ID,
-      email: email.trim().toLowerCase(),
+      email: e,
       unsubscribed: true,
     })
+    if (error) {
+      console.error('[audience] unsubscribe sync failed', { email: e, error })
+    }
   } catch (err) {
-    console.error('[audience] unsubscribe sync failed', { email, err })
+    console.error('[audience] unsubscribe threw', { email: e, err })
   }
 }
