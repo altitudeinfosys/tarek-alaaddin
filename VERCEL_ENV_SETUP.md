@@ -63,10 +63,10 @@ The script is idempotent — re-run any time to repair drift. The site DB stays 
 
 ## Verifying
 
-Hit `/api/health` to see which env vars are set (values hidden — just booleans):
+Unauthenticated callers to `/api/health` get a trivial `{"status":"ok"}` for uptime monitoring. To see the full env-var map (booleans only — values hidden), pass the cron secret:
 
 ```bash
-curl -s https://www.tarekalaaddin.com/api/health | python3 -m json.tool
+curl -s https://www.tarekalaaddin.com/api/health -H "Authorization: Bearer $CRON_SECRET" | python3 -m json.tool
 ```
 
 Expected keys under `configured`: `resendApi`, `resendAudienceId`, `cronSecret`, `databaseUrl`, `newsletterCutoffDate`, `turnstileSecret`, `turnstileSiteKey`, `mailgunApi`, `mailgunDomain`.

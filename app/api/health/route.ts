@@ -1,11 +1,27 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
- * Health check — reports which env vars are set, without ever returning values.
- * Useful for quickly confirming a production deploy picked up a new env var.
+ * Health check.
+ *
+ * Unauthenticated callers get a trivial {status: 'ok'} 200 — enough for any
+ * uptime monitor to confirm liveness without leaking the env-var fingerprint
+ * to anyone who hits the URL.
+ *
+ * Authenticated callers (Bearer CRON_SECRET) get the full `configured` map
+ * so operators can confirm a deploy picked up a new env var. Values are
+ * still never returned — only presence booleans.
  */
-export async function GET() {
-  const config = {
+export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get('authorization')
+  const expected = process.env.CRON_SECRET ? `Bearer ${process.env.CRON_SECRET}` : null
+  const authed = !!expected && authHeader === expected
+
+  if (!authed) {
+    return NextResponse.json({ status: 'ok' })
+  }
+
+  return NextResponse.json({
+    status: 'ok',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
     configured: {
@@ -25,7 +41,5 @@ export async function GET() {
       resendSender: process.env.RESEND_SENDER || 'newsletter@tarekalaaddin.com (default)',
       newsletterCutoffDate: process.env.NEWSLETTER_CUTOFF_DATE || null,
     },
-  }
-
-  return NextResponse.json(config)
+  })
 }

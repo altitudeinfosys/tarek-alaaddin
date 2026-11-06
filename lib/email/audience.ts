@@ -55,9 +55,21 @@ export async function syncContactUpsert(
     })
     if (!createErr) return
 
-    // Create failed — contact likely already exists in the audience. Only
-    // reactivate (clear unsubscribed) if the calling path has verified consent.
-    // Unverified paths leave Resend state alone so a prior opt-out is preserved.
+    // Create failed. The expected case is "contact already exists" — which is
+    // a benign no-op on an unverified path (we can't reactivate anyway) and
+    // leads to an update on a verified path. Other errors (rate limit, auth,
+    // network, 5xx) are transient operational problems the operator needs to
+    // see, so we always log at this point. If the operator sees a rising
+    // volume of these logs, they should re-run the backfill script.
+    const likelyAlreadyExists = createErr.name === 'validation_error' ||
+      /already exists|conflict|duplicate/i.test(createErr.message || '')
+    if (!likelyAlreadyExists) {
+      console.error('[audience] upsert create failed', { email, createErr })
+    }
+
+    // On an unverified path we never clear a prior unsubscribe, so there's
+    // nothing more to do — the mirror diverges from the DB silently for this
+    // row, surfaceable later via the backfill script.
     if (!allowReactivate) return
 
     const { error: updateErr } = await resend.contacts.update({

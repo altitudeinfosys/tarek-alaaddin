@@ -51,7 +51,8 @@ export default function NewsletterPopup() {
       fired = true
       setState('visible')
       window.removeEventListener('scroll', handleScroll)
-      window.removeEventListener('mouseout', handleMouseOut)
+      // Must match the addEventListener target — this listener is on document.
+      document.removeEventListener('mouseout', handleMouseOut)
       clearTimeout(timeFallback)
     }
 
