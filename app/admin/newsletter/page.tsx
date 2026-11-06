@@ -18,7 +18,9 @@ interface PageProps {
 }
 
 export default async function NewsletterPage({ searchParams }: PageProps) {
-  const expected = process.env.CRON_SECRET
+  // A separate key from CRON_SECRET: this one travels in URLs, so it must not be
+  // able to trigger sends.
+  const expected = process.env.ADMIN_VIEW_KEY
   if (!expected || searchParams.key !== expected) {
     notFound()
   }

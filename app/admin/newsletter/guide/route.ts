@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
-  const expected = process.env.CRON_SECRET
+  const expected = process.env.ADMIN_VIEW_KEY
   if (!expected || request.nextUrl.searchParams.get('key') !== expected) {
     return new NextResponse('Not found', { status: 404 })
   }
