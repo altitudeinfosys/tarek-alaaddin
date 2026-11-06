@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { markUnsubscribed } from '@/lib/db/subscribers'
+import { syncContactUnsubscribe } from '@/lib/email/audience'
 
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token')
@@ -18,6 +19,13 @@ export async function GET(request: NextRequest) {
       "We couldn't find that subscription. It may have already been cancelled.",
       false
     )
+  }
+
+  // Only sync Resend when we actually flipped an active row. For rows that
+  // were already suppressed (unsubscribed/bounced/complained), Resend's state
+  // is already in sync or the row shouldn't be resurrected either way.
+  if (result.changed) {
+    await syncContactUnsubscribe(result.subscriber.email)
   }
 
   return renderHtml(

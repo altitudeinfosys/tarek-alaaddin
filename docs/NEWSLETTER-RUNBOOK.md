@@ -200,6 +200,23 @@ curl -sS -X POST "https://www.tarekalaaddin.com/api/cron/newsletter" \
   -d '{"slug": "your-post-slug"}' | python3 -m json.tool
 ```
 
+### 7a. Reactivation policy — what public forms can and can't do
+
+| Prior status | Can `/subscribe` reactivate? | Can popup/footer reactivate? | How to re-enable manually |
+|---|---|---|---|
+| `active` | n/a | n/a | — |
+| `unsubscribed` | ✅ yes (Turnstile gate) | ❌ no (silently no-op) | Have the user re-submit via `/subscribe` |
+| `bounced` | ❌ never from any form | ❌ never from any form | Fix the deliverability issue, then direct SQL update |
+| `complained` | ❌ never from any form | ❌ never from any form | Operator SQL update ONLY after verifying the complaint is resolved. Resending to a prior complainer damages sender reputation. |
+
+**No double opt-in today.** The site does not send a "click to confirm" email after signup. A Turnstile-verified `/subscribe` submission is treated as sufficient to reactivate an `unsubscribed` row. This is weaker than a full double opt-in flow (emailed confirmation link) but was a deliberate choice for a personal-scale newsletter:
+
+- The list is small enough that a determined attacker couldn't cause enterprise-scale harm.
+- Legitimate re-subscribers face one form instead of a form + email round trip.
+- An unsubscribed reader who tries to re-subscribe via the popup silently fails — they'll need to use `/subscribe`.
+
+If the list grows meaningfully or the attack surface matters more, the follow-up is a proper double opt-in flow: new `pending_confirmations` table, confirmation email with single-use expiring token, reactivation only on link click.
+
 ### 8. Manually unsubscribe someone
 
 ```bash
@@ -323,3 +340,46 @@ Subscribe a test email (e.g., `tarek+test@tarekalaaddin.com`), then force-send t
 | `subscribers` | One row per email. Status, source, unsubscribe token, interests. |
 | `sends` | One row per post-broadcast. Gates whether a post re-emails. |
 | `sent_to` | Join table — which subscribers got which send. Enables idempotent retries. |
+
+---
+
+## Resend audience sync
+
+The site DB is the source of truth. The Resend audience ("General") is a **mirror**, kept in sync so the Resend dashboard shows live counts and you can see / search subscribers there without hitting the DB.
+
+### How it stays in sync
+
+- **On subscribe** (via `/subscribe`, footer form, or popup): after the DB upsert, `syncContactUpsert` is called and creates/updates the Resend contact. Failures are logged, not surfaced to the user.
+- **On unsubscribe**: after the DB status flip, `syncContactUnsubscribe` flips the Resend contact to `unsubscribed`.
+- **No background job** does this continuously — the sync happens inline on each event.
+
+### When to re-backfill
+
+Run the backfill script if:
+- You've just deployed the audience-sync code for the first time.
+- You suspect drift (e.g. Resend had an outage during a signup, or the Resend audience was wiped manually).
+- You changed `RESEND_AUDIENCE_ID` and want the new audience populated.
+
+```bash
+vercel env pull .env.local
+node scripts/sync-audience-backfill.mjs --dry-run   # counts only, no API calls
+node scripts/sync-audience-backfill.mjs             # actually push
+```
+
+The script is idempotent. It sends every subscriber's current state (active or unsubscribed) to Resend, so a second run just updates existing contacts.
+
+### Changing the audience
+
+Set `RESEND_AUDIENCE_ID` in Vercel to a different audience ID, redeploy, then re-run the backfill script against the new audience. The old audience is left alone (you can delete it manually in the Resend dashboard).
+
+---
+
+## Recent sends tracking
+
+The admin dashboard (`/admin/newsletter?key=$CRON_SECRET`) shows a **Recent sends** table with a direct deep-link to Resend Logs filtered by that post's slug tag.
+
+Every email the cron sends is tagged with:
+- `kind=newsletter`
+- `slug=<post-slug>`
+
+So in Resend Logs, filter by `slug:<post-slug>` to see opens / clicks / bounces for one specific newsletter send.

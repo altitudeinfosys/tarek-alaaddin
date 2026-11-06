@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/ThemeProvider'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import NewsletterPopup from '@/components/NewsletterPopup'
+import StickyNewsletterBar from '@/components/StickyNewsletterBar'
 import { Analytics } from '@vercel/analytics/react'
 import { PersonSchema, WebSiteSchema } from '@/components/JsonLd'
 import { SITE_URL, absoluteUrl } from '@/lib/site'
@@ -81,6 +82,7 @@ export default function RootLayout({
             <main className="flex-grow">{children}</main>
             <Footer />
             <NewsletterPopup />
+            <StickyNewsletterBar />
           </div>
         </ThemeProvider>
         <Analytics />

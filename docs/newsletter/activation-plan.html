@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Newsletter Activation & Growth Plan — tarekalaaddin.com</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg: #0b0d12;
+    --panel: #11141b;
+    --panel-2: #161a23;
+    --border: #262c3a;
+    --text: #e6e9ef;
+    --muted: #8a93a6;
+    --accent: #7cc4ff;
+    --accent-2: #b6ff7a;
+    --warn: #ffd166;
+    --danger: #ff7a7a;
+    --ok: #74e3a0;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media print {
+    :root { --bg: #fff; --panel: #fff; --panel-2: #fff; --border: #bbb; --text: #111; --muted: #444; --accent: #0066cc; --accent-2: #116611; --warn: #996600; --danger: #990000; --ok: #006633; }
+    body { background: #fff; color: #111; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 40px 24px;
+  }
+  main { max-width: 980px; margin: 0 auto; }
+  h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h2 { font-size: 20px; margin: 44px 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  h3 { font-size: 16px; margin: 24px 0 8px; }
+  p { margin: 8px 0; }
+  code { font-family: var(--mono); font-size: 13px; background: var(--panel-2); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border); }
+  pre { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; overflow: auto; font-size: 12.5px; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .pill { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel-2); color: var(--muted); }
+  .pill.ok { color: var(--ok); border-color: #1a4a2e; }
+  .pill.warn { color: var(--warn); border-color: #4a3a1a; }
+  .pill.new { color: var(--accent); border-color: #1a3a55; }
+  .pill.cleanup { color: var(--danger); border-color: #4a1a1a; }
+
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin: 12px 0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 760px) { .grid-2 { grid-template-columns: 1fr; } }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 760px) { .grid-3 { grid-template-columns: 1fr; } }
+
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 18px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+  tr:last-child td { border-bottom: none; }
+
+  .callout { border-left: 3px solid var(--accent); background: var(--panel-2); padding: 12px 14px; border-radius: 6px; margin: 14px 0; }
+  .callout.warn { border-left-color: var(--warn); }
+  .callout.danger { border-left-color: var(--danger); }
+  .callout.ok { border-left-color: var(--ok); }
+  .callout h4 { margin: 0 0 4px; font-size: 14px; }
+  .callout p { margin: 2px 0; font-size: 13.5px; }
+
+  .diagram { background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; overflow: auto; }
+
+  ol.steps { padding-left: 20px; }
+  ol.steps li { margin: 6px 0; }
+  .fp { font-family: var(--mono); font-size: 12.5px; color: var(--accent-2); }
+
+  .kbd { font-family: var(--mono); font-size: 12px; background: var(--panel-2); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; }
+
+  summary { cursor: pointer; font-weight: 600; margin: 8px 0; }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <h1>Newsletter Activation &amp; Growth Plan</h1>
+  <p class="meta">tarekalaaddin.com &middot; 2026-11-05 &middot; for review &amp; sign-off before any code changes</p>
+</header>
+
+<section class="panel">
+  <h3 style="margin-top:0">What this plan is</h3>
+  <p>You already have a complete newsletter system in this repo. You asked for three additions on top:</p>
+  <ol style="margin: 4px 0 0 18px; padding: 0;">
+    <li><strong>See subscribers in the Resend dashboard.</strong> Right now Resend&rsquo;s Audience page is empty.</li>
+    <li><strong>Track newsletter progress.</strong> Make sends findable in Resend&rsquo;s Logs with filterable tags, and surface per-post metrics in the admin UI.</li>
+    <li><strong>Aggressive email signup.</strong> Lower friction, more surfaces, exit-intent, inline blog CTAs, sticky bar.</li>
+  </ol>
+  <p>Plus a small cleanup: the health endpoint and VERCEL_ENV_SETUP.md still reference Kit/ConvertKit, which isn&rsquo;t used anywhere. That&rsquo;s stale and misleading.</p>
+</section>
+
+<h2>Current state — what&rsquo;s already in place</h2>
+
+<div class="grid-2">
+  <div class="panel">
+    <h3 style="margin-top:0">Architecture</h3>
+    <ul>
+      <li><strong>Source of truth:</strong> your Neon Postgres DB (<code>subscribers</code>, <code>sends</code>, <code>sent_to</code>)</li>
+      <li><strong>Transport:</strong> Resend (<code>newsletter@tarekalaaddin.com</code>)</li>
+      <li><strong>Auto-send:</strong> Vercel cron daily at 14:00 UTC, idempotent per subscriber</li>
+      <li><strong>Safety rails:</strong> <code>NEWSLETTER_CUTOFF_DATE=2026-04-18</code> plus 45 pre-marked legacy posts</li>
+      <li><strong>Protection:</strong> Cloudflare Turnstile on main form, honeypot on popup/footer</li>
+    </ul>
+  </div>
+  <div class="panel">
+    <h3 style="margin-top:0">Signup surfaces today</h3>
+    <ul>
+      <li>Footer form on every page (one-field email)</li>
+      <li>Popup — fires at <strong>50% scroll</strong>, dismisses for <strong>7 days</strong></li>
+      <li>Dedicated <code>/subscribe</code> page with topic preferences (productivity / AI / marketing)</li>
+    </ul>
+    <p style="margin-top:12px"><span class="pill">131</span> blog posts in <code>content/blog/</code></p>
+  </div>
+</div>
+
+<div class="panel">
+  <h3 style="margin-top:0">Resend account snapshot</h3>
+  <table>
+    <tr><th>Thing</th><th>Status</th></tr>
+    <tr><td>Domain <code>tarekalaaddin.com</code></td><td><span class="pill ok">Verified</span></td></tr>
+    <tr><td>Audience &ldquo;General&rdquo;</td><td><span class="pill warn">Exists but empty (0 contacts)</span></td></tr>
+    <tr><td>Broadcasts</td><td><span class="pill">0</span> &mdash; sends go as individual transactional emails via <code>resend.batch.send</code></td></tr>
+    <tr><td>Templates</td><td><span class="pill">0</span> &mdash; templates rendered in code (<code>lib/email/templates.ts</code>)</td></tr>
+    <tr><td>Webhooks</td><td>3 (none for tarekalaaddin.com &mdash; one for taskitos.com, two for expandnote)</td></tr>
+  </table>
+</div>
+
+<h2>What changes — three workstreams + hygiene</h2>
+
+<div class="grid-3">
+  <div class="panel"><h3 style="margin-top:0">1. Visibility</h3><p class="meta">Sync site DB &rarr; Resend Audience so the dashboard shows live subscriber counts.</p></div>
+  <div class="panel"><h3 style="margin-top:0">2. Growth</h3><p class="meta">Make signup more aggressive without being obnoxious. More surfaces, better triggers.</p></div>
+  <div class="panel"><h3 style="margin-top:0">3. Progress tracking</h3><p class="meta">Tag outbound emails so Resend&rsquo;s Logs can be filtered per post, surface metrics in admin.</p></div>
+</div>
+
+<h2>1. Resend Audience sync <span class="pill new">NEW</span></h2>
+
+<div class="diagram">
+  <svg viewBox="0 0 900 260" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 Z" fill="#7cc4ff"/>
+      </marker>
+    </defs>
+    <!-- Boxes -->
+    <rect x="30" y="40" width="190" height="60" rx="8" fill="#161a23" stroke="#262c3a"/>
+    <text x="125" y="65" fill="#e6e9ef" font-size="13" text-anchor="middle" font-family="system-ui">Signup forms</text>
+    <text x="125" y="84" fill="#8a93a6" font-size="11" text-anchor="middle" font-family="system-ui">footer / popup / /subscribe</text>
+
+    <rect x="290" y="40" width="200" height="60" rx="8" fill="#161a23" stroke="#262c3a"/>
+    <text x="390" y="65" fill="#e6e9ef" font-size="13" text-anchor="middle" font-family="system-ui">upsertSubscriber()</text>
+    <text x="390" y="84" fill="#8a93a6" font-size="11" text-anchor="middle" font-family="system-ui">Neon Postgres (source of truth)</text>
+
+    <rect x="560" y="10" width="300" height="60" rx="8" fill="#161a23" stroke="#1a4a2e"/>
+    <text x="710" y="35" fill="#74e3a0" font-size="13" text-anchor="middle" font-family="system-ui">Resend Audience &ldquo;General&rdquo;</text>
+    <text x="710" y="54" fill="#8a93a6" font-size="11" text-anchor="middle" font-family="system-ui">visible in Resend dashboard</text>
+
+    <rect x="560" y="100" width="300" height="60" rx="8" fill="#161a23" stroke="#262c3a"/>
+    <text x="710" y="125" fill="#e6e9ef" font-size="13" text-anchor="middle" font-family="system-ui">Welcome email (as today)</text>
+    <text x="710" y="144" fill="#8a93a6" font-size="11" text-anchor="middle" font-family="system-ui">resend.emails.send</text>
+
+    <rect x="30" y="180" width="190" height="60" rx="8" fill="#161a23" stroke="#262c3a"/>
+    <text x="125" y="205" fill="#e6e9ef" font-size="13" text-anchor="middle" font-family="system-ui">/unsubscribe</text>
+    <text x="125" y="224" fill="#8a93a6" font-size="11" text-anchor="middle" font-family="system-ui">token-based</text>
+
+    <rect x="290" y="180" width="200" height="60" rx="8" fill="#161a23" stroke="#262c3a"/>
+    <text x="390" y="205" fill="#e6e9ef" font-size="13" text-anchor="middle" font-family="system-ui">markUnsubscribed()</text>
+    <text x="390" y="224" fill="#8a93a6" font-size="11" text-anchor="middle" font-family="system-ui">DB status &rarr; unsubscribed</text>
+
+    <rect x="560" y="180" width="300" height="60" rx="8" fill="#161a23" stroke="#4a3a1a"/>
+    <text x="710" y="205" fill="#ffd166" font-size="13" text-anchor="middle" font-family="system-ui">Audience contact &rarr; unsubscribed</text>
+    <text x="710" y="224" fill="#8a93a6" font-size="11" text-anchor="middle" font-family="system-ui">keeps Resend count in sync</text>
+
+    <!-- Arrows -->
+    <line x1="220" y1="70" x2="290" y2="70" stroke="#7cc4ff" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line x1="490" y1="60" x2="560" y2="40" stroke="#7cc4ff" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line x1="490" y1="80" x2="560" y2="130" stroke="#7cc4ff" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line x1="220" y1="210" x2="290" y2="210" stroke="#7cc4ff" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line x1="490" y1="210" x2="560" y2="210" stroke="#7cc4ff" stroke-width="1.5" marker-end="url(#arrow)"/>
+  </svg>
+</div>
+
+<div class="callout">
+  <h4>Design principle</h4>
+  <p>Your DB stays the source of truth. The Resend audience is a <strong>mirror</strong>, never read from. If the mirror falls out of sync, re-run the backfill. This keeps you safe from vendor lock-in and avoids dual-write race conditions driving correctness.</p>
+</div>
+
+<h3>Files &amp; changes</h3>
+<table>
+  <tr><th>Change</th><th>File</th><th>What</th></tr>
+  <tr><td><span class="pill new">NEW</span></td><td class="fp">lib/email/audience.ts</td><td>Thin wrapper over Resend Audiences API: <code>upsertContact()</code>, <code>markContactUnsubscribed()</code>, <code>backfillAll()</code>. Every call is best-effort &mdash; a Resend failure must never block a DB write or 500 the subscribe route.</td></tr>
+  <tr><td><span class="pill new">NEW</span></td><td class="fp">scripts/sync-audience-backfill.mjs</td><td>One-shot: pull all active subscribers from the DB, push to the Resend audience. Supports <code>--dry-run</code>. Run once after deploy; idempotent for re-runs.</td></tr>
+  <tr><td>edit</td><td class="fp">app/api/newsletter/subscribe/route.ts</td><td>After successful <code>upsertSubscriber</code>, fire-and-forget <code>upsertContact</code>. Non-blocking.</td></tr>
+  <tr><td>edit</td><td class="fp">app/api/newsletter/popup-subscribe/route.ts</td><td>Same hook.</td></tr>
+  <tr><td>edit</td><td class="fp">app/api/newsletter/unsubscribe/route.ts</td><td>After <code>markUnsubscribed</code>, fire-and-forget <code>markContactUnsubscribed</code>.</td></tr>
+  <tr><td><span class="pill new">NEW env</span></td><td class="fp">Vercel env</td><td><code>RESEND_AUDIENCE_ID</code> &mdash; defaults to the existing &ldquo;General&rdquo; audience ID. Single env var, no code churn to change audience later.</td></tr>
+</table>
+
+<h2>2. Broadcast progress tracking <span class="pill new">NEW</span></h2>
+
+<p>Your cron sends through <code>resend.batch.send()</code> &mdash; every send is already visible in <strong>Resend &rarr; Emails</strong> with open/click rates. What&rsquo;s missing is being able to pull up all emails for a given post in one filter, or see rollups in the admin dashboard.</p>
+
+<table>
+  <tr><th>Change</th><th>File</th><th>What</th></tr>
+  <tr><td>edit</td><td class="fp">app/api/cron/newsletter/route.ts</td><td>Attach Resend tags to every email in the batch: <code>{ name: &quot;kind&quot;, value: &quot;newsletter&quot; }</code> and <code>{ name: &quot;slug&quot;, value: meta.slug }</code>. Makes per-post filtering trivial in Resend&rsquo;s Logs.</td></tr>
+  <tr><td>edit</td><td class="fp">components/newsletter/NewsletterDashboard.tsx</td><td>Add a &ldquo;Recent sends&rdquo; table: post title, date, recipient count, deep-link to Resend Logs filtered by that slug tag.</td></tr>
+  <tr><td><span class="pill new">NEW</span></td><td class="fp">app/api/newsletter/sends/route.ts</td><td>Auth-protected list of recent <code>sends</code> rows for the admin UI. Same bearer-token pattern as the subscribers route.</td></tr>
+</table>
+
+<div class="callout warn">
+  <h4>Scope note</h4>
+  <p>Not pulling live Resend metrics into the admin UI in this pass &mdash; it would add an API round-trip per render. The Resend deep-link is better: one click, see live metrics in the source of truth. If you want in-dashboard open rates later, that&rsquo;s a second pass.</p>
+</div>
+
+<h2>3. Aggressive signup UX <span class="pill new">NEW</span></h2>
+
+<p>Current popup is polite: fires only after 50% scroll, dismisses for 7 days. We can push it harder without being annoying.</p>
+
+<h3>Changes to the existing popup</h3>
+<table>
+  <tr><th>Setting</th><th>Before</th><th>After</th></tr>
+  <tr><td>Scroll trigger</td><td>50%</td><td><strong>25%</strong> &mdash; fires earlier, catches shallower readers</td></tr>
+  <tr><td>Dismiss duration</td><td>7 days</td><td><strong>3 days</strong></td></tr>
+  <tr><td>Exit-intent trigger</td><td>none</td><td><strong>new:</strong> fires when mouse leaves viewport top (desktop only)</td></tr>
+  <tr><td>Time-on-page fallback</td><td>none</td><td><strong>new:</strong> fires at 45s regardless of scroll</td></tr>
+  <tr><td>Excluded pages</td><td><code>/</code>, <code>/subscribe</code>, <code>/thank-you</code></td><td>unchanged</td></tr>
+</table>
+
+<h3>New signup surfaces</h3>
+<table>
+  <tr><th>Surface</th><th>Where</th><th>Behavior</th></tr>
+  <tr><td><span class="pill new">NEW</span> Inline blog CTA</td><td>Mid-article on <code>/blog/[slug]</code>, after the Nth paragraph</td><td>Styled card break: &ldquo;Get posts like this in your inbox.&rdquo; Inline, non-modal.</td></tr>
+  <tr><td><span class="pill new">NEW</span> End-of-post card</td><td>After article body on <code>/blog/[slug]</code></td><td>Full-width card with first-name + email. Pre-fills topic preference from post tags where available.</td></tr>
+  <tr><td><span class="pill new">NEW</span> Sticky bottom bar</td><td>Blog pages only, for non-subscribers who haven&rsquo;t dismissed</td><td>Slim one-line bar: &ldquo;New: AI &amp; productivity posts every week. [email] [Subscribe] [x]&rdquo;. Separate localStorage flag from popup.</td></tr>
+  <tr><td>Footer form</td><td>Every page</td><td>Unchanged behaviorally; tightening copy.</td></tr>
+</table>
+
+<div class="callout">
+  <h4>Why not more</h4>
+  <p>Interstitial/full-screen modals, blocking overlays, and &ldquo;no thanks, I don&rsquo;t want to grow&rdquo; dark-patterns actively damage trust on a personal brand site. These four surfaces together typically 2&ndash;4&times; conversion versus a footer form alone without feeling spammy.</p>
+</div>
+
+<h3>Files &amp; changes</h3>
+<table>
+  <tr><th>Change</th><th>File</th></tr>
+  <tr><td>edit</td><td class="fp">components/NewsletterPopup.tsx</td></tr>
+  <tr><td><span class="pill new">NEW</span></td><td class="fp">components/InlineNewsletterCTA.tsx &mdash; mid-article</td></tr>
+  <tr><td><span class="pill new">NEW</span></td><td class="fp">components/EndOfPostNewsletterCard.tsx &mdash; after article</td></tr>
+  <tr><td><span class="pill new">NEW</span></td><td class="fp">components/StickyNewsletterBar.tsx &mdash; blog-only, dismissible</td></tr>
+  <tr><td>edit</td><td class="fp">app/blog/[slug]/page.tsx &mdash; mount the three new components</td></tr>
+</table>
+
+<h2>4. Hygiene <span class="pill cleanup">CLEANUP</span></h2>
+
+<table>
+  <tr><th>Change</th><th>File / target</th><th>What</th></tr>
+  <tr><td>edit</td><td class="fp">app/api/health/route.ts</td><td>Replace Kit-centric checks with Resend-centric checks: <code>resendApi</code>, <code>resendAudienceId</code>, <code>cronSecret</code>, <code>databaseUrl</code>, Turnstile. Drops the stale Kit fields.</td></tr>
+  <tr><td>edit</td><td class="fp">VERCEL_ENV_SETUP.md</td><td>Rewrite to match the Resend-based system actually in use. Document <code>RESEND_AUDIENCE_ID</code>. Remove Kit section. Keep Mailgun section (contact form still uses it, confirmed via grep).</td></tr>
+  <tr><td>no change</td><td class="fp">package.json / mailgun.js</td><td><strong>Keep</strong>. Only used by <code>/api/contact/route.ts</code>, which is out of scope for this plan.</td></tr>
+  <tr><td>edit</td><td class="fp">docs/NEWSLETTER-RUNBOOK.md</td><td>Append a short section: &ldquo;Resend audience sync &mdash; how it works, how to re-backfill, when to run it.&rdquo;</td></tr>
+</table>
+
+<h2>What stays the same</h2>
+<div class="callout ok">
+  <ul style="margin:0; padding-left:18px">
+    <li>DB schema &mdash; <strong>no migrations</strong></li>
+    <li>Cron behavior, cutoff date, safety rails</li>
+    <li>Unsubscribe flow</li>
+    <li>Welcome email</li>
+    <li>Turnstile protection</li>
+    <li>Admin dashboard access pattern</li>
+    <li>Mailgun for contact form</li>
+  </ul>
+</div>
+
+<h2>Risks &amp; how we handle them</h2>
+<table>
+  <tr><th>Risk</th><th>Mitigation</th></tr>
+  <tr><td>Resend API hiccup blocks a signup</td><td>Audience sync is fire-and-forget with try/catch. Signup always succeeds if the DB write does. Failures logged, not surfaced to user.</td></tr>
+  <tr><td>Backfill double-adds contacts</td><td>Resend&rsquo;s create-contact is idempotent by email within an audience. Re-runs are safe.</td></tr>
+  <tr><td>Drift between DB and Resend</td><td>Backfill script can be re-run any time. DB is source of truth; Resend is a cache.</td></tr>
+  <tr><td>Aggressive signup feels spammy to loyal readers</td><td>All new surfaces respect a <code>SUBSCRIBED_KEY</code> flag so returning subscribers never see them. Sticky bar has its own dismiss flag. If feedback is bad, roll back by changing component mounts.</td></tr>
+  <tr><td>Stale <code>NEWSLETTER_CUTOFF_DATE</code> env</td><td>Not touched by this plan. Runbook already documents it.</td></tr>
+</table>
+
+<h2>Verification before merge</h2>
+<ol class="steps">
+  <li>Local dev: subscribe a test email through each of the four surfaces. Verify each appears in both the DB and the Resend audience.</li>
+  <li>Unsubscribe via token. Verify DB row flips to <code>unsubscribed</code> AND Resend contact flips to unsubscribed.</li>
+  <li>Dry-run the cron with a force-send against a test post. Verify Resend Logs show the tags <code>kind=newsletter</code> and <code>slug=&lt;slug&gt;</code>.</li>
+  <li>Hit <code>/api/health</code> &mdash; confirm the new Resend-based fields appear and Kit fields are gone.</li>
+  <li>Backfill script with <code>--dry-run</code>: shows the count of contacts it would push, no Resend writes yet. Then run for real.</li>
+  <li>Admin dashboard: verify the &ldquo;Recent sends&rdquo; table renders and the Resend deep-links work.</li>
+</ol>
+
+<h2>Branch &amp; merge plan</h2>
+<ol class="steps">
+  <li>Already in worktree on <code>claude/mailing-list-service-options-59a01b</code>. All work goes here.</li>
+  <li>Push &amp; open PR to <code>main</code>.</li>
+  <li><strong>I will NOT merge.</strong> You review &amp; merge per CLAUDE.md rules.</li>
+  <li>After merge: you add <code>RESEND_AUDIENCE_ID</code> to Vercel env (I&rsquo;ll give you the exact ID and a one-liner to set it), then run the backfill script once locally.</li>
+</ol>
+
+<h2>Out of scope for this PR</h2>
+<ul>
+  <li>Switching Broadcast sends to use Resend&rsquo;s native Broadcasts API (your cron model works fine &mdash; worth a separate conversation later if you want the visual editor).</li>
+  <li>Any bounce/complaint webhook from Resend into the site DB (you can rely on Resend&rsquo;s own suppression for now).</li>
+  <li>Moving the contact form off Mailgun.</li>
+  <li>A/B testing different popup copy.</li>
+</ul>
+
+<footer style="margin-top:50px; color:var(--muted); font-size:12px; border-top:1px solid var(--border); padding-top:12px">
+  Plan generated 2026-11-05 &middot; worktree <span class="fp">mailing-list-service-options-59a01b</span> &middot; awaiting your sign-off before any code changes
+</footer>
+
+</main>
+</body>
+</html>

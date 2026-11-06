@@ -5,8 +5,10 @@ import { usePathname } from 'next/navigation'
 
 const DISMISSED_KEY = 'newsletter-popup-dismissed'
 const SUBSCRIBED_KEY = 'newsletter-popup-subscribed'
-const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
-const SCROLL_THRESHOLD = 0.5
+const DISMISS_DURATION_MS = 3 * 24 * 60 * 60 * 1000 // 3 days (was 7)
+const SCROLL_THRESHOLD = 0.25 // fire earlier (was 0.5)
+const TIME_FALLBACK_MS = 45_000 // show after 45s regardless of scroll
+const EXIT_INTENT_MIN_MS = 10_000 // don't exit-intent-trigger instantly on load
 // Homepage has its own footer signup; don't stack the popup on top of it.
 const EXCLUDED_PATHS = ['/', '/subscribe', '/thank-you']
 
@@ -42,18 +44,43 @@ export default function NewsletterPopup() {
   useEffect(() => {
     if (!shouldShow()) return
 
+    const loadedAt = Date.now()
+    let fired = false
+    const fire = () => {
+      if (fired) return
+      fired = true
+      setState('visible')
+      window.removeEventListener('scroll', handleScroll)
+      // Must match the addEventListener target — this listener is on document.
+      document.removeEventListener('mouseout', handleMouseOut)
+      clearTimeout(timeFallback)
+    }
+
     const handleScroll = () => {
       const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight
       if (scrollableHeight <= 0) return
       const scrollPercent = window.scrollY / scrollableHeight
-      if (scrollPercent >= SCROLL_THRESHOLD) {
-        setState('visible')
-        window.removeEventListener('scroll', handleScroll)
-      }
+      if (scrollPercent >= SCROLL_THRESHOLD) fire()
     }
 
+    // Exit intent: pointer leaves the top of the viewport. Desktop-ish only — on
+    // touch there's no equivalent and this never fires, which is fine.
+    const handleMouseOut = (event: MouseEvent) => {
+      if (event.relatedTarget) return // moving to another element, not leaving
+      if (event.clientY > 0) return // only when leaving via the top edge
+      if (Date.now() - loadedAt < EXIT_INTENT_MIN_MS) return
+      fire()
+    }
+
+    const timeFallback = setTimeout(fire, TIME_FALLBACK_MS)
     window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
+    document.addEventListener('mouseout', handleMouseOut)
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      document.removeEventListener('mouseout', handleMouseOut)
+      clearTimeout(timeFallback)
+    }
   }, [shouldShow])
 
   const dismiss = () => {

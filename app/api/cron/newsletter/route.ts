@@ -111,6 +111,9 @@ async function runNewsletterSend({ cutoff, dryRun, forceSlug }: RunArgs) {
 
     for (let i = 0; i < pending.length; i += 100) {
       const batch = pending.slice(i, i + 100)
+      // Resend tag values must be ASCII letters, numbers, _ or -. Slugs are already
+      // kebab-case ASCII; defensive sanitize keeps this invariant if that ever changes.
+      const slugTag = meta.slug.replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 256)
       const batchPayload = batch.map((sub) => {
         const { subject, html, text } = renderBlogPostEmail({
           postTitle: meta.title,
@@ -126,6 +129,11 @@ async function runNewsletterSend({ cutoff, dryRun, forceSlug }: RunArgs) {
           subject,
           html,
           text,
+          // Tags let Resend's Logs/Emails tabs filter by kind=newsletter or by post slug.
+          tags: [
+            { name: 'kind', value: 'newsletter' },
+            { name: 'slug', value: slugTag },
+          ],
         }
       })
 

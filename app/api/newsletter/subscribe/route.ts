@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { upsertSubscriber } from '@/lib/db/subscribers'
 import { resend, FROM, REPLY_TO } from '@/lib/email/resend'
 import { renderWelcomeEmail } from '@/lib/email/templates'
+import { syncContactUpsert } from '@/lib/email/audience'
 
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY
 
@@ -54,7 +55,24 @@ export async function POST(request: NextRequest) {
         ai: !!topics.ai,
         marketing: !!topics.marketing,
       },
+      // Turnstile passed above, so a bot didn't submit this. That's weaker
+      // than proof of mailbox ownership (full double opt-in), but strong
+      // enough to let this path clear a prior `unsubscribed` status.
+      // Honeypot-only paths (popup/footer) leave the default false.
+      // 'bounced' and 'complained' rows are never reactivated regardless.
+      allowReactivate: true,
     })
+
+    // Mirror into Resend audience so the dashboard count stays live. Failures
+    // here must not block the subscribe response — the DB is source of truth.
+    // allowReactivate=true because this route is Turnstile-verified above.
+    await syncContactUpsert(
+      {
+        email: result.subscriber.email,
+        firstName: result.subscriber.firstName,
+      },
+      { allowReactivate: true }
+    )
 
     if (result.isNew || result.wasReactivated) {
       try {

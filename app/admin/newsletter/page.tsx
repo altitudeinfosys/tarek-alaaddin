@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { desc } from 'drizzle-orm'
 import { db, subscribers } from '@/lib/db'
+import { listRecentSends } from '@/lib/db/sends'
 import NewsletterDashboard from '@/components/newsletter/NewsletterDashboard'
 
 export const metadata: Metadata = {
@@ -22,13 +23,25 @@ export default async function NewsletterPage({ searchParams }: PageProps) {
     notFound()
   }
 
-  const rows = await db.select().from(subscribers).orderBy(desc(subscribers.subscribedAt))
+  const [rows, sends] = await Promise.all([
+    db.select().from(subscribers).orderBy(desc(subscribers.subscribedAt)),
+    listRecentSends(20),
+  ])
+
   const initialSubscribers = rows.map((sub) => ({
     id: sub.id,
     email: sub.email,
     first_name: sub.firstName ?? undefined,
     subscribed_at: sub.subscribedAt.toISOString(),
     state: sub.status,
+  }))
+
+  const recentSends = sends.map((s) => ({
+    id: s.id,
+    post_slug: s.postSlug,
+    post_title: s.postTitle,
+    sent_at: s.sentAt.toISOString(),
+    recipient_count: s.recipientCount,
   }))
 
   return (
@@ -40,7 +53,10 @@ export default async function NewsletterPage({ searchParams }: PageProps) {
             Manage and monitor your newsletter subscribers
           </p>
         </div>
-        <NewsletterDashboard initialSubscribers={initialSubscribers} />
+        <NewsletterDashboard
+          initialSubscribers={initialSubscribers}
+          recentSends={recentSends}
+        />
       </div>
     </div>
   )

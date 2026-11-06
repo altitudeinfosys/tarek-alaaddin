@@ -6,6 +6,8 @@ import Callout from '@/components/mdx/Callout'
 import CodeBlock from '@/components/mdx/CodeBlock'
 import ProductCTA from '@/components/mdx/ProductCTA'
 import ImageWithCaption from '@/components/mdx/ImageWithCaption'
+import InlineNewsletterCTA from '@/components/InlineNewsletterCTA'
+import EndOfPostNewsletterCard from '@/components/EndOfPostNewsletterCard'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeSlug from 'rehype-slug'
@@ -70,6 +72,7 @@ const components = {
   CodeBlock,
   ProductCTA,
   ImageWithCaption,
+  InlineNewsletterCTA,
 }
 
 export default function BlogPostPage({ params }: BlogPostPageProps) {
@@ -164,6 +167,9 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
             }}
           />
         </div>
+
+        {/* End-of-post signup */}
+        <EndOfPostNewsletterCard />
 
         {/* Footer */}
         <footer className="mt-12 pt-8 border-t border-gray-300 dark:border-gray-800">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { upsertSubscriber } from '@/lib/db/subscribers'
 import { resend, FROM, REPLY_TO } from '@/lib/email/resend'
 import { renderWelcomeEmail } from '@/lib/email/templates'
+import { syncContactUpsert } from '@/lib/email/audience'
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -23,10 +24,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Valid email is required' }, { status: 400 })
     }
 
+    // Honeypot-only path: allowReactivate stays false (the default). Upserting
+    // an already-unsubscribed email will return reactivationBlocked=true and
+    // leave the DB row and status untouched — no welcome email, no mirror.
     const result = await upsertSubscriber({
       email,
       firstName: firstName?.trim() || null,
       source,
+    })
+
+    if (result.reactivationBlocked) {
+      // Return the same "success" shape so a honeypot-bypass bot can't tell
+      // the difference between "subscribed" and "silently ignored". A real
+      // visitor who previously unsubscribed can re-subscribe via /subscribe
+      // (which runs Turnstile).
+      return NextResponse.json({ success: true })
+    }
+
+    // Mirror into Resend audience — best-effort, must not block signup.
+    await syncContactUpsert({
+      email: result.subscriber.email,
+      firstName: result.subscriber.firstName,
     })
 
     if (result.isNew || result.wasReactivated) {
