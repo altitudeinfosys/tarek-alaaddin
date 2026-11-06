@@ -50,7 +50,13 @@ export default async function NewsletterPage({ searchParams }: PageProps) {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Newsletter Dashboard</h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Manage and monitor your newsletter subscribers
+            Manage and monitor your newsletter subscribers ·{' '}
+            <a
+              href={`/admin/newsletter/guide?key=${encodeURIComponent(expected)}`}
+              className="font-medium text-primary-600 dark:text-primary-400 hover:underline"
+            >
+              Operator guide
+            </a>
           </p>
         </div>
         <NewsletterDashboard

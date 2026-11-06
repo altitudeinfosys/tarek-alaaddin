@@ -2,13 +2,14 @@
 /**
  * Newsletter admin CLI — local helpers for the self-hosted newsletter.
  *
- * Usage:
- *   node scripts/newsletter-admin.mjs migrate            # generate + run migrations
- *   node scripts/newsletter-admin.mjs dry-run            # preview cron without sending
- *   node scripts/newsletter-admin.mjs send <slug>        # force-send a specific post
- *   node scripts/newsletter-admin.mjs backfill           # mark all existing posts as already-sent
+ * Usage (requires Node 20+ for --env-file):
+ *   node --env-file=.env.local scripts/newsletter-admin.mjs dry-run
+ *   node --env-file=.env.local scripts/newsletter-admin.mjs send <slug>
+ *   node --env-file=.env.local scripts/newsletter-admin.mjs backfill
+ *
+ * Pull env first if you don't already have .env.local:
+ *   vercel env pull .env.local
  */
-import 'dotenv/config'
 import fs from 'node:fs'
 import path from 'node:path'
 

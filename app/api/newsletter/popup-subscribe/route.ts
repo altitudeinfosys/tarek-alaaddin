@@ -8,7 +8,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 // The footer form reuses this honeypot-protected endpoint. Only known values are
 // recorded; anything else falls back to 'popup' so callers can't write arbitrary text.
-const ALLOWED_SOURCES = ['popup', 'footer'] as const
+const ALLOWED_SOURCES = ['popup', 'footer', 'sticky-bar', 'end-of-post'] as const
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,21 +33,14 @@ export async function POST(request: NextRequest) {
       source,
     })
 
-    if (result.reactivationBlocked) {
-      // Return the same "success" shape so a honeypot-bypass bot can't tell
-      // the difference between "subscribed" and "silently ignored". A real
-      // visitor who previously unsubscribed can re-subscribe via /subscribe
-      // (which runs Turnstile).
-      return NextResponse.json({ success: true })
-    }
-
-    // Mirror into Resend audience — best-effort, must not block signup.
-    await syncContactUpsert({
-      email: result.subscriber.email,
-      firstName: result.subscriber.firstName,
-    })
-
+    // A blocked reactivation falls through to the same success response, so this
+    // endpoint can't be used to probe which addresses have opted out.
     if (result.isNew || result.wasReactivated) {
+      await syncContactUpsert({
+        email: result.subscriber.email,
+        firstName: result.subscriber.firstName,
+      })
+
       try {
         const { subject, html, text } = renderWelcomeEmail({
           firstName: result.subscriber.firstName,

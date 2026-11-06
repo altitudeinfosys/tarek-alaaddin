@@ -1,4 +1,4 @@
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, gt } from 'drizzle-orm'
 import { db } from './index'
 import { sends, sentTo, type Send, type NewSend } from './schema'
 
@@ -20,15 +20,12 @@ export async function updateSendRecipientCount(sendId: string, count: number) {
   await db.update(sends).set({ recipientCount: count }).where(eq(sends.id, sendId))
 }
 
-/**
- * Most-recent sends, newest first. Backfilled "mark as sent" rows have
- * recipient_count = 0 and are excluded from this feed since they never actually
- * went out.
- */
+// Backfilled "mark as sent" rows have recipient_count = 0 and never went out.
 export async function listRecentSends(limit = 20): Promise<Send[]> {
   return db
     .select()
     .from(sends)
+    .where(gt(sends.recipientCount, 0))
     .orderBy(desc(sends.sentAt))
     .limit(limit)
 }

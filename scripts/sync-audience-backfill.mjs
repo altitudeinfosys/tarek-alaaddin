@@ -3,9 +3,12 @@
  * One-shot: mirror every row in the site `subscribers` table into the Resend
  * audience. Idempotent — safe to re-run. The DB stays the source of truth.
  *
- * Usage:
- *   node scripts/sync-audience-backfill.mjs            # live sync
- *   node scripts/sync-audience-backfill.mjs --dry-run  # count only, no writes
+ * Usage (requires Node 20+ for --env-file):
+ *   node --env-file=.env.local scripts/sync-audience-backfill.mjs
+ *   node --env-file=.env.local scripts/sync-audience-backfill.mjs --dry-run
+ *
+ * Pull env first if you don't already have .env.local:
+ *   vercel env pull .env.local
  *
  * Env required:
  *   DATABASE_URL             Neon connection string
@@ -16,51 +19,32 @@
  * NOT throw on API errors. This script branches on both exceptions AND the
  * returned `error` so failed syncs are counted, never silently dropped.
  */
-import 'dotenv/config'
 import { Resend } from 'resend'
 import { neon } from '@neondatabase/serverless'
+
+if (!process.env.DATABASE_URL || !process.env.RESEND_API_KEY) {
+  console.error('Missing env. Run with `node --env-file=.env.local ...` (pull first with `vercel env pull .env.local`).')
+  process.exit(1)
+}
 
 const DEFAULT_AUDIENCE_ID = 'fd886bd2-4e69-43ad-a8de-d876ec34c689'
 const AUDIENCE_ID = process.env.RESEND_AUDIENCE_ID || DEFAULT_AUDIENCE_ID
 const DRY_RUN = process.argv.includes('--dry-run')
 
-if (!process.env.DATABASE_URL) {
-  console.error('DATABASE_URL not set. Run `vercel env pull .env.local` first.')
-  process.exit(1)
-}
-if (!process.env.RESEND_API_KEY) {
-  console.error('RESEND_API_KEY not set.')
-  process.exit(1)
-}
-
 const sql = neon(process.env.DATABASE_URL)
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 async function upsert(email, firstName, unsubscribed) {
-  // Try create first; if it returns error (likely "already exists"), fall through to update.
+  // Resend's create is an upsert: an existing email succeeds with the same id.
   try {
-    const { error: createErr } = await resend.contacts.create({
+    const { error } = await resend.contacts.create({
       email,
       firstName: firstName || undefined,
       unsubscribed,
       segments: [{ id: AUDIENCE_ID }],
     })
-    if (!createErr) return { outcome: 'created' }
-
-    // Backfill runs with operator consent — reactivation is fine here. The
-    // DB row's status is the authoritative truth for every contact.
-    const { error: updateErr } = await resend.contacts.update({
-      audienceId: AUDIENCE_ID,
-      email,
-      unsubscribed,
-      ...(firstName ? { firstName } : {}),
-    })
-    if (!updateErr) return { outcome: 'updated' }
-
-    return {
-      outcome: 'failed',
-      reason: `create: ${createErr?.message || 'unknown'}; update: ${updateErr?.message || 'unknown'}`,
-    }
+    if (!error) return { outcome: 'synced' }
+    return { outcome: 'failed', reason: error.message || 'unknown' }
   } catch (err) {
     return {
       outcome: 'failed',
@@ -88,25 +72,23 @@ async function main() {
     return
   }
 
-  let created = 0
-  let updated = 0
+  let synced = 0
   let failed = 0
   const failures = []
 
   for (const row of rows) {
     const result = await upsert(row.email, row.first_name, row.status !== 'active')
-    if (result.outcome === 'created') created++
-    else if (result.outcome === 'updated') updated++
+    if (result.outcome === 'synced') synced++
     else {
       failed++
       failures.push({ email: row.email, reason: result.reason })
     }
-    if ((created + updated + failed) % 25 === 0) {
-      console.log(`  ... processed ${created + updated + failed}/${total}`)
+    if ((synced + failed) % 25 === 0) {
+      console.log(`  ... processed ${synced + failed}/${total}`)
     }
   }
 
-  console.log(`\nDone. created: ${created} | updated: ${updated} | failed: ${failed}`)
+  console.log(`\nDone. synced: ${synced} | failed: ${failed}`)
   if (failures.length) {
     console.log('\nFailures:')
     for (const f of failures) console.log(`  ${f.email} — ${f.reason}`)

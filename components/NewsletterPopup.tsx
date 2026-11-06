@@ -2,9 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
+import {
+  POPUP_VISIBILITY_EVENT,
+  SUBSCRIBED_EVENT,
+  isSubscribed,
+  markSubscribed,
+} from '@/lib/newsletter-signup'
 
 const DISMISSED_KEY = 'newsletter-popup-dismissed'
-const SUBSCRIBED_KEY = 'newsletter-popup-subscribed'
 const DISMISS_DURATION_MS = 3 * 24 * 60 * 60 * 1000 // 3 days (was 7)
 const SCROLL_THRESHOLD = 0.25 // fire earlier (was 0.5)
 const TIME_FALLBACK_MS = 45_000 // show after 45s regardless of scroll
@@ -26,7 +31,7 @@ export default function NewsletterPopup() {
     if (EXCLUDED_PATHS.includes(pathname)) return false
 
     try {
-      if (localStorage.getItem(SUBSCRIBED_KEY) === 'true') return false
+      if (isSubscribed()) return false
 
       const dismissed = localStorage.getItem(DISMISSED_KEY)
       if (dismissed) {
@@ -49,7 +54,7 @@ export default function NewsletterPopup() {
     const fire = () => {
       if (fired) return
       fired = true
-      setState('visible')
+      if (!isSubscribed()) setState('visible')
       window.removeEventListener('scroll', handleScroll)
       // Must match the addEventListener target — this listener is on document.
       document.removeEventListener('mouseout', handleMouseOut)
@@ -83,6 +88,19 @@ export default function NewsletterPopup() {
     }
   }, [shouldShow])
 
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent(POPUP_VISIBILITY_EVENT, { detail: { visible: state !== 'hidden' } })
+    )
+  }, [state])
+
+  useEffect(() => {
+    const closeIfOpen = () =>
+      setState((current) => (current === 'visible' ? 'hidden' : current))
+    window.addEventListener(SUBSCRIBED_EVENT, closeIfOpen)
+    return () => window.removeEventListener(SUBSCRIBED_EVENT, closeIfOpen)
+  }, [])
+
   const dismiss = () => {
     setState('hidden')
     try {
@@ -113,11 +131,7 @@ export default function NewsletterPopup() {
       }
 
       setState('success')
-      try {
-        localStorage.setItem(SUBSCRIBED_KEY, 'true')
-      } catch {
-        // localStorage unavailable
-      }
+      markSubscribed()
 
       setTimeout(() => setState('hidden'), 2000)
     } catch {
@@ -159,7 +173,7 @@ export default function NewsletterPopup() {
                 Stay in the loop
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Get weekly insights on productivity, AI, and building products.
+                Get each new post on AI and building products by email.
               </p>
             </div>
 

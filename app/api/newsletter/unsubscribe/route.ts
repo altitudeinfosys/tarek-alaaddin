@@ -2,16 +2,33 @@ import { NextRequest, NextResponse } from 'next/server'
 import { markUnsubscribed } from '@/lib/db/subscribers'
 import { syncContactUnsubscribe } from '@/lib/email/audience'
 
+async function unsubscribe(token: string) {
+  const result = await markUnsubscribed(token).catch((error) => {
+    console.error('[unsubscribe] Error:', error)
+    return null
+  })
+
+  if (result?.changed) {
+    await syncContactUnsubscribe(result.subscriber.email)
+  }
+
+  return result
+}
+
+// One-click unsubscribe from mail clients (RFC 8058), via the List-Unsubscribe headers.
+export async function POST(request: NextRequest) {
+  const token = request.nextUrl.searchParams.get('token')
+  const result = token ? await unsubscribe(token) : null
+  return new NextResponse(null, { status: result ? 200 : 400 })
+}
+
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token')
   if (!token) {
     return renderHtml('Missing token', 'No unsubscribe token was provided.', false)
   }
 
-  const result = await markUnsubscribed(token).catch((error) => {
-    console.error('[unsubscribe] Error:', error)
-    return null
-  })
+  const result = await unsubscribe(token)
 
   if (!result) {
     return renderHtml(
@@ -19,13 +36,6 @@ export async function GET(request: NextRequest) {
       "We couldn't find that subscription. It may have already been cancelled.",
       false
     )
-  }
-
-  // Only sync Resend when we actually flipped an active row. For rows that
-  // were already suppressed (unsubscribed/bounced/complained), Resend's state
-  // is already in sync or the row shouldn't be resurrected either way.
-  if (result.changed) {
-    await syncContactUnsubscribe(result.subscriber.email)
   }
 
   return renderHtml(
