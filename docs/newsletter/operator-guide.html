@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Newsletter Operator Guide — tarekalaaddin.com</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg: #0b0d12;
+    --panel: #11141b;
+    --panel-2: #161a23;
+    --border: #262c3a;
+    --text: #e6e9ef;
+    --muted: #8a93a6;
+    --accent: #7cc4ff;
+    --accent-2: #b6ff7a;
+    --warn: #ffd166;
+    --danger: #ff7a7a;
+    --ok: #74e3a0;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media print {
+    :root { --bg: #fff; --panel: #fff; --panel-2: #fff; --border: #bbb; --text: #111; --muted: #444; --accent: #0066cc; --accent-2: #116611; --warn: #996600; --danger: #990000; --ok: #006633; }
+    body { background: #fff; color: #111; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 40px 24px;
+  }
+  main { max-width: 980px; margin: 0 auto; }
+  h1 { font-size: 30px; margin: 0 0 4px; letter-spacing: -0.015em; }
+  h2 {
+    font-size: 22px; margin: 44px 0 12px;
+    border-bottom: 1px solid var(--border); padding-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+  h3 { font-size: 16px; margin: 24px 0 8px; }
+  p { margin: 8px 0; }
+  code {
+    font-family: var(--mono); font-size: 13px;
+    background: var(--panel-2); padding: 1px 6px; border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  pre {
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 14px; overflow: auto; font-size: 12.5px;
+    margin: 10px 0;
+  }
+  .meta { color: var(--muted); font-size: 13px; }
+  .pill {
+    display: inline-block; font-size: 11px;
+    padding: 2px 8px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--panel-2);
+    color: var(--muted);
+  }
+  .pill.ok { color: var(--ok); border-color: #1a4a2e; }
+  .pill.warn { color: var(--warn); border-color: #4a3a1a; }
+  .pill.accent { color: var(--accent); border-color: #1a3a55; }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; margin: 12px 0;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 760px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 18px; }
+  th, td {
+    text-align: left; padding: 8px 10px;
+    border-bottom: 1px solid var(--border); vertical-align: top;
+  }
+  th {
+    font-weight: 600; color: var(--muted); font-size: 12px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  tr:last-child td { border-bottom: none; }
+
+  .callout {
+    border-left: 3px solid var(--accent); background: var(--panel-2);
+    padding: 12px 14px; border-radius: 6px; margin: 14px 0;
+  }
+  .callout.warn { border-left-color: var(--warn); }
+  .callout.danger { border-left-color: var(--danger); }
+  .callout.ok { border-left-color: var(--ok); }
+  .callout h4 { margin: 0 0 4px; font-size: 14px; }
+  .callout p { margin: 2px 0; font-size: 13.5px; }
+
+  .step {
+    display: grid; grid-template-columns: 32px 1fr; gap: 12px;
+    padding: 12px 0;
+  }
+  .step + .step { border-top: 1px solid var(--border); }
+  .step-num {
+    width: 28px; height: 28px; border-radius: 999px;
+    background: var(--accent); color: #002040;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  .step-body h4 { margin: 2px 0 4px; font-size: 15px; }
+  .step-body p { margin: 2px 0; font-size: 14px; color: var(--muted); }
+  .step-body p.body-text { color: var(--text); }
+
+  a { color: var(--accent); }
+  a:hover { text-decoration: underline; }
+
+  .toc {
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 18px; margin: 20px 0 30px;
+  }
+  .toc h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .toc ol { margin: 0; padding-left: 18px; font-size: 14px; }
+  .toc li { padding: 2px 0; }
+
+  .fp { font-family: var(--mono); font-size: 12.5px; color: var(--accent-2); }
+  .kv { display: grid; grid-template-columns: 180px 1fr; gap: 6px 14px; font-size: 14px; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <h1>Newsletter Operator Guide</h1>
+  <p class="meta">tarekalaaddin.com &middot; how to run the newsletter day-to-day</p>
+</header>
+
+<nav class="toc">
+  <h3>What's in here</h3>
+  <ol>
+    <li><a href="#arch">Architecture at a glance (do we need the DB?)</a></li>
+    <li><a href="#subs">View subscribers</a></li>
+    <li><a href="#sends">View send history &amp; email metrics</a></li>
+    <li><a href="#when">When emails are sent (and how to force one)</a></li>
+    <li><a href="#tasks">Common tasks</a></li>
+    <li><a href="#env">Env vars checklist</a></li>
+    <li><a href="#troubleshooting">Troubleshooting</a></li>
+  </ol>
+</nav>
+
+<h2 id="arch">1 · Architecture at a glance</h2>
+
+<p><strong>Short answer to &ldquo;do we need the DB?&rdquo;</strong> Yes &mdash; your Neon Postgres DB is the <em>source of truth</em> for who your subscribers are, their topic preferences, their unsubscribe tokens, and which post has already been emailed to which subscriber. Resend is the sending <em>transport</em>, plus a dashboard mirror for visibility.</p>
+
+<div class="panel">
+  <h3 style="margin-top:0">The two systems and their roles</h3>
+  <table>
+    <tr><th>System</th><th>What it stores / does</th><th>Why we need it</th></tr>
+    <tr>
+      <td><strong>Neon Postgres</strong><br/><span class="pill">source of truth</span></td>
+      <td>
+        <code>subscribers</code> &mdash; email, name, status, topic prefs, unsubscribe token<br/>
+        <code>sends</code> &mdash; one row per post-broadcast<br/>
+        <code>sent_to</code> &mdash; join table, which subs got which send (idempotency)
+      </td>
+      <td>Resend doesn't natively model your topic preferences, your idempotent &ldquo;one post = one broadcast&rdquo; semantics, or your per-subscriber unsubscribe tokens. The DB gives you ownership of your list, no vendor lock-in, and the cron reads from here to decide who to email.</td>
+    </tr>
+    <tr>
+      <td><strong>Resend</strong><br/><span class="pill accent">transport + mirror</span></td>
+      <td>
+        Sends every email (welcome + newsletter broadcasts)<br/>
+        &ldquo;General&rdquo; audience &mdash; mirror of your DB subscribers<br/>
+        Email logs, open/click/bounce metrics
+      </td>
+      <td>You get the dashboard, deliverability tracking, open rates, bounce handling, and compliance (unsubscribe headers etc.) without building it. The audience mirror means you can scroll a list and see counts without opening a terminal.</td>
+    </tr>
+  </table>
+</div>
+
+<div class="callout ok">
+  <h4>Which should you look at?</h4>
+  <p>For "who's on my list / who just signed up" &rarr; the admin dashboard or Resend's audience page work equally (they're in sync).</p>
+  <p>For "did my blog post get delivered, opened, bounced?" &rarr; Resend Logs.</p>
+  <p>For data exports or anything scripted &rarr; the admin dashboard's JSON API (pulls from the DB).</p>
+</div>
+
+<h2 id="subs">2 · View subscribers</h2>
+
+<div class="grid-2">
+  <div class="panel">
+    <h3 style="margin-top:0"><span class="pill ok">Easiest</span> Your admin dashboard</h3>
+    <p>Open in a browser:</p>
+    <pre>https://www.tarekalaaddin.com/admin/newsletter?key=<em>&lt;CRON_SECRET&gt;</em></pre>
+    <p class="meta">Shows total/active/inactive counts, Recent Sends table with deep-links into Resend Logs, and the full subscriber list with email, name, status, and signup date.</p>
+    <p>Get the key: <code>vercel env pull .env.local</code> &rarr; grep for <code>CRON_SECRET</code>.</p>
+  </div>
+
+  <div class="panel">
+    <h3 style="margin-top:0">Resend audience page</h3>
+    <p>Open in a browser:</p>
+    <pre><a href="https://resend.com/audiences">resend.com/audiences</a> &rarr; "General"</pre>
+    <p class="meta">Mirror of your DB. Same count, same emails, same unsubscribed state. Updated automatically on every new signup and unsubscribe.</p>
+  </div>
+</div>
+
+<div class="panel">
+  <h3 style="margin-top:0">For scripting / exports &mdash; JSON API</h3>
+  <pre>curl -sS "https://www.tarekalaaddin.com/api/newsletter/subscribers" \
+  -H "Authorization: Bearer $CRON_SECRET" | jq</pre>
+
+  <p>Export to CSV for migration or reporting:</p>
+  <pre>curl -sS "https://www.tarekalaaddin.com/api/newsletter/subscribers" \
+  -H "Authorization: Bearer $CRON_SECRET" \
+  | jq -r '.subscribers[] | [.email, .first_name, .status, .source, .subscribed_at] | @csv' \
+  &gt; subscribers-$(date +%Y-%m-%d).csv</pre>
+</div>
+
+<h2 id="sends">3 · View send history &amp; email metrics</h2>
+
+<div class="panel">
+  <h3 style="margin-top:0">The Recent Sends table in your admin dashboard</h3>
+  <p>Admin dashboard shows a &ldquo;Recent sends&rdquo; table with: post title, send timestamp, recipient count, and an <strong>Open &rarr;</strong> link that deep-links to Resend Logs filtered by that post's slug tag.</p>
+
+  <h3>In Resend directly</h3>
+  <table>
+    <tr><th>Where</th><th>What you see</th></tr>
+    <tr>
+      <td><a href="https://resend.com/emails">resend.com/emails</a></td>
+      <td>Every individual email sent, with delivery status, open/click timestamps. Filter by tag: <code>kind=newsletter</code> to see broadcast emails only, or <code>slug=&lt;post-slug&gt;</code> to see all deliveries for one specific post.</td>
+    </tr>
+    <tr>
+      <td><a href="https://resend.com/metrics">resend.com/metrics</a></td>
+      <td>Aggregate open rate, click rate, bounce rate over time.</td>
+    </tr>
+    <tr>
+      <td><a href="https://resend.com/logs">resend.com/logs</a></td>
+      <td>Low-level event stream (delivered, opened, clicked, bounced, complained).</td>
+    </tr>
+  </table>
+
+  <div class="callout">
+    <h4>How tagging works</h4>
+    <p>Every newsletter email the cron sends is tagged with <code>kind=newsletter</code> and <code>slug=&lt;post-slug&gt;</code>. This makes it one click to see &ldquo;how did my post about X do?&rdquo; in Resend's UI. Welcome emails are untagged (they go via <code>resend.emails.send</code> without tags).</p>
+  </div>
+</div>
+
+<h2 id="when">4 · When emails are sent (and how to force one)</h2>
+
+<div class="panel">
+  <h3 style="margin-top:0">Automatic flow &mdash; happens without you</h3>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h4>You push a new blog post to <code>main</code></h4>
+      <p>MDX file in <code>content/blog/</code> with <code>date:</code> on or after <code>NEWSLETTER_CUTOFF_DATE</code> (currently <code>2026-04-18</code>) and <code>published: true</code> (default).</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h4>Vercel builds and deploys to production</h4>
+      <p>Usually ~1&ndash;2 minutes after push.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h4>Next day at 14:00 UTC (~9 AM Central, &plusmn;59min on Hobby)</h4>
+      <p>Vercel Cron hits <code>/api/cron/newsletter</code> with the authenticated secret.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h4>The cron finds new posts, queries active subscribers, sends via Resend batch API</h4>
+      <p>Idempotent &mdash; if a partial send fails, re-running picks up only the subscribers who didn't receive the email. Each email tagged <code>kind=newsletter</code> and <code>slug=&lt;post-slug&gt;</code>.</p>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h3 style="margin-top:0">Force-send a specific post right now (bypass the daily schedule)</h3>
+  <pre>curl -sS -X POST "https://www.tarekalaaddin.com/api/cron/newsletter" \
+  -H "Authorization: Bearer $CRON_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"slug": "<em>your-post-slug</em>"}' | python3 -m json.tool</pre>
+  <p class="meta">Still idempotent: if a subscriber already received this post, they won't get it again. Use this when you want to publish a post and immediately email it out.</p>
+</div>
+
+<div class="panel">
+  <h3 style="margin-top:0">Preview what the cron would send (dry-run, no email goes out)</h3>
+  <pre>curl -sS -X POST "https://www.tarekalaaddin.com/api/cron/newsletter" \
+  -H "Authorization: Bearer $CRON_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"dryRun": true}' | python3 -m json.tool</pre>
+  <p class="meta">Returns the list of candidate posts and how many recipients each would reach.</p>
+</div>
+
+<h2 id="tasks">5 · Common tasks</h2>
+
+<table>
+  <tr><th>I want to&hellip;</th><th>Do this</th></tr>
+  <tr>
+    <td>Publish a post without emailing anyone</td>
+    <td>Three options: set <code>published: false</code> in frontmatter (also hides from blog) &middot; set <code>date:</code> earlier than <code>NEWSLETTER_CUTOFF_DATE</code> &middot; preemptively insert a row into <code>sends</code> for that slug before deploying.</td>
+  </tr>
+  <tr>
+    <td>Pause all newsletter sends temporarily</td>
+    <td>Delete <code>NEWSLETTER_CUTOFF_DATE</code> from Vercel env. The cron will refuse to run. Re-add it to resume.</td>
+  </tr>
+  <tr>
+    <td>Change the daily send time</td>
+    <td>Edit <code>vercel.json</code> &rarr; <code>crons[0].schedule</code> (currently <code>"0 14 * * *"</code> = 14:00 UTC) and push.</td>
+  </tr>
+  <tr>
+    <td>Manually unsubscribe someone</td>
+    <td>See <a href="./NEWSLETTER-RUNBOOK.md#8-manually-unsubscribe-someone">Runbook §8</a> &mdash; direct SQL update.</td>
+  </tr>
+  <tr>
+    <td>Re-send a post to everyone (danger)</td>
+    <td>See <a href="./NEWSLETTER-RUNBOOK.md#7-re-send-a-post-to-everyone-danger">Runbook §7</a> &mdash; delete <code>sent_to</code> rows for that send, then force-send.</td>
+  </tr>
+  <tr>
+    <td>Test email delivery without affecting real subscribers</td>
+    <td>Subscribe <code>yourname+test@...</code> via the signup form, then force-send to a slug. Delete the test row after.</td>
+  </tr>
+  <tr>
+    <td>Re-backfill the Resend audience (if it falls out of sync)</td>
+    <td><code>node --env-file=.env.local scripts/sync-audience-backfill.mjs</code> &mdash; idempotent, safe to re-run.</td>
+  </tr>
+</table>
+
+<h2 id="env">6 · Env vars checklist</h2>
+
+<p>Set in Vercel &rarr; Settings &rarr; Environment Variables. After adding, redeploy.</p>
+
+<dl class="kv">
+  <dt><code>RESEND_API_KEY</code></dt><dd>Resend Pro key &mdash; powers all sending and audience sync</dd>
+  <dt><code>DATABASE_URL</code></dt><dd>Neon Postgres connection string &mdash; source of truth</dd>
+  <dt><code>CRON_SECRET</code></dt><dd>Bearer token for cron, admin dashboard, subscribers API, sends API</dd>
+  <dt><code>NEWSLETTER_CUTOFF_DATE</code></dt><dd>ISO date, posts before this never email. Delete to pause.</dd>
+  <dt><code>TURNSTILE_SECRET_KEY</code></dt><dd>Server-side Turnstile verification for <code>/subscribe</code></dd>
+  <dt><code>NEXT_PUBLIC_TURNSTILE_SITE_KEY</code></dt><dd>Client widget key</dd>
+  <dt><code>NEXT_PUBLIC_SITE_URL</code></dt><dd>Canonical URL used in email links</dd>
+  <dt><code>RESEND_AUDIENCE_ID</code> (optional)</dt><dd>Defaults to the existing &ldquo;General&rdquo; audience</dd>
+  <dt><code>RESEND_SENDER</code> (optional)</dt><dd>From-address; defaults to <code>newsletter@tarekalaaddin.com</code></dd>
+  <dt><code>RESEND_REPLY_TO</code> (optional)</dt><dd>Reply-to; defaults to <code>tarek@tarekalaaddin.com</code></dd>
+</dl>
+
+<p>Quick check what's set in production (auth-gated):</p>
+<pre>curl -s "https://www.tarekalaaddin.com/api/health" -H "Authorization: Bearer $CRON_SECRET" | python3 -m json.tool</pre>
+
+<h2 id="troubleshooting">7 · Troubleshooting</h2>
+
+<table>
+  <tr><th>Symptom</th><th>Likely cause &amp; fix</th></tr>
+  <tr>
+    <td>&ldquo;Cron ran but no email arrived&rdquo;</td>
+    <td>Hit the dry-run endpoint &mdash; is <code>processed &gt; 0</code>? Is the post's row already in the <code>sends</code> table (already sent)? Any active subscribers? Check Resend Logs for bounce/failure.</td>
+  </tr>
+  <tr>
+    <td>Cron returns <code>500: NEWSLETTER_CUTOFF_DATE is not set</code></td>
+    <td>Env var got unset. Re-add in Vercel. Redeploy.</td>
+  </tr>
+  <tr>
+    <td>Admin dashboard shows 404 or <code>Unauthorized</code></td>
+    <td><code>CRON_SECRET</code> query param doesn't match the Vercel env value. Run <code>vercel env pull .env.local</code> to refresh.</td>
+  </tr>
+  <tr>
+    <td>Dry-run shows 0 processed but I just published</td>
+    <td>Is it merged to <code>main</code>? Has Vercel deployed? Is <code>date:</code> in frontmatter on or after cutoff? Is <code>published: true</code>? Is there already a <code>sends</code> row (would skip)?</td>
+  </tr>
+  <tr>
+    <td>Partial send &mdash; some batches failed</td>
+    <td>The cron is idempotent &mdash; re-run the force-send for the same slug. It skips subscribers who already got the email and retries the rest.</td>
+  </tr>
+  <tr>
+    <td>Resend audience count doesn't match DB</td>
+    <td>Re-run the backfill script. <code>node --env-file=.env.local scripts/sync-audience-backfill.mjs --dry-run</code> to see the counts, then without <code>--dry-run</code> to sync.</td>
+  </tr>
+  <tr>
+    <td>Welcome email didn't arrive after signup</td>
+    <td>Check Resend Logs for that recipient. Common causes: the address doesn't exist (bounced), the mail provider is rate-limiting, or <code>RESEND_API_KEY</code> isn't set in prod. Check <code>/api/health</code> with auth.</td>
+  </tr>
+</table>
+
+<footer style="margin-top:50px; color:var(--muted); font-size:12px; border-top:1px solid var(--border); padding-top:12px">
+  See <code>docs/NEWSLETTER-RUNBOOK.md</code> for deeper runbook, <code>VERCEL_ENV_SETUP.md</code> for env var details, <code>docs/newsletter/activation-plan.html</code> for the original architecture plan.
+</footer>
+
+</main>
+</body>
+</html>

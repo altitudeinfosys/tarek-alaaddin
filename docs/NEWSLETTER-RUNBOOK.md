@@ -362,11 +362,13 @@ Run the backfill script if:
 
 ```bash
 vercel env pull .env.local
-node scripts/sync-audience-backfill.mjs --dry-run   # counts only, no API calls
-node scripts/sync-audience-backfill.mjs             # actually push
+node --env-file=.env.local scripts/sync-audience-backfill.mjs --dry-run   # counts only, no API calls
+node --env-file=.env.local scripts/sync-audience-backfill.mjs             # actually push
 ```
 
 The script is idempotent. It sends every subscriber's current state (active or unsubscribed) to Resend, so a second run just updates existing contacts.
+
+**Note:** The script uses Node's built-in `--env-file` flag (Node 20+). If you're on an older Node, upgrade it or export the vars manually (`export $(cat .env.local | xargs)`) before running.
 
 ### Changing the audience
 

@@ -41,12 +41,12 @@ The contact form at `/contact` uses Mailgun, not Resend. These are independent f
 
 ## Resend audience sync — one-time backfill
 
-After adding `RESEND_API_KEY` (and optionally `RESEND_AUDIENCE_ID`) in Vercel, mirror existing DB subscribers into the Resend audience:
+After adding `RESEND_API_KEY` (and optionally `RESEND_AUDIENCE_ID`) in Vercel, mirror existing DB subscribers into the Resend audience (requires Node 20+):
 
 ```bash
 vercel env pull .env.local
-node scripts/sync-audience-backfill.mjs --dry-run   # see what would sync
-node scripts/sync-audience-backfill.mjs             # actually push
+node --env-file=.env.local scripts/sync-audience-backfill.mjs --dry-run   # see what would sync
+node --env-file=.env.local scripts/sync-audience-backfill.mjs             # actually push
 ```
 
 The script is idempotent — re-run any time to repair drift. The site DB stays source of truth.

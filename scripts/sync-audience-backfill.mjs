@@ -3,9 +3,12 @@
  * One-shot: mirror every row in the site `subscribers` table into the Resend
  * audience. Idempotent — safe to re-run. The DB stays the source of truth.
  *
- * Usage:
- *   node scripts/sync-audience-backfill.mjs            # live sync
- *   node scripts/sync-audience-backfill.mjs --dry-run  # count only, no writes
+ * Usage (requires Node 20+ for --env-file):
+ *   node --env-file=.env.local scripts/sync-audience-backfill.mjs
+ *   node --env-file=.env.local scripts/sync-audience-backfill.mjs --dry-run
+ *
+ * Pull env first if you don't already have .env.local:
+ *   vercel env pull .env.local
  *
  * Env required:
  *   DATABASE_URL             Neon connection string
@@ -16,22 +19,17 @@
  * NOT throw on API errors. This script branches on both exceptions AND the
  * returned `error` so failed syncs are counted, never silently dropped.
  */
-import 'dotenv/config'
 import { Resend } from 'resend'
 import { neon } from '@neondatabase/serverless'
+
+if (!process.env.DATABASE_URL || !process.env.RESEND_API_KEY) {
+  console.error('Missing env. Run with `node --env-file=.env.local ...` (pull first with `vercel env pull .env.local`).')
+  process.exit(1)
+}
 
 const DEFAULT_AUDIENCE_ID = 'fd886bd2-4e69-43ad-a8de-d876ec34c689'
 const AUDIENCE_ID = process.env.RESEND_AUDIENCE_ID || DEFAULT_AUDIENCE_ID
 const DRY_RUN = process.argv.includes('--dry-run')
-
-if (!process.env.DATABASE_URL) {
-  console.error('DATABASE_URL not set. Run `vercel env pull .env.local` first.')
-  process.exit(1)
-}
-if (!process.env.RESEND_API_KEY) {
-  console.error('RESEND_API_KEY not set.')
-  process.exit(1)
-}
 
 const sql = neon(process.env.DATABASE_URL)
 const resend = new Resend(process.env.RESEND_API_KEY)

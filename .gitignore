@@ -54,3 +54,4 @@ public/search-index.json
 # Claude Code local state (machine-specific permissions/locks — never commit)
 .claude/settings.local.json
 .claude/*.lock
+.env*
