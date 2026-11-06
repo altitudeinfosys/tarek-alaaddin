@@ -3,6 +3,17 @@ import { nanoid } from 'nanoid'
 import { db } from './index'
 import { subscribers, sentTo, type Subscriber, type NewSubscriber } from './schema'
 
+export interface UnsubscribeResult {
+  subscriber: Subscriber
+  /**
+   * True when this call actually flipped an active row to unsubscribed.
+   * False when the row was already in a non-sending status (unsubscribed,
+   * bounced, complained) — the token is still valid but no transition was
+   * needed. Callers should show the same success UI either way.
+   */
+  changed: boolean
+}
+
 export interface UpsertSubscriberInput {
   email: string
   firstName?: string | null
@@ -105,13 +116,47 @@ export async function findByUnsubscribeToken(token: string): Promise<Subscriber 
   return rows[0] ?? null
 }
 
-export async function markUnsubscribed(token: string): Promise<Subscriber | null> {
+/**
+ * Flip the subscriber the token belongs to from `active` to `unsubscribed`.
+ *
+ * Only transitions `active` rows. `bounced` and `complained` rows are already
+ * suppressed and are left as-is — flipping them to `unsubscribed` would open
+ * a path for the Turnstile-gated reactivation flow to bring them back and
+ * resume sending to a known-bad address. For the same reason we must not
+ * demote a `bounced`/`complained` row through this public endpoint.
+ *
+ * If the token is valid but the row is already in a non-sending status
+ * (unsubscribed, bounced, complained), returns the row with changed=false
+ * so the UI can still render a confirmation page instead of "link expired".
+ *
+ * Returns null only when the token doesn't exist.
+ */
+export async function markUnsubscribed(token: string): Promise<UnsubscribeResult | null> {
+  // Scope the update to 'active' rows only — this prevents a stale
+  // unsubscribe link from being used to transition a bounced/complained row.
   const [updated] = await db
     .update(subscribers)
     .set({ status: 'unsubscribed', unsubscribedAt: new Date() })
-    .where(eq(subscribers.unsubscribeToken, token))
+    .where(
+      and(
+        eq(subscribers.unsubscribeToken, token),
+        eq(subscribers.status, 'active')
+      )
+    )
     .returning()
-  return updated ?? null
+  if (updated) {
+    return { subscriber: updated, changed: true }
+  }
+
+  // No active row flipped. Either the token is bogus, or the row exists in a
+  // non-sending status already. Look up the row to distinguish.
+  const existing = await db
+    .select()
+    .from(subscribers)
+    .where(eq(subscribers.unsubscribeToken, token))
+    .limit(1)
+  if (!existing[0]) return null
+  return { subscriber: existing[0], changed: false }
 }
 
 export async function listActiveSubscribers(): Promise<Subscriber[]> {

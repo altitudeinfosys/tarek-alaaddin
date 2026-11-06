@@ -21,8 +21,12 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  // Mirror unsubscribe into Resend so dashboard counts stay accurate.
-  await syncContactUnsubscribe(result.email)
+  // Only sync Resend when we actually flipped an active row. For rows that
+  // were already suppressed (unsubscribed/bounced/complained), Resend's state
+  // is already in sync or the row shouldn't be resurrected either way.
+  if (result.changed) {
+    await syncContactUnsubscribe(result.subscriber.email)
+  }
 
   return renderHtml(
     'Unsubscribed',
