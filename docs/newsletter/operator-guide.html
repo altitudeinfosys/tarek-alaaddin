@@ -167,7 +167,7 @@
         &ldquo;General&rdquo; audience &mdash; mirror of your DB subscribers<br/>
         Email logs, open/click/bounce metrics
       </td>
-      <td>You get the dashboard, deliverability tracking, open rates, bounce handling, and compliance (unsubscribe headers etc.) without building it. The audience mirror means you can scroll a list and see counts without opening a terminal.</td>
+      <td>You get delivery status and a dashboard without building them. The audience mirror means you can scroll a list and see counts without opening a terminal. Your Resend account is shared with your other apps, so Emails and Metrics include their traffic unless you filter.</td>
     </tr>
   </table>
 </div>
@@ -175,7 +175,7 @@
 <div class="callout ok">
   <h4>Which should you look at?</h4>
   <p>For "who's on my list / who just signed up" &rarr; the admin dashboard or Resend's audience page work equally (they're in sync).</p>
-  <p>For "did my blog post get delivered, opened, bounced?" &rarr; Resend Logs.</p>
+  <p>For "did my blog post get delivered or bounce?" &rarr; Resend Emails, searching for the post title. Opens and clicks need tracking turned on first (see section 3).</p>
   <p>For data exports or anything scripted &rarr; the admin dashboard's JSON API (pulls from the DB).</p>
 </div>
 
@@ -186,14 +186,14 @@
     <h3 style="margin-top:0"><span class="pill ok">Easiest</span> Your admin dashboard</h3>
     <p>Open in a browser:</p>
     <pre>https://www.tarekalaaddin.com/admin/newsletter?key=<em>&lt;CRON_SECRET&gt;</em></pre>
-    <p class="meta">Shows total/active/inactive counts, Recent Sends table with deep-links into Resend Logs, and the full subscriber list with email, name, status, and signup date.</p>
+    <p class="meta">Shows total/active/inactive counts, a Recent sends table, and the full subscriber list with email, name, status, and signup date.</p>
     <p>Get the key: <code>vercel env pull .env.local</code> &rarr; grep for <code>CRON_SECRET</code>.</p>
   </div>
 
   <div class="panel">
     <h3 style="margin-top:0">Resend audience page</h3>
     <p>Open in a browser:</p>
-    <pre><a href="https://resend.com/audiences">resend.com/audiences</a> &rarr; "General"</pre>
+    <pre><a href="https://resend.com/audience">resend.com/audience</a></pre>
     <p class="meta">Mirror of your DB. Same count, same emails, same unsubscribed state. Updated automatically on every new signup and unsubscribe.</p>
   </div>
 </div>
@@ -214,28 +214,33 @@
 
 <div class="panel">
   <h3 style="margin-top:0">The Recent Sends table in your admin dashboard</h3>
-  <p>Admin dashboard shows a &ldquo;Recent sends&rdquo; table with: post title, send timestamp, recipient count, and an <strong>Open &rarr;</strong> link that deep-links to Resend Logs filtered by that post's slug tag.</p>
+  <p>The admin dashboard's &ldquo;Recent sends&rdquo; table shows post title, send time, and recipient count for every post that actually went out.</p>
 
   <h3>In Resend directly</h3>
   <table>
     <tr><th>Where</th><th>What you see</th></tr>
     <tr>
       <td><a href="https://resend.com/emails">resend.com/emails</a></td>
-      <td>Every individual email sent, with delivery status, open/click timestamps. Filter by tag: <code>kind=newsletter</code> to see broadcast emails only, or <code>slug=&lt;post-slug&gt;</code> to see all deliveries for one specific post.</td>
+      <td>Every email on your account, across all your apps, with delivery status. Use the search box with a post's title to find its sends.</td>
     </tr>
     <tr>
       <td><a href="https://resend.com/metrics">resend.com/metrics</a></td>
-      <td>Aggregate open rate, click rate, bounce rate over time.</td>
+      <td>Deliverability, bounce, and complaint rates. Change &ldquo;All domains&rdquo; to <code>tarekalaaddin.com</code> so your other apps aren't counted.</td>
     </tr>
     <tr>
       <td><a href="https://resend.com/logs">resend.com/logs</a></td>
-      <td>Low-level event stream (delivered, opened, clicked, bounced, complained).</td>
+      <td>Low-level API request log, useful for debugging a failed send.</td>
     </tr>
   </table>
 
+  <div class="callout warn">
+    <h4>Open and click rates are not being collected</h4>
+    <p>As of 2026-11-06, open and click tracking are off for <code>tarekalaaddin.com</code> in Resend, so those charts have no newsletter data. To enable them, open Resend &rarr; Domains &rarr; <code>tarekalaaddin.com</code> &rarr; Configuration &rarr; Enable tracking metrics. Resend asks for a custom tracking subdomain, which means adding a DNS record in Cloudflare. Past sends can't be backfilled.</p>
+  </div>
+
   <div class="callout">
-    <h4>How tagging works</h4>
-    <p>Every newsletter email the cron sends is tagged with <code>kind=newsletter</code> and <code>slug=&lt;post-slug&gt;</code>. This makes it one click to see &ldquo;how did my post about X do?&rdquo; in Resend's UI. Welcome emails are untagged (they go via <code>resend.emails.send</code> without tags).</p>
+    <h4>About the tags</h4>
+    <p>Cron emails carry the tags <code>kind=newsletter</code> and <code>slug=&lt;post-slug&gt;</code>. Resend's Emails page has no visible tag filter, so they're useful for webhooks and API use, not for browsing. Welcome emails are untagged.</p>
   </div>
 </div>
 
@@ -255,7 +260,7 @@
     <div class="step-num">2</div>
     <div class="step-body">
       <h4>Vercel builds and deploys to production</h4>
-      <p>Usually ~1&ndash;2 minutes after push.</p>
+      <p>The site publishes posts often, so subscribers can get an email on most days: one per new post, not a weekly digest.</p>
     </div>
   </div>
   <div class="step">
@@ -310,11 +315,11 @@
   </tr>
   <tr>
     <td>Manually unsubscribe someone</td>
-    <td>See <a href="./NEWSLETTER-RUNBOOK.md#8-manually-unsubscribe-someone">Runbook §8</a> &mdash; direct SQL update.</td>
+    <td>See <code>docs/NEWSLETTER-RUNBOOK.md</code> &sect;8 &mdash; direct SQL update. Also unsubscribe them in Resend &rarr; Audience, because a direct SQL change doesn't sync.</td>
   </tr>
   <tr>
     <td>Re-send a post to everyone (danger)</td>
-    <td>See <a href="./NEWSLETTER-RUNBOOK.md#7-re-send-a-post-to-everyone-danger">Runbook §7</a> &mdash; delete <code>sent_to</code> rows for that send, then force-send.</td>
+    <td>See <code>docs/NEWSLETTER-RUNBOOK.md</code> &sect;7 &mdash; delete <code>sent_to</code> rows for that send, then force-send.</td>
   </tr>
   <tr>
     <td>Test email delivery without affecting real subscribers</td>

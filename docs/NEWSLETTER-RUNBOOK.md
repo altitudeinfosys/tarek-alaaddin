@@ -378,10 +378,12 @@ Set `RESEND_AUDIENCE_ID` in Vercel to a different audience ID, redeploy, then re
 
 ## Recent sends tracking
 
-The admin dashboard (`/admin/newsletter?key=$CRON_SECRET`) shows a **Recent sends** table with a direct deep-link to Resend Logs filtered by that post's slug tag.
+The admin dashboard (`/admin/newsletter?key=$CRON_SECRET`) shows a **Recent sends** table with post title, send time, and recipient count.
 
-Every email the cron sends is tagged with:
-- `kind=newsletter`
-- `slug=<post-slug>`
+To find one post's emails in Resend, open [resend.com/emails](https://resend.com/emails) and search for the post title. The account is shared with other apps, so unfiltered views include their mail.
 
-So in Resend Logs, filter by `slug:<post-slug>` to see opens / clicks / bounces for one specific newsletter send.
+Every email the cron sends is tagged `kind=newsletter` and `slug=<post-slug>`, and carries one-click `List-Unsubscribe` headers. The Emails page has no visible tag filter, so the tags are for webhook or API use.
+
+**Open and click tracking are off** for `tarekalaaddin.com` as of 2026-11-06. Enable them under Resend → Domains → `tarekalaaddin.com` → Configuration, which requires a custom tracking subdomain (a DNS record in Cloudflare).
+
+**Nothing sets `bounced` or `complained` yet.** There is no Resend webhook for this site, so those statuses only change by manual SQL, and the cron keeps treating those addresses as active.

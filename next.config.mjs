@@ -4,6 +4,9 @@ const nextConfig = {
   experimental: {
     // Optimize package imports
     optimizePackageImports: ['@anthropic-ai/sdk'],
+    outputFileTracingIncludes: {
+      '/admin/newsletter/guide': ['./docs/newsletter/operator-guide.html'],
+    },
   },
   async headers() {
     return [

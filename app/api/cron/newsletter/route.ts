@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAllPosts, getPostBySlug } from '@/lib/mdx'
 import { listActiveSubscribers, listPendingSubscribersForSend } from '@/lib/db/subscribers'
 import { findSendByPostSlug, recordSend, recordSentTo, updateSendRecipientCount } from '@/lib/db/sends'
-import { resend, FROM, REPLY_TO } from '@/lib/email/resend'
+import { resend, FROM, REPLY_TO, unsubscribeUrl } from '@/lib/email/resend'
 import { renderBlogPostEmail } from '@/lib/email/templates'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tarekalaaddin.com'
@@ -129,7 +129,10 @@ async function runNewsletterSend({ cutoff, dryRun, forceSlug }: RunArgs) {
           subject,
           html,
           text,
-          // Tags let Resend's Logs/Emails tabs filter by kind=newsletter or by post slug.
+          headers: {
+            'List-Unsubscribe': `<${unsubscribeUrl(sub.unsubscribeToken)}>`,
+            'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+          },
           tags: [
             { name: 'kind', value: 'newsletter' },
             { name: 'slug', value: slugTag },
@@ -139,6 +142,11 @@ async function runNewsletterSend({ cutoff, dryRun, forceSlug }: RunArgs) {
 
       try {
         const batchResponse = await resend.batch.send(batchPayload)
+        // The SDK returns API errors instead of throwing. Recording these
+        // recipients as sent would stop the retry from ever reaching them.
+        if (batchResponse.error) {
+          throw new Error(batchResponse.error.message)
+        }
         const sent = batchResponse.data?.data ?? []
         for (let j = 0; j < batch.length; j++) {
           const sub = batch[j]

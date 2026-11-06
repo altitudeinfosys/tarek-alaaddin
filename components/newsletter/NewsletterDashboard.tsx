@@ -52,9 +52,6 @@ export default function NewsletterDashboard({ initialSubscribers, recentSends = 
     return { total, active, inactive }
   }, [subscribers])
 
-  // Backfilled "mark-as-sent" rows have recipient_count=0 and shouldn't clutter the feed.
-  const realSends = recentSends.filter((s) => s.recipient_count > 0)
-
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -81,10 +78,10 @@ export default function NewsletterDashboard({ initialSubscribers, recentSends = 
             rel="noopener noreferrer"
             className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline"
           >
-            Open Resend Logs →
+            Open Resend Emails →
           </a>
         </div>
-        {realSends.length === 0 ? (
+        {recentSends.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">
             No sends yet. The cron runs daily at 14:00 UTC and only emails posts dated on or after <code>NEWSLETTER_CUTOFF_DATE</code>.
           </p>
@@ -96,11 +93,10 @@ export default function NewsletterDashboard({ initialSubscribers, recentSends = 
                   <th className="text-left py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">Post</th>
                   <th className="text-left py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">Sent</th>
                   <th className="text-right py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">Recipients</th>
-                  <th className="text-right py-2 px-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">Metrics</th>
                 </tr>
               </thead>
               <tbody>
-                {realSends.map((s) => (
+                {recentSends.map((s) => (
                   <tr
                     key={s.id}
                     className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
@@ -119,16 +115,6 @@ export default function NewsletterDashboard({ initialSubscribers, recentSends = 
                     </td>
                     <td className="py-3 px-3 text-sm text-gray-900 dark:text-white text-right tabular-nums">
                       {s.recipient_count}
-                    </td>
-                    <td className="py-3 px-3 text-right">
-                      <a
-                        href={`https://resend.com/emails?tag=slug%3A${encodeURIComponent(s.post_slug)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline whitespace-nowrap"
-                      >
-                        Open →
-                      </a>
                     </td>
                   </tr>
                 ))}

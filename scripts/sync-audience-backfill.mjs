@@ -35,30 +35,16 @@ const sql = neon(process.env.DATABASE_URL)
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 async function upsert(email, firstName, unsubscribed) {
-  // Try create first; if it returns error (likely "already exists"), fall through to update.
+  // Resend's create is an upsert: an existing email succeeds with the same id.
   try {
-    const { error: createErr } = await resend.contacts.create({
+    const { error } = await resend.contacts.create({
       email,
       firstName: firstName || undefined,
       unsubscribed,
       segments: [{ id: AUDIENCE_ID }],
     })
-    if (!createErr) return { outcome: 'created' }
-
-    // Backfill runs with operator consent — reactivation is fine here. The
-    // DB row's status is the authoritative truth for every contact.
-    const { error: updateErr } = await resend.contacts.update({
-      audienceId: AUDIENCE_ID,
-      email,
-      unsubscribed,
-      ...(firstName ? { firstName } : {}),
-    })
-    if (!updateErr) return { outcome: 'updated' }
-
-    return {
-      outcome: 'failed',
-      reason: `create: ${createErr?.message || 'unknown'}; update: ${updateErr?.message || 'unknown'}`,
-    }
+    if (!error) return { outcome: 'synced' }
+    return { outcome: 'failed', reason: error.message || 'unknown' }
   } catch (err) {
     return {
       outcome: 'failed',
@@ -86,25 +72,23 @@ async function main() {
     return
   }
 
-  let created = 0
-  let updated = 0
+  let synced = 0
   let failed = 0
   const failures = []
 
   for (const row of rows) {
     const result = await upsert(row.email, row.first_name, row.status !== 'active')
-    if (result.outcome === 'created') created++
-    else if (result.outcome === 'updated') updated++
+    if (result.outcome === 'synced') synced++
     else {
       failed++
       failures.push({ email: row.email, reason: result.reason })
     }
-    if ((created + updated + failed) % 25 === 0) {
-      console.log(`  ... processed ${created + updated + failed}/${total}`)
+    if ((synced + failed) % 25 === 0) {
+      console.log(`  ... processed ${synced + failed}/${total}`)
     }
   }
 
-  console.log(`\nDone. created: ${created} | updated: ${updated} | failed: ${failed}`)
+  console.log(`\nDone. synced: ${synced} | failed: ${failed}`)
   if (failures.length) {
     console.log('\nFailures:')
     for (const f of failures) console.log(`  ${f.email} — ${f.reason}`)

@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { track } from '@vercel/analytics'
-
-const SUBSCRIBED_KEY = 'newsletter-popup-subscribed'
+import { isSubscribed, markSubscribed } from '@/lib/newsletter-signup'
 
 type Status = 'idle' | 'submitting' | 'success' | 'error'
 
@@ -21,11 +20,7 @@ export default function EndOfPostNewsletterCard() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    try {
-      setIsSubscriber(localStorage.getItem(SUBSCRIBED_KEY) === 'true')
-    } catch {
-      setIsSubscriber(false)
-    }
+    setIsSubscriber(isSubscribed())
   }, [])
 
   if (isSubscriber) return null
@@ -38,14 +33,12 @@ export default function EndOfPostNewsletterCard() {
       const response = await fetch('/api/newsletter/popup-subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, firstName, honeypot, source: 'popup' }),
+        body: JSON.stringify({ email, firstName, honeypot, source: 'end-of-post' }),
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Something went wrong')
       setStatus('success')
-      try {
-        localStorage.setItem(SUBSCRIBED_KEY, 'true')
-      } catch {}
+      markSubscribed()
       track('newsletter_endofpost_submit')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -75,7 +68,7 @@ export default function EndOfPostNewsletterCard() {
               Get posts like this in your inbox.
             </h3>
             <p className="mt-2 text-sm md:text-base text-gray-600 dark:text-gray-400">
-              Weekly notes on AI engineering, automation, and building products — no fluff, unsubscribe anytime.
+              New posts on AI engineering, automation, and building products — no fluff, unsubscribe anytime.
             </p>
           </div>
 

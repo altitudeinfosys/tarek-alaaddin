@@ -3,10 +3,15 @@
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { track } from '@vercel/analytics'
+import {
+  POPUP_VISIBILITY_EVENT,
+  SUBSCRIBED_EVENT,
+  isSubscribed,
+  markSubscribed,
+} from '@/lib/newsletter-signup'
 
 // Separate dismiss key from the popup so dismissing one doesn't hide the other.
 const BAR_DISMISSED_KEY = 'newsletter-sticky-bar-dismissed'
-const SUBSCRIBED_KEY = 'newsletter-popup-subscribed'
 const DISMISS_DURATION_MS = 3 * 24 * 60 * 60 * 1000 // 3 days
 const SHOW_AFTER_MS = 6_000 // small delay so it doesn't ambush on landing
 
@@ -23,13 +28,31 @@ export default function StickyNewsletterBar() {
   const [email, setEmail] = useState('')
   const [honeypot, setHoneypot] = useState('')
   const [error, setError] = useState('')
+  const [popupOpen, setPopupOpen] = useState(false)
+
+  useEffect(() => {
+    const onPopupVisibility = (event: Event) =>
+      setPopupOpen((event as CustomEvent<{ visible: boolean }>).detail.visible)
+    const hideIfOpen = () =>
+      setStatus((current) => (current === 'visible' ? 'hidden' : current))
+
+    window.addEventListener(POPUP_VISIBILITY_EVENT, onPopupVisibility)
+    window.addEventListener(SUBSCRIBED_EVENT, hideIfOpen)
+    return () => {
+      window.removeEventListener(POPUP_VISIBILITY_EVENT, onPopupVisibility)
+      window.removeEventListener(SUBSCRIBED_EVENT, hideIfOpen)
+    }
+  }, [])
 
   useEffect(() => {
     // Only on blog pages, excluding the index.
-    if (!pathname?.startsWith('/blog/')) return
+    if (!pathname?.startsWith('/blog/')) {
+      setStatus('hidden')
+      return
+    }
 
     try {
-      if (localStorage.getItem(SUBSCRIBED_KEY) === 'true') return
+      if (isSubscribed()) return
       const dismissedAt = localStorage.getItem(BAR_DISMISSED_KEY)
       if (dismissedAt) {
         const t = parseInt(dismissedAt, 10)
@@ -39,7 +62,9 @@ export default function StickyNewsletterBar() {
       return
     }
 
-    const timer = setTimeout(() => setStatus('visible'), SHOW_AFTER_MS)
+    const timer = setTimeout(() => {
+      if (!isSubscribed()) setStatus('visible')
+    }, SHOW_AFTER_MS)
     return () => clearTimeout(timer)
   }, [pathname])
 
@@ -58,14 +83,12 @@ export default function StickyNewsletterBar() {
       const response = await fetch('/api/newsletter/popup-subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, honeypot, source: 'popup' }),
+        body: JSON.stringify({ email, honeypot, source: 'sticky-bar' }),
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Something went wrong')
       setStatus('success')
-      try {
-        localStorage.setItem(SUBSCRIBED_KEY, 'true')
-      } catch {}
+      markSubscribed()
       track('newsletter_stickybar_submit')
       setTimeout(() => setStatus('hidden'), 2500)
     } catch (err) {
@@ -74,7 +97,7 @@ export default function StickyNewsletterBar() {
     }
   }
 
-  if (status === 'hidden') return null
+  if (status === 'hidden' || popupOpen) return null
 
   return (
     <div
@@ -90,8 +113,7 @@ export default function StickyNewsletterBar() {
         ) : (
           <>
             <p className="flex-1 min-w-0 text-sm text-gray-800 dark:text-gray-200">
-              <span className="font-semibold">New:</span>{' '}
-              AI &amp; productivity posts, weekly. No spam.
+              Get each new post on AI and building products by email.
             </p>
             <form onSubmit={handleSubmit} className="flex items-center gap-2 flex-wrap">
               <input

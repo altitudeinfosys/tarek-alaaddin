@@ -75,4 +75,4 @@ Expected keys under `configured`: `resendApi`, `resendAudienceId`, `cronSecret`,
 
 ## Historical note
 
-Earlier versions of this app shipped Kit/ConvertKit code paths that were never wired into production. Those references have been removed; `KIT_API_KEY` and `KIT_API_BASE_URL` are not used by any current code and can be removed from Vercel env if they're still set.
+`KIT_API_KEY` and `KIT_API_BASE_URL` are not used by any current code and can be removed from Vercel env if they're still set.

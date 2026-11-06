@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-
-const SUBSCRIBED_KEY = 'newsletter-popup-subscribed'
+import { isSubscribed } from '@/lib/newsletter-signup'
 
 /**
  * Mid-article CTA block that authors (or the content pipeline) can drop into an
@@ -14,11 +13,7 @@ export default function InlineNewsletterCTA() {
   const [isSubscriber, setIsSubscriber] = useState<boolean | null>(null)
 
   useEffect(() => {
-    try {
-      setIsSubscriber(localStorage.getItem(SUBSCRIBED_KEY) === 'true')
-    } catch {
-      setIsSubscriber(false)
-    }
+    setIsSubscriber(isSubscribed())
   }, [])
 
   if (isSubscriber) return null
@@ -29,8 +24,8 @@ export default function InlineNewsletterCTA() {
         Enjoying this?
       </p>
       <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-        I write a weekly post on AI engineering and shipping real products.
-        No fluff.
+        I write about AI engineering and shipping real products. Get each new
+        post by email. No fluff.
       </p>
       <Link
         href="/subscribe"
