@@ -200,6 +200,23 @@ curl -sS -X POST "https://www.tarekalaaddin.com/api/cron/newsletter" \
   -d '{"slug": "your-post-slug"}' | python3 -m json.tool
 ```
 
+### 7a. Reactivation policy — what public forms can and can't do
+
+| Prior status | Can `/subscribe` reactivate? | Can popup/footer reactivate? | How to re-enable manually |
+|---|---|---|---|
+| `active` | n/a | n/a | — |
+| `unsubscribed` | ✅ yes (Turnstile gate) | ❌ no (silently no-op) | Have the user re-submit via `/subscribe` |
+| `bounced` | ❌ never from any form | ❌ never from any form | Fix the deliverability issue, then direct SQL update |
+| `complained` | ❌ never from any form | ❌ never from any form | Operator SQL update ONLY after verifying the complaint is resolved. Resending to a prior complainer damages sender reputation. |
+
+**No double opt-in today.** The site does not send a "click to confirm" email after signup. A Turnstile-verified `/subscribe` submission is treated as sufficient to reactivate an `unsubscribed` row. This is weaker than a full double opt-in flow (emailed confirmation link) but was a deliberate choice for a personal-scale newsletter:
+
+- The list is small enough that a determined attacker couldn't cause enterprise-scale harm.
+- Legitimate re-subscribers face one form instead of a form + email round trip.
+- An unsubscribed reader who tries to re-subscribe via the popup silently fails — they'll need to use `/subscribe`.
+
+If the list grows meaningfully or the attack surface matters more, the follow-up is a proper double opt-in flow: new `pending_confirmations` table, confirmation email with single-use expiring token, reactivation only on link click.
+
 ### 8. Manually unsubscribe someone
 
 ```bash

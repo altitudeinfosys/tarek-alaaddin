@@ -13,11 +13,20 @@ export interface UpsertSubscriberInput {
     marketing?: boolean
   }
   /**
-   * Whether the calling path is allowed to clear a prior unsubscribe. Set
-   * true only when the request has strong consent verification (Turnstile on
-   * /subscribe). For honeypot-only paths (popup/footer), the default false
-   * preserves a recorded opt-out: a bot or attacker submitting an opted-out
-   * email cannot silently reactivate the subscriber or trigger a welcome.
+   * Whether the calling path is allowed to clear a prior `unsubscribed`
+   * status. Set true only on paths that pass a human-verification check
+   * (e.g. Turnstile on /subscribe). Honeypot-only paths (popup/footer)
+   * leave the default false so a bot can't silently reactivate an opted-out
+   * address.
+   *
+   * Note: this is a bot-filter gate, NOT proof of mailbox ownership. A full
+   * double opt-in flow (emailed confirmation link) would be the stronger
+   * primitive — see docs/NEWSLETTER-RUNBOOK.md for the rationale on why
+   * this personal-newsletter stack doesn't ship one today.
+   *
+   * `bounced` and `complained` rows are NEVER reactivated by this function,
+   * regardless of allowReactivate — those are deliverability signals from
+   * the ESP and only an operator-run SQL change should bring them back.
    *
    * Default false.
    */
@@ -45,10 +54,17 @@ export async function upsertSubscriber(input: UpsertSubscriberInput): Promise<Up
     if (row.status === 'active') {
       return { subscriber: row, isNew: false, wasReactivated: false }
     }
-    // Row exists but is unsubscribed/bounced/complained. Only clear that
-    // recorded intent if the caller has verified consent — otherwise an
-    // unverified submit (honeypot-only popup/footer) could silently
-    // resubscribe someone who opted out.
+    // 'bounced' and 'complained' are deliverability signals from Resend and
+    // must NEVER be flipped to active from a public form — doing so damages
+    // sender reputation and, for 'complained', risks anti-spam violations.
+    // An operator can re-enable these manually with a direct SQL update if
+    // they've verified the deliverability issue is resolved.
+    if (row.status === 'bounced' || row.status === 'complained') {
+      return { subscriber: row, isNew: false, wasReactivated: false, reactivationBlocked: true }
+    }
+    // Row is 'unsubscribed'. Only clear it if the caller passes
+    // allowReactivate — unverified submits (honeypot-only popup/footer) must
+    // not silently resubscribe someone who opted out.
     if (!input.allowReactivate) {
       return { subscriber: row, isNew: false, wasReactivated: false, reactivationBlocked: true }
     }

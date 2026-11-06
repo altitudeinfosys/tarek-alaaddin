@@ -55,8 +55,11 @@ export async function POST(request: NextRequest) {
         ai: !!topics.ai,
         marketing: !!topics.marketing,
       },
-      // Turnstile was verified above, so this path is allowed to clear a
-      // prior unsubscribe. Honeypot-only paths (popup/footer) must not.
+      // Turnstile passed above, so a bot didn't submit this. That's weaker
+      // than proof of mailbox ownership (full double opt-in), but strong
+      // enough to let this path clear a prior `unsubscribed` status.
+      // Honeypot-only paths (popup/footer) leave the default false.
+      // 'bounced' and 'complained' rows are never reactivated regardless.
       allowReactivate: true,
     })
 
