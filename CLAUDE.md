@@ -19,6 +19,14 @@ git push -u origin feature/description-of-change
 # Wait for approval before merging
 ```
 
+## Preferred model
+
+This project should run on **Claude Opus 5.5** (`claude-opus-5-5`). The
+default is pinned in `.claude/settings.json` via the top-level `"model"` key,
+so new sessions opened on this project start on Opus 5.5 automatically. If a
+session is already running on a different model, switch it from the app's
+model picker — a session can't re-price its own turns.
+
 ## Other Guidelines
 
 - Use a to-do list before coding
