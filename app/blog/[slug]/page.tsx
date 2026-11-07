@@ -15,8 +15,9 @@ import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import Link from 'next/link'
 import { categoryLabel } from '@/lib/categories'
 import Badge from '@/components/ui/Badge'
-import { BlogPostingSchema } from '@/components/JsonLd'
+import { BlogPostingSchema, BreadcrumbSchema } from '@/components/JsonLd'
 import { absoluteUrl } from '@/lib/site'
+import { categoryGroup } from '@/lib/categories'
 
 const TITLE_SUFFIX = ' | Tarek Alaaddin'
 
@@ -56,6 +57,7 @@ export async function generateMetadata({ params }: BlogPostPageProps) {
       locale: 'en_US',
       type: 'article',
       publishedTime: post.date,
+      ...(post.updated ? { modifiedTime: post.updated } : {}),
       authors: ['Tarek Alaaddin'],
       tags: post.tags,
     },
@@ -98,6 +100,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
   const categoryVariant = categoryColors[post.category as keyof typeof categoryColors] || 'default'
 
   const relatedPosts = getRelatedPosts(post)
+  const group = categoryGroup(post.category)
 
   return (
     <div className="bg-white dark:bg-gray-900 min-h-screen">
@@ -106,8 +109,16 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         description={post.description}
         slug={params.slug}
         date={post.date}
+        updated={post.updated}
         tags={post.tags}
         category={post.category}
+      />
+      <BreadcrumbSchema
+        items={[
+          { name: 'Blog', path: '/blog' },
+          { name: categoryLabel(group), path: `/blog/category/${group}` },
+          { name: post.title, path: `/blog/${params.slug}` },
+        ]}
       />
       <article className="max-w-4xl mx-auto py-12 md:py-16 px-4 sm:px-6 lg:px-8">
         {/* Header */}
@@ -142,8 +153,10 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
           {post.tags && post.tags.length > 0 && (
             <ul className="flex flex-wrap gap-1.5 mt-6">
               {post.tags.map((tag) => (
-                <li key={tag} className="chip">
-                  #{tag}
+                <li key={tag}>
+                  <Link href={`/blog/tag/${tag.toLowerCase()}`} className="chip hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                    #{tag}
+                  </Link>
                 </li>
               ))}
             </ul>

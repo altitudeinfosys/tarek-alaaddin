@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import ResumePageClient from '@/components/ResumePageClient'
 import { absoluteUrl } from '@/lib/site'
+import { BreadcrumbSchema, ProfilePageSchema } from '@/components/JsonLd'
 
 export const metadata: Metadata = {
   title: 'Resume | Tarek Alaaddin',
@@ -21,5 +22,11 @@ export const metadata: Metadata = {
 }
 
 export default function ResumePage() {
-  return <ResumePageClient />
+  return (
+    <>
+      <ProfilePageSchema url={absoluteUrl('/resume')} />
+      <BreadcrumbSchema items={[{ name: 'Resume', path: '/resume' }]} />
+      <ResumePageClient />
+    </>
+  )
 }

@@ -3,6 +3,10 @@ export interface BlogPost {
   title: string
   description: string
   date: string
+  // Optional ISO date set when the post is edited after publication. Used for
+  // Schema.org dateModified and the article:modified_time OG tag; absent means
+  // the post hasn't been edited since it went live.
+  updated?: string
   category: 'ai' | 'productivity' | 'development'
   tags: string[]
   image?: string
@@ -16,6 +20,7 @@ export interface BlogPostMeta {
   title: string
   description: string
   date: string
+  updated?: string
   category: 'ai' | 'productivity' | 'development'
   tags: string[]
   image?: string

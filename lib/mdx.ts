@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
 import { BlogPost, BlogPostMeta } from '@/types/blog'
+import { categoryGroup } from '@/lib/categories'
 
 const BLOG_CONTENT_DIR = path.join(process.cwd(), 'content/blog')
 
@@ -38,6 +39,7 @@ export function getPostBySlug(slug: string): BlogPost | null {
       title: data.title || '',
       description: data.description || '',
       date: data.date || '',
+      updated: data.updated || undefined,
       category: data.category || 'development',
       tags: data.tags || [],
       image: data.image,
@@ -69,6 +71,7 @@ export function getAllPosts(): BlogPostMeta[] {
       title: post.title,
       description: post.description,
       date: post.date,
+      updated: post.updated,
       category: post.category,
       tags: post.tags,
       image: post.image,
@@ -91,6 +94,17 @@ export function getPostsByCategory(category: string): BlogPostMeta[] {
     return allPosts
   }
   return allPosts.filter((post) => post.category === category)
+}
+
+/**
+ * Posts in a top-level category group (ai, productivity, development).
+ * Uses categoryGroup() so posts tagged as "ai-tools", "ai-industry",
+ * "backend", "security", etc. roll up into the right archive.
+ */
+export function getPostsByCategoryGroup(
+  group: 'ai' | 'productivity' | 'development'
+): BlogPostMeta[] {
+  return getAllPosts().filter((post) => categoryGroup(post.category) === group)
 }
 
 /**
@@ -122,4 +136,34 @@ export function getRelatedPosts(
 export function getFeaturedPosts(): BlogPostMeta[] {
   const allPosts = getAllPosts()
   return allPosts.filter((post) => post.featured)
+}
+
+/**
+ * Get posts that carry a given tag (case-insensitive match).
+ */
+export function getPostsByTag(tag: string): BlogPostMeta[] {
+  const normalized = tag.trim().toLowerCase()
+  return getAllPosts().filter((post) =>
+    post.tags.some((postTag) => postTag.toLowerCase() === normalized)
+  )
+}
+
+/**
+ * Tags that appear on at least `minPostCount` posts, with their post counts.
+ * Single-post tags are excluded by default so each tag archive is a real
+ * index rather than a near-duplicate of a single post.
+ */
+export function getAllTagsWithCounts(minPostCount = 2): { tag: string; count: number }[] {
+  const counts = new Map<string, number>()
+  for (const post of getAllPosts()) {
+    for (const tag of post.tags) {
+      const key = tag.trim().toLowerCase()
+      if (!key) continue
+      counts.set(key, (counts.get(key) ?? 0) + 1)
+    }
+  }
+  return Array.from(counts.entries())
+    .filter(([, count]) => count >= minPostCount)
+    .map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
 }
