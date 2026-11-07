@@ -4,6 +4,7 @@ import { getAllProducts } from '@/data/products'
 import { apps } from '@/data/apps'
 import ProductDetail from '@/components/products/ProductDetail'
 import { absoluteUrl } from '@/lib/site'
+import { BreadcrumbSchema, SoftwareApplicationSchema } from '@/components/JsonLd'
 
 export const metadata: Metadata = {
   title: 'Products | Tarek Alaaddin',
@@ -28,6 +29,39 @@ export default function ProductsPage() {
 
   return (
     <div className="bg-white dark:bg-gray-900">
+      <BreadcrumbSchema items={[{ name: 'Products', path: '/products' }]} />
+      {products.map((product) => {
+        // Prefer the product's own site as the canonical URL; fall back to
+        // the on-page anchor when there's no external web URL.
+        const url = product.links.web ?? absoluteUrl(`/products#${product.id}`)
+        const sameAs = [
+          product.links.web,
+          product.links.ios,
+          product.links.android,
+          product.links.github,
+        ].filter((v): v is string => typeof v === 'string' && v.length > 0)
+        const image = product.images[0]?.startsWith('http')
+          ? product.images[0]
+          : absoluteUrl(product.images[0] ?? '')
+        // Combine free and paid tiers into one offer string Schema.org can
+        // accept as a single Offer node.
+        const offer = [product.pricing?.free, product.pricing?.pro]
+          .filter(Boolean)
+          .join(' · ')
+        return (
+          <SoftwareApplicationSchema
+            key={product.id}
+            name={product.name}
+            description={product.fullDescription || product.description}
+            url={url}
+            image={image || undefined}
+            applicationCategory="ProductivityApplication"
+            operatingSystem="Web, iOS, Android"
+            offer={offer || undefined}
+            sameAs={sameAs.length > 0 ? sameAs : undefined}
+          />
+        )
+      })}
       {/* Hero Section */}
       <section className="pt-14 md:pt-[4.5rem] pb-10 px-4 sm:px-6 lg:px-8 max-w-[76rem] mx-auto">
         <div className="eyebrow eyebrow-accent mb-3">Apps</div>
