@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { track } from '@vercel/analytics'
-import { format } from 'date-fns'
-import { formatDuration, type Video } from '@/lib/youtube'
+import type { Video } from '@/lib/youtube'
 
 // Starting one video stops any other, so two never play over each other.
 const PLAY_EVENT = 'videos:play'
@@ -31,7 +30,6 @@ export default function VideoCard({ video, channel }: VideoCardProps) {
   }
 
   const aspect = video.isShort ? 'aspect-[9/16]' : 'aspect-video'
-  const duration = formatDuration(video.duration)
 
   const thumbnail = (
     <>
@@ -49,9 +47,9 @@ export default function VideoCard({ video, channel }: VideoCardProps) {
           </svg>
         </span>
       </span>
-      {duration && !video.isShort && (
+      {video.durationLabel && !video.isShort && (
         <span className="absolute bottom-2 right-2 rounded bg-gray-950/80 px-1.5 py-0.5 font-mono text-[0.69rem] text-white">
-          {duration}
+          {video.durationLabel}
         </span>
       )}
     </>
@@ -99,7 +97,7 @@ export default function VideoCard({ video, channel }: VideoCardProps) {
           dateTime={video.publishedAt}
           className="mt-1 block text-sm text-gray-600 dark:text-gray-400"
         >
-          {format(new Date(video.publishedAt), 'MMM d, yyyy')}
+          {video.dateLabel}
         </time>
       )}
     </article>
