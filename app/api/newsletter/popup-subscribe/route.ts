@@ -8,7 +8,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 // The footer form reuses this honeypot-protected endpoint. Only known values are
 // recorded; anything else falls back to 'popup' so callers can't write arbitrary text.
-const ALLOWED_SOURCES = ['popup', 'footer', 'sticky-bar', 'end-of-post'] as const
+const ALLOWED_SOURCES = ['popup', 'footer', 'sticky-bar', 'end-of-post', 'videos'] as const
 
 export async function POST(request: NextRequest) {
   try {

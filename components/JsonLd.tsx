@@ -5,12 +5,12 @@ interface JsonLdProps {
 }
 
 export default function JsonLd({ data }: JsonLdProps) {
-  // JSON-LD requires dangerouslySetInnerHTML — content is safe because
-  // it's JSON.stringify of developer-controlled objects, not user input.
+  // JSON-LD requires dangerouslySetInnerHTML. Video titles come from the YouTube
+  // API, so "<" is escaped to stop any text from closing the script tag.
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, '\\u003c') }}
     />
   )
 }
@@ -39,6 +39,8 @@ export function PersonSchema() {
           'https://www.linkedin.com/in/tarekalaaddin',
           'https://github.com/altitudeinfosys',
           'https://x.com/tarekalaaddin',
+          'https://www.youtube.com/@TarekAlaaddin',
+          'https://www.youtube.com/@TarekAlaaddinUnfiltered',
         ],
       }}
     />
