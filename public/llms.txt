@@ -12,6 +12,9 @@
 - [SayCopy](https://apps.apple.com/us/app/saycopy/id6790925849): Voice to text, ready to use — transcribe, translate (EN/ES/AR), clean up, copy anywhere
 - [PropertyPulse360](https://www.propertypulse360.com): Property management for small landlords — rent collection, expense tracking, and owner reporting
 
+## Videos
+- [Videos](https://www.tarekalaaddin.com/videos): Videos on AI tools and workflows, plus short talks on habits, money, and mindset
+
 ## Blog
 - [Blog](https://www.tarekalaaddin.com/blog): Articles on AI development, productivity, and software engineering
 

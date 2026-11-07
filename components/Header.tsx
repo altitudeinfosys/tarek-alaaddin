@@ -10,6 +10,7 @@ import { useState } from 'react'
 const NAVIGATION_LINKS = [
   { name: 'Home', href: '/' },
   { name: 'Blog', href: '/blog' },
+  { name: 'Videos', href: '/videos' },
   { name: 'Apps', href: '/products' },
   { name: 'Contact', href: '/contact' },
 ]

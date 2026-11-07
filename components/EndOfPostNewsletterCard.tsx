@@ -7,11 +7,19 @@ import { isSubscribed, markSubscribed } from '@/lib/newsletter-signup'
 type Status = 'idle' | 'submitting' | 'success' | 'error'
 
 /**
- * End-of-post signup card. Renders unconditionally below every blog post,
+ * Inline signup card. Renders below every blog post and on the videos page,
  * except for visitors who already subscribed (we check the shared
  * localStorage flag used by the popup/footer).
  */
-export default function EndOfPostNewsletterCard() {
+interface EndOfPostNewsletterCardProps {
+  source?: 'end-of-post' | 'videos'
+  heading?: string
+}
+
+export default function EndOfPostNewsletterCard({
+  source = 'end-of-post',
+  heading = 'Get posts like this in your inbox.',
+}: EndOfPostNewsletterCardProps) {
   const [isSubscriber, setIsSubscriber] = useState<boolean | null>(null)
   const [firstName, setFirstName] = useState('')
   const [email, setEmail] = useState('')
@@ -33,13 +41,13 @@ export default function EndOfPostNewsletterCard() {
       const response = await fetch('/api/newsletter/popup-subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, firstName, honeypot, source: 'end-of-post' }),
+        body: JSON.stringify({ email, firstName, honeypot, source }),
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Something went wrong')
       setStatus('success')
       markSubscribed()
-      track('newsletter_endofpost_submit')
+      track('newsletter_endofpost_submit', { source })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
       setStatus('error')
@@ -65,7 +73,7 @@ export default function EndOfPostNewsletterCard() {
               id="endofpost-newsletter-heading"
               className="text-xl md:text-2xl font-display font-bold tracking-[-0.02em] text-gray-900 dark:text-white"
             >
-              Get posts like this in your inbox.
+              {heading}
             </h3>
             <p className="mt-2 text-sm md:text-base text-gray-600 dark:text-gray-400">
               New posts on AI engineering, automation, and building products — no fluff, unsubscribe anytime.

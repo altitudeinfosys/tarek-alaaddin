@@ -29,6 +29,16 @@ For day-to-day newsletter operations see [`docs/NEWSLETTER-RUNBOOK.md`](docs/NEW
 
 ---
 
+## Videos page (`/videos`)
+
+| Variable | Required | What it is |
+|---|---|---|
+| `YOUTUBE_API_KEY` | ✅ | YouTube Data API v3 key, from the `tarekalaaddin-site` Google Cloud project. Server-side only, and restricted to that API. |
+
+The page refreshes its list every 6 hours. Featured videos are set in `lib/youtube.ts`.
+
+---
+
 ## Contact form (separate system — Mailgun)
 
 The contact form at `/contact` uses Mailgun, not Resend. These are independent from the newsletter stack.

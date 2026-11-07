@@ -18,6 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const staticPages = [
     { url: absoluteUrl(), lastModified: latest, changeFrequency: 'weekly' as const, priority: 1.0 },
     { url: absoluteUrl('/blog'), lastModified: latest, changeFrequency: 'daily' as const, priority: 0.9 },
+    { url: absoluteUrl('/videos'), changeFrequency: 'weekly' as const, priority: 0.8 },
     { url: absoluteUrl('/products'), changeFrequency: 'monthly' as const, priority: 0.8 },
     { url: absoluteUrl('/resume'), changeFrequency: 'monthly' as const, priority: 0.6 },
     { url: absoluteUrl('/contact'), changeFrequency: 'yearly' as const, priority: 0.5 },
