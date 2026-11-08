@@ -1,0 +1,189 @@
+---
+title: "Make a Looping GIF Mascot for Your App With OpenAI Images 2.6"
+description: "OpenAI Images 2.6 outputs GIFs and SVGs from the API. Design a mascot, animate it, and ship it."
+date: "2026-11-08"
+category: "ai-tools"
+tags: ["openai", "images-2-6", "gif-generation", "svg", "api-tutorial", "image-generation", "app-development"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+OpenAI shipped [Images 2.6](https://openai.com/index/introducing-images-2-6/) on November 4, 2026, and the headline feature for developers isn't speed or quality — it's format. The API can now output animated GIFs directly with `output_format: "gif"`, and it can export static SVGs with `output_format: "svg"`. One model, two formats your app actually needs.
+
+That turns a single afternoon into a real asset pipeline: design a consistent mascot in ChatGPT, animate it as a looping GIF for your empty state or loading screen, then export a crisp SVG for your app icon and favicon. No Figma, no After Effects, no sprite-sheet plugins.
+
+Here's how to do it end to end.
+
+## What's New in Images 2.6
+
+Two models replace GPT Image 2.5 in the API:
+
+- **GPT-Image-2.6 Flare** — built for speed. At low quality, it returns an image in [as little as six seconds](https://openai.com/index/introducing-images-2-6/).
+- **GPT-Image-2.6 Sunburst** — built for detail. The higher-fidelity option when speed doesn't matter.
+
+Both models share these new capabilities:
+
+| Feature | What it does |
+|---------|-------------|
+| **GIF output** | `output_format: "gif"` on generations and edits. 2–16 frames, 20–2000 ms per frame. |
+| **SVG output** | `output_format: "svg"` on generations only. Static vector — no animation, no scripts. |
+| **Complexity** | `low`, `medium`, or `high`. Controls how much the model plans before rendering. Default is `high`. |
+| **Markup** | Send a transparent PNG overlay to point at exactly where to edit. |
+
+OpenAI says Images 2.6 is "50% faster than before," and that people now create [4 billion images per week](https://openai.com/index/introducing-images-2-6/) across ChatGPT, Codex, and the API — more than half a billion a day. Both claims come from OpenAI's launch post.
+
+Images 2.6 is available across all ChatGPT and Codex subscription tiers on desktop, mobile, and web.
+
+## Step 1: Design the Mascot in ChatGPT
+
+Start in ChatGPT, not the API. The conversational loop is faster for exploration: describe your character, iterate on details, use the markup feature to circle what needs fixing.
+
+A good mascot prompt is specific about proportions, style, and pose:
+
+> A friendly robot barista with oversized round eyes, a small cylindrical body, and short articulated arms. It holds a steaming coffee cup in one hand. Kawaii 3D toy style, warm pastel lighting, solid white background. Front-facing, centered, no shadows on the background.
+
+Run it a few times. When you have a version you like, use ChatGPT's markup feature — draw directly on the image to circle the arm angle, the eye shape, whatever needs adjusting — and describe the fix in your follow-up message.
+
+<Callout type="tip">
+Keep the background solid white or transparent from the start. It makes the GIF loop cleaner and the SVG export simpler. A busy background adds noise to both.
+</Callout>
+
+Save your best result. You'll use it as a reference image in the API steps below.
+
+## Step 2: Animate It With a GIF
+
+Once you have the static mascot, the next step is motion. GIFs in Images 2.6 work by describing the loop in your prompt — there is no explicit loop parameter in the API. The model generates a sequence of frames, and the output is a standard animated GIF.
+
+In ChatGPT, you can ask directly: "Animate this character waving hello in a seamless loop."
+
+A prompt structure that works is to describe the frames as a sequence:
+
+> Create a seamless looping animation. A friendly robot barista waves hello with one arm while holding a coffee cup in the other. Exactly 6 sequential frames: arm starts at side, rises to full wave, returns to side. The sixth frame transitions smoothly toward the first. Kawaii 3D toy style, warm pastel lighting, solid white background.
+
+This gives you a feel for what the animation will look like. But for production, you want the API — repeatable, scriptable, and you control every parameter.
+
+## Step 3: Generate the GIF via the API
+
+The API endpoint is `POST /v1/images/generations` (or `/v1/images/edits` if you're guiding the animation from your static mascot reference). Set `output_format: "gif"` and configure the frame parameters.
+
+Here are the GIF-specific fields from the [API docs](https://developers.openai.com/api/docs/guides/image-generation):
+
+| Parameter | Range | Default |
+|-----------|-------|---------|
+| `frame_count` | 2–16 | 9 |
+| `frame_duration_ms` | 20–2000 (rounded to 10 ms) | 200 |
+| `size` | `auto` or `WIDTHxHEIGHT` (multiples of 16) | `auto` |
+
+A `frame_count` of 8–9 at `frame_duration_ms` of 150–200 produces a smooth, short loop — about 1.2 to 1.8 seconds.
+
+Here's the curl to generate a GIF with Flare:
+
+```bash
+curl -s https://api.openai.com/v1/images/generations \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-image-2.6-flare",
+    "prompt": "A friendly robot barista waves hello with one arm while holding a coffee cup. Seamless loop: arm rises, waves, returns to starting position. Kawaii 3D toy style, warm pastel lighting, solid white background.",
+    "output_format": "gif",
+    "frame_count": 9,
+    "frame_duration_ms": 200,
+    "quality": "medium",
+    "complexity": "low"
+  }' | jq -r '.data[0].b64_json' | base64 --decode > mascot-wave.gif
+```
+
+If you want the animation to closely match your ChatGPT design, use the **edit endpoint** instead with your static mascot as a reference image. That keeps the character consistent — same proportions, same colors — while adding motion.
+
+<Callout type="info">
+GIF output does not support streaming or partial images. The entire animation is generated server-side and returned as a complete base64-encoded GIF. At medium quality with 9 frames, expect generation to take longer than a single static image.
+</Callout>
+
+**Why `complexity: "low"` here?** The complexity parameter controls how much planning the model does before rendering. For a simple single-character animation against a clean background, low is usually enough. Higher complexity is designed for dense scenes — multiple characters, text, or intricate layouts. Try both and compare results for your specific case.
+
+## Step 4: Export the SVG Icon via the API
+
+SVG output is generation-only — no edits, no reference images. You describe what you want, and the API produces a static SVG.
+
+```bash
+curl -s https://api.openai.com/v1/images/generations \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-image-2.6-sunburst",
+    "prompt": "A minimal icon of a friendly robot barista holding a coffee cup. Simple geometric shapes, flat colors, no gradients, centered on a transparent background. Designed as an app icon.",
+    "output_format": "svg",
+    "n": 1,
+    "quality": "high"
+  }' | jq -r '.data[0].b64_json' | base64 --decode > mascot-icon.svg
+```
+
+Key constraints from the [API docs](https://developers.openai.com/api/docs/guides/image-generation):
+
+- `n` must be `1`. SVG supports only a single output per request.
+- The edit endpoint does not support SVG — you can't pass a reference image.
+- The returned SVG is static. No animation, no scripts, no external resources, no embedded raster images.
+- The `quality` setting affects the fidelity of the generated SVG.
+
+<Callout type="warning">
+Because SVG generation doesn't accept reference images, the output won't be pixel-identical to your GIF mascot. Use a detailed prompt that describes the same character, and use Sunburst at high quality for the most consistent result. You may need a few generations to get one that matches well enough.
+</Callout>
+
+For the app icon, this is usually fine. Your GIF mascot handles the "personality" role (loading screens, empty states, onboarding), while the SVG icon handles the "identity" role (app icon, favicon, web).
+
+## Flare vs. Sunburst: When to Use Which
+
+Both models share the same pricing — $8 per million image input tokens, $30 per million image output tokens, and $5 per million text input tokens — so the choice is purely about the output you need.
+
+| Use case | Model | Why |
+|----------|-------|-----|
+| GIF with simple motion | **Flare** | Faster — speed matters more than fidelity for a simple loop |
+| GIF with complex scene | **Sunburst** | The detail-oriented model for scenes with multiple elements |
+| SVG icon | **Sunburst** | Higher fidelity reference image produces cleaner vector output |
+| Quick iteration / drafts | **Flare** | As fast as 6 seconds at low quality |
+| Production hero image | **Sunburst** | Best fidelity when speed doesn't matter |
+
+For SVG output specifically, billing is different: you pay the image model's rate for the internal reference image, plus the authoring model's rate for the tokens spent writing the SVG. The total depends on complexity and prompt length. Check your `usage` response to track actual token consumption.
+
+## Shipping It in Your App
+
+Once you have both assets, here's where they go:
+
+**The GIF:**
+- **Empty states** — when a list has no items yet, the mascot waving is friendlier than a blank screen
+- **Loading screens** — a short looping animation replaces a generic spinner
+- **Onboarding** — animated characters are more engaging than static illustrations
+- **Marketing** — social media posts, email headers, landing page hero sections
+
+**The SVG:**
+- **App icon** — scales perfectly to any resolution
+- **Favicon** — crisp at 16×16 and 32×32
+- **Web** — inline SVG in your header, footer, or about page
+- **Print** — business cards, stickers, swag
+
+The consistency between them comes from using the same character description and design language across both prompts, not from a shared reference image (since SVG generation doesn't support one).
+
+## What You Should Know Before Starting
+
+**Looping is prompt-driven.** There is no loop flag in the API. You have to describe the seamless transition in your prompt: "the sixth frame transitions smoothly toward the first," or "arm returns to starting position." Some prompts produce better loops than others. Experiment.
+
+**Complex prompts can take time.** The API docs note that complex prompts can take [up to 2 minutes](https://developers.openai.com/api/docs/guides/image-generation). For GIFs, generation time scales with frame count and quality. Start with `quality: "low"` and `frame_count: 6` during iteration, then bump up for the final version.
+
+**Organization Verification may be required.** The API may require [Organization Verification](https://developers.openai.com/api/docs/guides/image-generation) for access to image generation endpoints. Check your API dashboard.
+
+**SVG limitations are real.** No edits, no reference images, no animation, no scripts, no embedded raster. The model is writing vector XML from a text description. It handles simple icons and illustrations well. It is not a replacement for a designer on complex logos.
+
+**The API docs still show 2.5 in most examples.** As of this writing, the image generation guide's code samples reference GPT Image 2.5, though the markup example uses `gpt-image-2.6-flare`. The 2.6 models use the same endpoints and response format, with the added GIF, SVG, complexity, and markup parameters.
+
+## The Bigger Picture
+
+Images 2.6 is not a generational leap in image quality. What it changes is the *output surface*. GIF and SVG mean the API can now produce assets that ship directly into products — animated content for engagement, vector icons for branding — without a post-processing step.
+
+For indie developers and small teams, that's the shift that matters. You don't need a motion designer to get a looping mascot animation, and you don't need a vector artist for a clean app icon. You need a good prompt, the right model, and an afternoon.
+
+GIFs are the native language of social media, and SVGs are the native language of UI. Images 2.6 lets every developer produce both from a single API call.
+
+---
+
+*Want more practical AI tutorials like this?* [Subscribe to the newsletter](/subscribe) *for a new post every week.*
