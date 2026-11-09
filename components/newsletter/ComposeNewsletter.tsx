@@ -155,7 +155,7 @@ export default function ComposeNewsletter({ viewKey, defaultTestTo, subscribers 
   const results = search.trim()
     ? subscribers.filter((s) => !selectedSet.has(s.id) && matchesSubscriber(search, s)).slice(0, MAX_RESULTS)
     : []
-  const audienceReady = draft.audience === 'all' || draft.selectedIds.length > 0
+  const audienceReady = draft.audience === 'all' || selectedKnown.length > 0
   const ready = draft.subject.trim().length > 0 && draft.markdown.trim().length > 0 && audienceReady
   const busy = phase.kind === 'busy'
   const canSend = ready && secret.length > 0 && !busy
@@ -169,11 +169,14 @@ export default function ComposeNewsletter({ viewKey, defaultTestTo, subscribers 
     if (!draft || draft.locked || selectedSet.has(id)) return
     update({ selectedIds: [...draft.selectedIds, id] })
     setSearch('')
+    // A confirm box on screen names the old list; make the user review again.
+    setPhase({ kind: 'idle' })
   }
 
   function removeRecipient(id: string) {
     if (!draft || draft.locked) return
     update({ selectedIds: draft.selectedIds.filter((x) => x !== id) })
+    setPhase({ kind: 'idle' })
   }
 
   async function post(path: string, payload: Record<string, unknown>) {
@@ -332,7 +335,7 @@ export default function ComposeNewsletter({ viewKey, defaultTestTo, subscribers 
         </div>
 
         <fieldset
-          disabled={draft.locked}
+          disabled={draft.locked || busy}
           className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4"
         >
           <legend className="sr-only">Recipients</legend>
@@ -514,7 +517,7 @@ export default function ComposeNewsletter({ viewKey, defaultTestTo, subscribers 
               className={`${buttonBase} w-full bg-primary-600 text-white hover:bg-primary-700`}
             >
               {draft.audience === 'selected'
-                ? `Send to ${draft.selectedIds.length} selected…`
+                ? `Send to ${selectedKnown.length} selected…`
                 : 'Send to all subscribers…'}
             </button>
           )}

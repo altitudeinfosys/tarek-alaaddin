@@ -68,7 +68,9 @@ Use this for announcements like "my YouTube videos are on the site now".
    - **Specific subscribers**: search by email or first name, click a result (or press Enter for the top one) to add them, × to remove. Only active subscribers are listed, and the server drops anyone who stopped being active before the send.
 6. The send button shows how many people it will reach (for specific subscribers, it lists their addresses). Nothing goes out until you press **Yes, send to N**.
 
-To try a real send on yourself, pick **Specific subscribers** and choose your own address (you have to be an active subscriber).
+To check how the email looks, use **Send test**: it doesn't lock the draft, so you can still send the same email to everyone afterwards. A real send to **Specific subscribers** (even just yourself) locks the draft's subject, body and recipients, so sending it to everyone next means starting a new email.
+
+The server ties each send to its recipients: a retry with the same draft but a different set of people is refused with "already sent to a different set of people".
 
 How it sends: same path as the blog cron. One email per active subscriber from the site database, each with their own unsubscribe link, 100 per Resend batch call, every delivery recorded in `sent_to`. The send is stored in `sends` as `post_slug = custom-<key>` and shows on the dashboard as "One-off email". If a batch fails, pressing the send button again on the same draft sends only to the people who didn't get it. Once anything has gone out the draft locks, including the audience, so a retry goes to the same people; use **Start a new email** for the next one.
 

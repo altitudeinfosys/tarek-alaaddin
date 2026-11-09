@@ -1,4 +1,5 @@
-import { and, asc, eq, inArray, sql, type SQL } from 'drizzle-orm'
+import { createHash } from 'node:crypto'
+import { and, asc, eq, inArray, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { sends, sentTo, subscribers, type Send, type Subscriber } from '@/lib/db/schema'
 import type { Audience } from './recipients'
@@ -51,13 +52,35 @@ export function renderDraft(draft: Draft, unsubscribeToken: string) {
   })
 }
 
+/**
+ * The `sends.post_slug` for a draft and its audience. "All" keeps the plain
+ * `custom-<sendKey>` slug (so drafts from before the picker still resume);
+ * a selected audience appends a fingerprint of the picked ids. That ties a
+ * send row to its recipients without a schema change: a retry with the same
+ * sendKey but different people finds a row with a different slug and is refused.
+ * sendKey can't contain '.', so the two forms never collide.
+ */
+export function customSendSlug(sendKey: string, audience: Audience): string {
+  const base = `${CUSTOM_SEND_PREFIX}${sendKey}`
+  if (audience.type === 'all') return base
+  const fingerprint = createHash('sha256').update(audience.subscriberIds.join(',')).digest('hex').slice(0, 16)
+  return `${base}.${fingerprint}`
+}
+
+/** The send row for this sendKey, whichever audience it was made for. */
 export async function findCustomSend(sendKey: string): Promise<Send | null> {
+  const base = `${CUSTOM_SEND_PREFIX}${sendKey}`
   const rows = await db
     .select()
     .from(sends)
-    .where(eq(sends.postSlug, `${CUSTOM_SEND_PREFIX}${sendKey}`))
+    .where(or(eq(sends.postSlug, base), sql`starts_with(${sends.postSlug}, ${`${base}.`})`))
     .limit(1)
   return rows[0] ?? null
+}
+
+/** True when an existing send row was made for a different set of people. */
+export function audienceMismatch(existing: Send, sendKey: string, audience: Audience): boolean {
+  return existing.postSlug !== customSendSlug(sendKey, audience)
 }
 
 /**
@@ -121,8 +144,11 @@ export async function sendCustomToSubscribers(
   draft: Draft,
   audience: Audience
 ): Promise<CustomSendResult> {
-  const postSlug = `${CUSTOM_SEND_PREFIX}${sendKey}`
+  const postSlug = customSendSlug(sendKey, audience)
   let send = await findCustomSend(sendKey)
+  if (send && send.postSlug !== postSlug) {
+    throw new Error('This draft was already sent to a different set of people.')
+  }
   if (!send) {
     const [created] = await db
       .insert(sends)

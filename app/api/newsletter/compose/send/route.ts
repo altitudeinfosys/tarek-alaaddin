@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { hasSendAuth } from '@/lib/admin-auth'
 import {
   countRecipients,
+  audienceMismatch,
   findCustomSend,
   isValidSendKey,
   parseDraft,
@@ -46,6 +47,12 @@ export async function POST(request: NextRequest) {
   if (existing && existing.postTitle !== parsed.draft.subject) {
     return NextResponse.json(
       { error: 'This draft was already sent with a different subject. Start a new email instead.' },
+      { status: 409 }
+    )
+  }
+  if (existing && audienceMismatch(existing, sendKey, audience)) {
+    return NextResponse.json(
+      { error: 'This draft was already sent to a different set of people. Start a new email instead.' },
       { status: 409 }
     )
   }
