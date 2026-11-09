@@ -63,9 +63,14 @@ Use this for announcements like "my YouTube videos are on the site now".
 2. Write a subject and a Markdown body. The preview on the right is the exact email subscribers get, with the unsubscribe footer added automatically. The draft is saved in your browser.
 3. Paste `CRON_SECRET` into **Send secret**. It stays in the tab only.
 4. **Send test** emails one copy to the test address (default `RESEND_REPLY_TO`), subject prefixed `[Test]`. Its unsubscribe link is a placeholder and does nothing.
-5. **Send to subscribers…** shows how many active subscribers it will reach. Nothing goes out until you press **Yes, send to N**.
+5. **Send to** picks the audience:
+   - **All subscribers**: every active subscriber.
+   - **Specific subscribers**: search by email or first name, click a result (or press Enter for the top one) to add them, × to remove. Only active subscribers are listed, and the server drops anyone who stopped being active before the send.
+6. The send button shows how many people it will reach (for specific subscribers, it lists their addresses). Nothing goes out until you press **Yes, send to N**.
 
-How it sends: same path as the blog cron. One email per active subscriber from the site database, each with their own unsubscribe link, 100 per Resend batch call, every delivery recorded in `sent_to`. The send is stored in `sends` as `post_slug = custom-<key>` and shows on the dashboard as "One-off email". If a batch fails, pressing **Send to subscribers…** again on the same draft sends only to the people who didn't get it. Once anything has gone out the draft locks; use **Start a new email** for the next one.
+To try a real send on yourself, pick **Specific subscribers** and choose your own address (you have to be an active subscriber).
+
+How it sends: same path as the blog cron. One email per active subscriber from the site database, each with their own unsubscribe link, 100 per Resend batch call, every delivery recorded in `sent_to`. The send is stored in `sends` as `post_slug = custom-<key>` and shows on the dashboard as "One-off email". If a batch fails, pressing the send button again on the same draft sends only to the people who didn't get it. Once anything has gone out the draft locks, including the audience, so a retry goes to the same people; use **Start a new email** for the next one.
 
 The Resend "General" segment is not used for sending; the site database is the source of truth.
 

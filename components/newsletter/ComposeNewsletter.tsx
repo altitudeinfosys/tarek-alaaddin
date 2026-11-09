@@ -1,16 +1,29 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { matchesSubscriber } from '@/lib/email/recipients'
+
+export interface PickerSubscriber {
+  id: string
+  email: string
+  firstName: string | null
+}
 
 interface Props {
   viewKey: string
   defaultTestTo: string
+  /** Active subscribers, for the "Specific subscribers" search. */
+  subscribers: PickerSubscriber[]
 }
+
+type AudienceType = 'all' | 'selected'
 
 interface StoredDraft {
   subject: string
   markdown: string
   sendKey: string
+  audience: AudienceType
+  selectedIds: string[]
   /** Set once any part of this draft went out, so the content can't drift between retries. */
   locked: boolean
 }
@@ -18,10 +31,12 @@ interface StoredDraft {
 type Phase =
   | { kind: 'idle' }
   | { kind: 'busy'; label: string }
-  | { kind: 'confirm'; recipients: number; alreadySent: number }
+  | { kind: 'confirm'; recipients: number; alreadySent: number; recipientEmails?: string[]; skipped?: number }
   | { kind: 'done'; message: string; tone: 'ok' | 'warn' | 'error' }
 
 const STORAGE_KEY = 'newsletter-compose-draft'
+const MAX_RESULTS = 8
+const MAX_NAMES_IN_CONFIRM = 5
 
 function newSendKey(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -31,7 +46,7 @@ function newSendKey(): string {
 }
 
 function emptyDraft(): StoredDraft {
-  return { subject: '', markdown: '', sendKey: newSendKey(), locked: false }
+  return { subject: '', markdown: '', sendKey: newSendKey(), audience: 'all', selectedIds: [], locked: false }
 }
 
 function loadDraft(): StoredDraft {
@@ -43,6 +58,10 @@ function loadDraft(): StoredDraft {
       subject: typeof parsed.subject === 'string' ? parsed.subject : '',
       markdown: typeof parsed.markdown === 'string' ? parsed.markdown : '',
       sendKey: typeof parsed.sendKey === 'string' && parsed.sendKey.length >= 8 ? parsed.sendKey : newSendKey(),
+      audience: parsed.audience === 'selected' ? 'selected' : 'all',
+      selectedIds: Array.isArray(parsed.selectedIds)
+        ? parsed.selectedIds.filter((id): id is string => typeof id === 'string')
+        : [],
       locked: parsed.locked === true,
     }
   } catch {
@@ -64,14 +83,23 @@ const labelClass = 'block text-sm font-medium text-gray-700 dark:text-gray-300 m
 const buttonBase =
   'inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
 
-export default function ComposeNewsletter({ viewKey, defaultTestTo }: Props) {
+function confirmNames(emails: string[]): string {
+  const shown = emails.slice(0, MAX_NAMES_IN_CONFIRM).join(', ')
+  const more = emails.length - MAX_NAMES_IN_CONFIRM
+  return more > 0 ? `${shown} and ${more} more` : shown
+}
+
+export default function ComposeNewsletter({ viewKey, defaultTestTo, subscribers }: Props) {
   const [draft, setDraft] = useState<StoredDraft | null>(null)
   const [secret, setSecret] = useState('')
   const [testTo, setTestTo] = useState(defaultTestTo)
   const [previewHtml, setPreviewHtml] = useState('')
   const [previewError, setPreviewError] = useState('')
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' })
+  const [search, setSearch] = useState('')
   const previewSeq = useRef(0)
+
+  const byId = useMemo(() => new Map(subscribers.map((s) => [s.id, s])), [subscribers])
 
   useEffect(() => {
     setDraft(loadDraft())
@@ -121,9 +149,32 @@ export default function ComposeNewsletter({ viewKey, defaultTestTo }: Props) {
     return <p className="text-sm text-gray-500">Loading…</p>
   }
 
-  const ready = draft.subject.trim().length > 0 && draft.markdown.trim().length > 0
+  const selectedSet = new Set(draft.selectedIds)
+  const selectedKnown = draft.selectedIds.map((id) => byId.get(id)).filter((s): s is PickerSubscriber => !!s)
+  const selectedGone = draft.selectedIds.length - selectedKnown.length
+  const results = search.trim()
+    ? subscribers.filter((s) => !selectedSet.has(s.id) && matchesSubscriber(search, s)).slice(0, MAX_RESULTS)
+    : []
+  const audienceReady = draft.audience === 'all' || draft.selectedIds.length > 0
+  const ready = draft.subject.trim().length > 0 && draft.markdown.trim().length > 0 && audienceReady
   const busy = phase.kind === 'busy'
   const canSend = ready && secret.length > 0 && !busy
+
+  function audiencePayload() {
+    if (!draft || draft.audience === 'all') return { type: 'all' as const }
+    return { type: 'selected' as const, subscriberIds: draft.selectedIds }
+  }
+
+  function addRecipient(id: string) {
+    if (!draft || draft.locked || selectedSet.has(id)) return
+    update({ selectedIds: [...draft.selectedIds, id] })
+    setSearch('')
+  }
+
+  function removeRecipient(id: string) {
+    if (!draft || draft.locked) return
+    update({ selectedIds: draft.selectedIds.filter((x) => x !== id) })
+  }
 
   async function post(path: string, payload: Record<string, unknown>) {
     const res = await fetch(path, {
@@ -154,11 +205,12 @@ export default function ComposeNewsletter({ viewKey, defaultTestTo }: Props) {
 
   async function reviewSend() {
     if (!draft) return
-    setPhase({ kind: 'busy', label: 'Counting subscribers…' })
+    setPhase({ kind: 'busy', label: 'Counting recipients…' })
     const { res, data } = await post('/api/newsletter/compose/send', {
       subject: draft.subject,
       markdown: draft.markdown,
       sendKey: draft.sendKey,
+      audience: audiencePayload(),
       dryRun: true,
     })
     if (res.status === 401) {
@@ -171,25 +223,41 @@ export default function ComposeNewsletter({ viewKey, defaultTestTo }: Props) {
         tone: 'warn',
         message: data.alreadySent
           ? `Everyone already has this email (${data.alreadySent} sent).`
-          : 'There are no active subscribers to send to.',
+          : draft.audience === 'selected'
+            ? 'None of the people you picked are active subscribers.'
+            : 'There are no active subscribers to send to.',
       })
     } else {
-      setPhase({ kind: 'confirm', recipients: data.recipients, alreadySent: data.alreadySent })
+      setPhase({
+        kind: 'confirm',
+        recipients: data.recipients,
+        alreadySent: data.alreadySent,
+        recipientEmails: data.recipientEmails,
+        skipped: data.skipped,
+      })
     }
   }
 
   async function confirmSend(expected: number) {
     if (!draft) return
-    setPhase({ kind: 'busy', label: `Sending to ${expected} subscribers…` })
+    setPhase({ kind: 'busy', label: `Sending to ${expected} ${expected === 1 ? 'person' : 'people'}…` })
+    // Lock content and audience: a retry with this sendKey must go to the same people.
     update({ locked: true })
     const { res, data } = await post('/api/newsletter/compose/send', {
       subject: draft.subject,
       markdown: draft.markdown,
       sendKey: draft.sendKey,
+      audience: audiencePayload(),
       expectedRecipients: expected,
     })
     if (res.status === 409 && typeof data.recipients === 'number') {
-      setPhase({ kind: 'confirm', recipients: data.recipients, alreadySent: data.alreadySent ?? 0 })
+      setPhase({
+        kind: 'confirm',
+        recipients: data.recipients,
+        alreadySent: data.alreadySent ?? 0,
+        recipientEmails: data.recipientEmails,
+        skipped: data.skipped,
+      })
       return
     }
     if (!res.ok && res.status !== 207) {
@@ -200,11 +268,15 @@ export default function ComposeNewsletter({ viewKey, defaultTestTo }: Props) {
       setPhase({
         kind: 'done',
         tone: 'warn',
-        message: `Sent to ${data.recipients} so far, but some batches failed (${data.error}). Press "Send to subscribers" again to retry only the ones who didn't get it.`,
+        message: `Sent to ${data.recipients} so far, but some batches failed (${data.error}). Press the send button again to retry only the ones who didn't get it.`,
       })
       return
     }
-    setPhase({ kind: 'done', tone: 'ok', message: `Sent to ${data.recipients} subscribers.` })
+    setPhase({
+      kind: 'done',
+      tone: 'ok',
+      message: `Sent to ${data.recipients} ${data.recipients === 1 ? 'person' : 'people'}.`,
+    })
   }
 
   function startNew() {
@@ -212,6 +284,7 @@ export default function ComposeNewsletter({ viewKey, defaultTestTo }: Props) {
     saveDraft(fresh)
     setDraft(fresh)
     setPreviewHtml('')
+    setSearch('')
     setPhase({ kind: 'idle' })
   }
 
@@ -258,6 +331,114 @@ export default function ComposeNewsletter({ viewKey, defaultTestTo }: Props) {
           )}
         </div>
 
+        <fieldset
+          disabled={draft.locked}
+          className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4"
+        >
+          <legend className="sr-only">Recipients</legend>
+          <p className={labelClass}>Send to</p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            {(
+              [
+                ['all', `All subscribers (${subscribers.length})`],
+                ['selected', 'Specific subscribers'],
+              ] as const
+            ).map(([value, label]) => (
+              <label
+                key={value}
+                className={`flex-1 flex items-center gap-2 rounded-md border px-3 py-2 text-sm cursor-pointer ${
+                  draft.audience === value
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-gray-900 dark:text-white'
+                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="compose-audience"
+                  value={value}
+                  checked={draft.audience === value}
+                  onChange={() => {
+                    update({ audience: value })
+                    setPhase({ kind: 'idle' })
+                  }}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+
+          {draft.audience === 'selected' && (
+            <div className="space-y-3">
+              <div className="relative">
+                <label htmlFor="compose-search" className="sr-only">Search subscribers</label>
+                <input
+                  id="compose-search"
+                  type="search"
+                  autoComplete="off"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      if (results[0]) addRecipient(results[0].id)
+                    }
+                  }}
+                  className={inputClass}
+                  placeholder="Search by email or name"
+                />
+                {search.trim() && (
+                  <ul className="absolute z-10 mt-1 w-full max-h-72 overflow-auto rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg">
+                    {results.length === 0 ? (
+                      <li className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No active subscriber matches.</li>
+                    ) : (
+                      results.map((s) => (
+                        <li key={s.id}>
+                          <button
+                            type="button"
+                            onClick={() => addRecipient(s.id)}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+                          >
+                            <span className="text-gray-900 dark:text-white">{s.email}</span>
+                            {s.firstName && <span className="ml-2 text-gray-500 dark:text-gray-400">{s.firstName}</span>}
+                          </button>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                )}
+              </div>
+
+              {selectedKnown.length > 0 ? (
+                <ul className="flex flex-wrap gap-2" aria-label="Selected recipients">
+                  {selectedKnown.map((s) => (
+                    <li
+                      key={s.id}
+                      className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-700 pl-3 pr-1 py-1 text-sm text-gray-800 dark:text-gray-100"
+                    >
+                      {s.email}
+                      <button
+                        type="button"
+                        onClick={() => removeRecipient(s.id)}
+                        aria-label={`Remove ${s.email}`}
+                        className="rounded-full w-6 h-6 leading-none text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:hidden"
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-gray-500 dark:text-gray-400">Nobody picked yet.</p>
+              )}
+              {selectedGone > 0 && (
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  {selectedGone} picked {selectedGone === 1 ? 'person is' : 'people are'} no longer active and won&apos;t get it.
+                </p>
+              )}
+            </div>
+          )}
+        </fieldset>
+
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4">
           <div>
             <label htmlFor="compose-secret" className={labelClass}>Send secret (CRON_SECRET)</label>
@@ -296,9 +477,18 @@ export default function ComposeNewsletter({ viewKey, defaultTestTo }: Props) {
             <div className="rounded-md border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 p-4 space-y-3">
               <p className="text-sm text-gray-900 dark:text-white">
                 Send <strong>&ldquo;{draft.subject}&rdquo;</strong> to <strong>{phase.recipients}</strong>{' '}
-                {phase.alreadySent > 0 ? 'remaining ' : ''}subscriber{phase.recipients === 1 ? '' : 's'}?
+                {phase.alreadySent > 0 ? 'remaining ' : ''}
+                {draft.audience === 'selected'
+                  ? phase.recipients === 1 ? 'person' : 'people'
+                  : phase.recipients === 1 ? 'subscriber' : 'subscribers'}
+                {phase.recipientEmails && phase.recipientEmails.length > 0 && <>: {confirmNames(phase.recipientEmails)}</>}?
                 {phase.alreadySent > 0 && ` (${phase.alreadySent} already got it.)`} This can&apos;t be undone.
               </p>
+              {!!phase.skipped && phase.skipped > 0 && (
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  {phase.skipped} picked {phase.skipped === 1 ? 'person is' : 'people are'} no longer active and will be skipped.
+                </p>
+              )}
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -323,7 +513,9 @@ export default function ComposeNewsletter({ viewKey, defaultTestTo }: Props) {
               disabled={!canSend}
               className={`${buttonBase} w-full bg-primary-600 text-white hover:bg-primary-700`}
             >
-              Send to subscribers…
+              {draft.audience === 'selected'
+                ? `Send to ${draft.selectedIds.length} selected…`
+                : 'Send to all subscribers…'}
             </button>
           )}
 

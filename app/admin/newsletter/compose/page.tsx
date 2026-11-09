@@ -1,5 +1,7 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { asc, eq } from 'drizzle-orm'
+import { db, subscribers } from '@/lib/db'
 import { hasViewKey } from '@/lib/admin-auth'
 import { REPLY_TO } from '@/lib/email/resend'
 import ComposeNewsletter from '@/components/newsletter/ComposeNewsletter'
@@ -16,13 +18,21 @@ interface PageProps {
   searchParams: { key?: string }
 }
 
-export default function ComposePage({ searchParams }: PageProps) {
+export default async function ComposePage({ searchParams }: PageProps) {
   // The view key only opens the page and renders previews. Sending needs
   // CRON_SECRET, which is typed on the page and never put in a URL.
   if (!hasViewKey(searchParams.key)) {
     notFound()
   }
   const viewKey = searchParams.key as string
+
+  // Active subscribers for the "Specific subscribers" picker. The dashboard
+  // behind the same key already lists every subscriber, so this exposes nothing new.
+  const activeSubscribers = await db
+    .select({ id: subscribers.id, email: subscribers.email, firstName: subscribers.firstName })
+    .from(subscribers)
+    .where(eq(subscribers.status, 'active'))
+    .orderBy(asc(subscribers.email))
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -39,7 +49,7 @@ export default function ComposePage({ searchParams }: PageProps) {
             </a>
           </p>
         </div>
-        <ComposeNewsletter viewKey={viewKey} defaultTestTo={REPLY_TO} />
+        <ComposeNewsletter viewKey={viewKey} defaultTestTo={REPLY_TO} subscribers={activeSubscribers} />
       </div>
     </div>
   )
