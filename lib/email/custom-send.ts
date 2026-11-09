@@ -1,7 +1,8 @@
-import { eq } from 'drizzle-orm'
+import { createHash } from 'node:crypto'
+import { and, asc, eq, inArray, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { sends, type Send } from '@/lib/db/schema'
-import { listPendingSubscribersForSend, listActiveSubscribers } from '@/lib/db/subscribers'
+import { sends, sentTo, subscribers, type Send, type Subscriber } from '@/lib/db/schema'
+import type { Audience } from './recipients'
 import { recordSentTo, updateSendRecipientCount } from '@/lib/db/sends'
 import { resend, FROM, REPLY_TO, unsubscribeUrl } from './resend'
 import { markdownToEmailHtml } from './markdown'
@@ -51,28 +52,77 @@ export function renderDraft(draft: Draft, unsubscribeToken: string) {
   })
 }
 
+/**
+ * The `sends.post_slug` for a draft and its audience. "All" keeps the plain
+ * `custom-<sendKey>` slug (so drafts from before the picker still resume);
+ * a selected audience appends a fingerprint of the picked ids. That ties a
+ * send row to its recipients without a schema change: a retry with the same
+ * sendKey but different people finds a row with a different slug and is refused.
+ * sendKey can't contain '.', so the two forms never collide.
+ */
+export function customSendSlug(sendKey: string, audience: Audience): string {
+  const base = `${CUSTOM_SEND_PREFIX}${sendKey}`
+  if (audience.type === 'all') return base
+  const fingerprint = createHash('sha256').update(audience.subscriberIds.join(',')).digest('hex').slice(0, 16)
+  return `${base}.${fingerprint}`
+}
+
+/** The send row for this sendKey, whichever audience it was made for. */
 export async function findCustomSend(sendKey: string): Promise<Send | null> {
+  const base = `${CUSTOM_SEND_PREFIX}${sendKey}`
   const rows = await db
     .select()
     .from(sends)
-    .where(eq(sends.postSlug, `${CUSTOM_SEND_PREFIX}${sendKey}`))
+    .where(or(eq(sends.postSlug, base), sql`starts_with(${sends.postSlug}, ${`${base}.`})`))
     .limit(1)
   return rows[0] ?? null
 }
 
+/** True when an existing send row was made for a different set of people. */
+export function audienceMismatch(existing: Send, sendKey: string, audience: Audience): boolean {
+  return existing.postSlug !== customSendSlug(sendKey, audience)
+}
+
 /**
- * How many subscribers a send with this key would reach right now: every
- * active subscriber for a new key, or only those not yet emailed when a
+ * Active subscribers in the audience who haven't received this send yet.
+ * With no send row (a new key) that's simply every active subscriber in the
+ * audience. Inactive or unknown ids in a `selected` audience are dropped
+ * here, so an unsubscribed person is never emailed whatever the page sent.
+ */
+async function listPendingRecipients(sendId: string | null, audience: Audience): Promise<Subscriber[]> {
+  const conditions: SQL[] = [eq(subscribers.status, 'active')]
+  if (audience.type === 'selected') conditions.push(inArray(subscribers.id, audience.subscriberIds))
+  if (sendId) {
+    conditions.push(
+      sql`NOT EXISTS (SELECT 1 FROM ${sentTo} WHERE ${sentTo.subscriberId} = ${subscribers.id} AND ${sentTo.sendId} = ${sendId})`
+    )
+  }
+  return db.select().from(subscribers).where(and(...conditions)).orderBy(asc(subscribers.email))
+}
+
+export interface RecipientCount {
+  recipients: number
+  alreadySent: number
+  /** For a `selected` audience: the addresses that would get it now (for the confirm step). */
+  recipientEmails?: string[]
+  /** For a `selected` audience: picked people who are no longer active, so won't get it. */
+  skipped?: number
+}
+
+/**
+ * How many subscribers a send with this key would reach right now: everyone
+ * in the audience for a new key, or only those not yet emailed when a
  * previous attempt with the same key partly finished.
  */
-export async function countRecipients(sendKey: string): Promise<{ recipients: number; alreadySent: number }> {
+export async function countRecipients(sendKey: string, audience: Audience): Promise<RecipientCount> {
   const existing = await findCustomSend(sendKey)
-  if (!existing) {
-    const active = await listActiveSubscribers()
-    return { recipients: active.length, alreadySent: 0 }
+  const pending = await listPendingRecipients(existing?.id ?? null, audience)
+  const result: RecipientCount = { recipients: pending.length, alreadySent: existing?.recipientCount ?? 0 }
+  if (audience.type === 'selected') {
+    result.recipientEmails = pending.map((s) => s.email)
+    if (!existing) result.skipped = audience.subscriberIds.length - pending.length
   }
-  const pending = await listPendingSubscribersForSend(existing.id)
-  return { recipients: pending.length, alreadySent: existing.recipientCount }
+  return result
 }
 
 export interface CustomSendResult {
@@ -83,14 +133,22 @@ export interface CustomSendResult {
 }
 
 /**
- * Email the draft to every active subscriber who hasn't received this send.
+ * Email the draft to every active subscriber in the audience who hasn't
+ * received this send.
  * Mirrors the blog cron: Resend batch API, 100 per call, one email per
  * subscriber with their own unsubscribe link, each delivery recorded in
  * sent_to so a retry with the same sendKey never double-sends.
  */
-export async function sendCustomToSubscribers(sendKey: string, draft: Draft): Promise<CustomSendResult> {
-  const postSlug = `${CUSTOM_SEND_PREFIX}${sendKey}`
+export async function sendCustomToSubscribers(
+  sendKey: string,
+  draft: Draft,
+  audience: Audience
+): Promise<CustomSendResult> {
+  const postSlug = customSendSlug(sendKey, audience)
   let send = await findCustomSend(sendKey)
+  if (send && send.postSlug !== postSlug) {
+    throw new Error('This draft was already sent to a different set of people.')
+  }
   if (!send) {
     const [created] = await db
       .insert(sends)
@@ -102,7 +160,7 @@ export async function sendCustomToSubscribers(sendKey: string, draft: Draft): Pr
     if (!send) throw new Error('Could not create send record')
   }
 
-  const pending = await listPendingSubscribersForSend(send.id)
+  const pending = await listPendingRecipients(send.id, audience)
   if (pending.length === 0) {
     return { status: 'already-sent-to-all', sendId: send.id, recipients: send.recipientCount }
   }
@@ -135,6 +193,7 @@ export async function sendCustomToSubscribers(sendKey: string, draft: Draft): Pr
         tags: [
           { name: 'kind', value: 'newsletter-custom' },
           { name: 'send', value: sendKey },
+          { name: 'audience', value: audience.type },
         ],
       }
     })

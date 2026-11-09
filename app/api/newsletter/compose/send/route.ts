@@ -2,17 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { hasSendAuth } from '@/lib/admin-auth'
 import {
   countRecipients,
+  audienceMismatch,
   findCustomSend,
   isValidSendKey,
   parseDraft,
   sendCustomToSubscribers,
 } from '@/lib/email/custom-send'
+import { parseAudience } from '@/lib/email/recipients'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
 
 /**
- * Sends a one-off email to all active subscribers.
+ * Sends a one-off email to all active subscribers, or to a chosen few.
+ *
+ * `audience` is { type: 'all' } (the default) or
+ * { type: 'selected', subscriberIds: [...] }. Selected ids that aren't
+ * active subscribers are skipped server-side.
  *
  * Two calls from the compose page:
  *   1. { dryRun: true }  → returns how many people it would reach.
@@ -33,6 +39,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing or invalid sendKey.' }, { status: 400 })
   }
   const sendKey: string = body.sendKey
+  const audienceResult = parseAudience(body?.audience)
+  if (!audienceResult.ok) return NextResponse.json({ error: audienceResult.error }, { status: 400 })
+  const audience = audienceResult.audience
 
   const existing = await findCustomSend(sendKey)
   if (existing && existing.postTitle !== parsed.draft.subject) {
@@ -41,16 +50,23 @@ export async function POST(request: NextRequest) {
       { status: 409 }
     )
   }
+  if (existing && audienceMismatch(existing, sendKey, audience)) {
+    return NextResponse.json(
+      { error: 'This draft was already sent to a different set of people. Start a new email instead.' },
+      { status: 409 }
+    )
+  }
 
-  const { recipients, alreadySent } = await countRecipients(sendKey)
+  const count = await countRecipients(sendKey, audience)
+  const { recipients, alreadySent } = count
 
   if (body?.dryRun) {
-    return NextResponse.json({ dryRun: true, recipients, alreadySent })
+    return NextResponse.json({ dryRun: true, ...count })
   }
 
   if (typeof body?.expectedRecipients !== 'number' || body.expectedRecipients !== recipients) {
     return NextResponse.json(
-      { error: 'The recipient count changed. Review the new number and confirm again.', recipients, alreadySent },
+      { error: 'The recipient count changed. Review the new number and confirm again.', ...count },
       { status: 409 }
     )
   }
@@ -59,7 +75,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await sendCustomToSubscribers(sendKey, parsed.draft)
+    const result = await sendCustomToSubscribers(sendKey, parsed.draft, audience)
     return NextResponse.json(result, { status: result.status === 'partial' ? 207 : 200 })
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
