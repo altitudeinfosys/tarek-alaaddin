@@ -24,6 +24,7 @@
 | Popup (exit intent) | `POST /api/newsletter/popup-subscribe` | Honeypot |
 | Unsubscribe | `GET /api/newsletter/unsubscribe?token=…` | token-based |
 | Admin dashboard | `/admin/newsletter?key=$ADMIN_VIEW_KEY` | query-param key |
+| Compose a one-off email | `/admin/newsletter/compose?key=$ADMIN_VIEW_KEY` | view key opens it; sending needs `CRON_SECRET` typed on the page |
 | Cron | `/api/cron/newsletter` | `Authorization: Bearer $CRON_SECRET` |
 | Subscribers list | `GET /api/newsletter/subscribers` | `Authorization: Bearer $CRON_SECRET` |
 
@@ -51,6 +52,22 @@ NEXT_PUBLIC_SITE_URL    — https://www.tarekalaaddin.com
 RESEND_SENDER           — optional override (default: newsletter@tarekalaaddin.com)
 RESEND_REPLY_TO         — optional override (default: tarek@tarekalaaddin.com)
 ```
+
+---
+
+## Sending a one-off email (not tied to a blog post)
+
+Use this for announcements like "my YouTube videos are on the site now".
+
+1. Open `/admin/newsletter/compose?key=$ADMIN_VIEW_KEY` (or the **Compose email** link on the dashboard).
+2. Write a subject and a Markdown body. The preview on the right is the exact email subscribers get, with the unsubscribe footer added automatically. The draft is saved in your browser.
+3. Paste `CRON_SECRET` into **Send secret**. It stays in the tab only.
+4. **Send test** emails one copy to the test address (default `RESEND_REPLY_TO`), subject prefixed `[Test]`. Its unsubscribe link is a placeholder and does nothing.
+5. **Send to subscribers…** shows how many active subscribers it will reach. Nothing goes out until you press **Yes, send to N**.
+
+How it sends: same path as the blog cron. One email per active subscriber from the site database, each with their own unsubscribe link, 100 per Resend batch call, every delivery recorded in `sent_to`. The send is stored in `sends` as `post_slug = custom-<key>` and shows on the dashboard as "One-off email". If a batch fails, pressing **Send to subscribers…** again on the same draft sends only to the people who didn't get it. Once anything has gone out the draft locks; use **Start a new email** for the next one.
+
+The Resend "General" segment is not used for sending; the site database is the source of truth.
 
 ---
 

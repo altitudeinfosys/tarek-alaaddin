@@ -102,13 +102,22 @@ export default function NewsletterDashboard({ initialSubscribers, recentSends = 
                     className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                   >
                     <td className="py-3 px-3">
-                      <a
-                        href={`/blog/${s.post_slug}`}
-                        className="text-sm font-medium text-gray-900 dark:text-white hover:underline"
-                      >
-                        {s.post_title}
-                      </a>
-                      <div className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">/{s.post_slug}</div>
+                      {s.post_slug.startsWith('custom-') ? (
+                        <>
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">{s.post_title}</span>
+                          <div className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">One-off email</div>
+                        </>
+                      ) : (
+                        <>
+                          <a
+                            href={`/blog/${s.post_slug}`}
+                            className="text-sm font-medium text-gray-900 dark:text-white hover:underline"
+                          >
+                            {s.post_title}
+                          </a>
+                          <div className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">/{s.post_slug}</div>
+                        </>
+                      )}
                     </td>
                     <td className="py-3 px-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
                       {formatSentAt(s.sent_at)}

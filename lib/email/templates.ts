@@ -165,6 +165,69 @@ Changed your mind? Unsubscribe: ${unsubUrl}
   return { subject, html, text }
 }
 
+interface CustomEmailArgs {
+  subject: string
+  /** Body already rendered to inline-styled HTML (see markdownToEmailHtml). */
+  bodyHtml: string
+  /** The Markdown source, used as the plain-text part. */
+  bodyText: string
+  unsubscribeToken: string
+}
+
+/**
+ * A one-off email written on /admin/newsletter/compose (not tied to a blog
+ * post). Same dark layout and unsubscribe footer as the blog-post email.
+ */
+export function renderCustomEmail({
+  subject,
+  bodyHtml,
+  bodyText,
+  unsubscribeToken,
+}: CustomEmailArgs): { subject: string; html: string; text: string } {
+  const unsubUrl = unsubscribeUrl(unsubscribeToken)
+
+  const text = `${bodyText.trim()}
+
+---
+Don't want these? Unsubscribe: ${unsubUrl}
+`
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escape(subject)}</title>
+</head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#e5e5e5;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#111;border:1px solid #222;border-radius:8px;">
+          <tr>
+            <td style="padding:32px 32px 16px 32px;">
+              ${bodyHtml}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 32px;border-top:1px solid #222;">
+              <p style="margin:0;font-size:12px;line-height:1.5;color:#737373;">
+                You're receiving this because you subscribed at <a href="https://www.tarekalaaddin.com" style="color:#737373;">tarekalaaddin.com</a>.
+                <br>
+                <a href="${escape(unsubUrl)}" style="color:#737373;text-decoration:underline;">Unsubscribe</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+
+  return { subject, html, text }
+}
+
 function escape(str: string): string {
   return str
     .replace(/&/g, '&amp;')
