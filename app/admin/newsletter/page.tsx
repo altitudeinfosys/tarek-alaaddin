@@ -58,6 +58,13 @@ export default async function NewsletterPage({ searchParams }: PageProps) {
               className="font-medium text-primary-600 dark:text-primary-400 hover:underline"
             >
               Operator guide
+            </a>{' '}
+            ·{' '}
+            <a
+              href={`/admin/newsletter/compose?key=${encodeURIComponent(expected)}`}
+              className="font-medium text-primary-600 dark:text-primary-400 hover:underline"
+            >
+              Compose email
             </a>
           </p>
         </div>
