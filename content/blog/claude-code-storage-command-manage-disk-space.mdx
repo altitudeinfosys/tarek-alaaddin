@@ -1,0 +1,152 @@
+---
+title: "Claude Code /storage Command — Manage Disk Space From the Desktop App"
+description: "Claude Desktop eats gigabytes in dead sessions and worktrees. The new /storage command shows exactly where it all goes and lets you reclaim it."
+date: "2026-11-10"
+category: "ai-tools"
+tags: ["claude-code", "claude-desktop", "disk-space", "developer-tools", "storage-management", "anthropic", "worktrees"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+If you've been running Claude Desktop for more than a few weeks, your disk is almost certainly fuller than you think.
+
+Sessions that run code create worktrees — working copies of your repo — on your local machine. Those worktrees stay after the session ends. The transcripts stay too. The runtime VM bundle stays. And nothing in the app told you any of this was happening.
+
+Developers started [filing GitHub issues](https://github.com/anthropics/claude-code) about it. One user [reported finding 9.3 GB](https://medium.com/@joenjenga) sitting in dead session folders with no built-in way to recover the space.
+
+Anthropic shipped a fix: `/storage`, a slash command built into Claude Desktop that gives you a full breakdown of what Claude is using on your machine and a way to clear it out.
+
+## Where Did 14 GB Go?
+
+The `/storage` panel splits Claude Desktop's disk usage into four blocks:
+
+| Block | What's in it |
+|-------|-------------|
+| **Cowork tasks** | Conversation data, uploaded files, Claude's outputs |
+| **Code sessions & worktrees** | `.jsonl` transcripts + full repo copies per session |
+| **Runtime** | The Cowork VM image + bundled Claude Code versions (~9.8 GB) |
+| **App caches & logs** | Web cache, browser panes, log files |
+
+One user on the wmedia.es walkthrough [reported 14 GB total](https://wmedia.es/en/tips/claude-code-storage-desktop-disk-space) across all four blocks on a Mac with a few weeks of active use. The runtime alone accounted for nearly 10 GB of that.
+
+That runtime block is the big one — nearly 10 GB that isn't yours and can't be removed. It's the virtual machine image that Cowork tasks run in, plus the Claude Code binaries the desktop app downloads separately from whatever you installed in the terminal. On macOS, all of this lives under `~/Library/Application Support/Claude/`. On disk, the runtime breaks down into `vm_bundles/` (the Cowork workspace image), `claude-code/` (the bundled CLI versions), and `claude-code-vm/` (the VM data disk). The app even keeps multiple Claude Code versions simultaneously — the current one and at least one previous one — though the docs don't specify when the old version gets retired.
+
+The insight here is that the runtime is a fixed cost. You pay it once. The part that grows without bound is the sessions block.
+
+## Why Sessions Pile Up
+
+Here's the part that catches people off guard: desktop transcripts don't expire.
+
+In the terminal, Claude Code deletes session transcripts after 30 days by default (controlled by [`cleanupPeriodDays`](https://code.claude.com/docs/en/settings-reference#cleanupperioddays)). Desktop is different. Since Claude Code v2.1.248, transcripts from sessions started or continued in Claude Desktop or Cowork are kept indefinitely.
+
+That's how you end up with 132 sessions in `~/.claude/projects/` and no indication that they're eating disk. Each session is a `.jsonl` transcript stored in plaintext — not encrypted, not compressed. If a session read your `.env` file or a command printed a credential, that value is sitting in the transcript. And each session that ran code has a worktree — a full working copy of your repository, including `node_modules`, build artifacts, and everything else in the tree.
+
+Three repos and a month of daily use, and you're looking at several gigabytes of dead worktrees alone. The worktrees are usually the biggest piece — each one is a full copy of the project directory, `node_modules` and all.
+
+## How /storage Works
+
+Type `/storage` in a Cowork conversation or a Code session in Claude Desktop. You can also get there through Settings → Storage, or wait for the low-disk-space warning to trigger it automatically. The panel shows up with the four blocks, their sizes, and the total.
+
+<Callout type="info">
+The `/storage` command is desktop-only. It doesn't exist in the terminal CLI. If you type it in a terminal session, Claude will just tell you no skill by that name is installed.
+</Callout>
+
+The panel computes totals when it opens. Hit **Refresh** to recompute after you've cleaned things up. **Open folder** at the bottom takes you straight to the app data directory.
+
+For Cowork tasks and Code sessions, the panel tags items as "inactive" if they've had no activity for 30 days. You can remove inactive items with one click:
+
+- **Removing a Cowork task** deletes its conversation, attached files, and generated outputs. Cowork projects and memory stay.
+- **Removing a Code session** deletes its transcript from `~/.claude/projects/`, so you can't resume it afterward — not in the app and not with `claude --resume` in the terminal.
+- **Clean worktrees get removed with their session.** If a worktree has uncommitted changes, it stays put.
+
+<Callout type="warning">
+Removing a session is permanent. The transcript is gone. If you had a particularly useful conversation you might want to reference later, either export it or leave it alone. The worktree removal is safe — your project files are untouched, only the session's copy is deleted.
+</Callout>
+
+## What /storage Can't Do
+
+The panel removes inactive Cowork tasks and Code sessions. That's it. Two things it doesn't touch:
+
+**Runtime (~9.8 GB).** The VM bundles and Claude Code binaries stay. This is the app's operating cost and there's no knob to reduce it.
+
+**App caches and logs (~2 GB).** The panel doesn't have a button for these. If you want to clear the web cache, it's under **Help → Troubleshooting → Clear Cache and Restart**. The separate **Free Up Cowork Disk Space** option lives there too.
+
+If you need serious space recovery, the panel is a starting point, not the whole answer. The worktrees are usually the biggest win, and the terminal gives you more control there.
+
+## The Manual Methods Still Work
+
+Before `/storage` existed, the only option was digging through the filesystem by hand. Those methods still work and give you more precision:
+
+**Check how much space Claude is using on macOS:**
+
+```bash
+du -sh ~/Library/Application\ Support/Claude/
+```
+
+**On Windows (PowerShell):**
+
+```powershell
+Get-ChildItem "$env:LOCALAPPDATA\Claude" -Recurse | Measure-Object -Property Length -Sum | Select-Object @{Name="Size (MB)"; Expression={[math]::Round($_.Sum / 1MB, 2)}}
+```
+
+**Remove all Claude data for a project:**
+
+```bash
+claude purge ~/path/to/your/project
+```
+
+`claude purge` wipes everything Claude Code holds for a single project — transcripts, auto memory, per-session tasks, debug data, and file history. Unlike the `/storage` panel, it doesn't filter by age: it deletes everything for that project.
+
+<Callout type="tip">
+If you've stopped working on a project and want all its Claude data gone, `claude purge` is the right tool. If you're still actively working on it and just want to clear old sessions, the `/storage` panel's age-based filtering is a better fit.
+</Callout>
+
+**List and remove worktrees directly:**
+
+```bash
+git worktree list
+git worktree remove ../path-to-worktree
+```
+
+Worktrees that Claude created for subagents and background sessions are removed automatically once they're older than `cleanupPeriodDays` — but only if they have no uncommitted changes. Worktrees you created yourself with `--worktree` are never removed by the automatic sweep.
+
+## Stop Sessions From Piling Up Again
+
+The `/storage` panel fixes the present. To prevent the problem from recurring, there's a setting that didn't exist before:
+
+```json
+{
+  "desktopSessionCleanupPeriodDays": 90
+}
+```
+
+Add this to your Claude settings. Claude Code will auto-delete Desktop and Cowork transcripts once they pass this age limit. By default, desktop transcripts never expire — this setting changes that.
+
+Note that the terminal's `cleanupPeriodDays` (30 days by default) still applies as a floor. A desktop transcript won't be cleaned up before it's older than both thresholds.
+
+## A Note on Security
+
+The transcripts deserve a second look from a security angle. Claude Code stores them as [plaintext `.jsonl` files](https://code.claude.com/docs/en/claude-directory#plaintext-storage), protected only by OS file permissions. If you've ever had Claude read a `.env` file, an API key, or a database connection string during a session, that value is written to the transcript.
+
+The `/storage` panel doesn't highlight this — it's a disk space tool, not a security audit. But cleaning up old sessions has a secondary benefit: it removes transcripts that may contain sensitive data you forgot about.
+
+If you want to reduce exposure without waiting for transcripts to age out, lower `cleanupPeriodDays` to something aggressive — 7 days instead of the default 30. You can also set the `CLAUDE_CODE_SKIP_PROMPT_HISTORY` environment variable to stop writing transcripts entirely, though that means you lose the ability to resume sessions.
+
+## The Bigger Picture
+
+The `/storage` command is useful, but the bigger takeaway is about what AI coding tools leave behind on your machine. Claude Desktop creates real filesystem artifacts — worktrees, transcripts, VM images, caches — and until this update, nothing in the interface surfaced them.
+
+This isn't unique to Claude. Every AI coding tool that runs locally is writing to your disk in ways the UI doesn't show. The pattern is the same across the category: the tool is designed for the coding experience, not for lifecycle management of its own artifacts.
+
+The good practice is the same regardless of tool: check your disk usage periodically, understand what each tool stores, and have a cleanup routine. For Claude Desktop, `/storage` is now that routine. For everything else, `du -sh` and a calendar reminder are still the best you've got.
+
+## Requirements
+
+- Claude Desktop v3.1623.0 or later (the release that adds Storage to Settings, bundling Claude Code 2.1.304)
+- `/storage` is available in the app's Cowork and Code tabs — not in the terminal CLI
+- On macOS, data lives in `~/Library/Application Support/Claude/`; on Windows, `%LOCALAPPDATA%\Claude`
+
+---
+
+*Want more practical takes on AI tools and how to actually use them? [Subscribe to the newsletter](/subscribe).*
