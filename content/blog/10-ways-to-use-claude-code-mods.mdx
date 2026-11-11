@@ -1,0 +1,254 @@
+---
+title: "10 Ways to Use Claude Code Mods — Practical Patterns"
+description: "Claude Code mods let you draw custom UI, intercept tool calls, and add slash commands inside the agent. Here are 10 practical builds."
+date: "2026-11-11"
+category: "ai-tools"
+tags: ["claude-code", "anthropic", "ai-agents", "developer-tools", "claude-code-mods", "typescript", "plugins"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Most AI coding agents give you a config file and call it extensibility. Claude Code gives you a middleware API that runs inside the agent itself. Since Anthropic shipped mods on October 1, 2026, the system has grown to include six built-in mods — `cc-plugin-diff`, `cc-plugin-agents-md`, `cc-plugin-sec-default`, `cc-plugin-telemetry`, `cc-plugin-you-should-know`, and `cc-plugin-plugin-authoring` — plus sample mods and a growing community of third-party plugins.
+
+If you have been meaning to build your first mod but were not sure where to start, this post gives you ten concrete use cases with the conceptual patterns behind them.
+
+## What a Mod Is (60-Second Primer)
+
+A mod is a JavaScript or TypeScript module inside a Claude Code plugin. It registers event handlers — called hooks — that Claude Code runs when something happens: a tool call, a prompt submission, a UI render, or a turn starting. Each hook follows a middleware pattern with three arguments:
+
+- **`$`** — the mods API (draw UI, add commands, call models, read files)
+- **`e`** — the event data
+- **`next`** — passes the event downstream (to the next mod or to Claude Code's own behavior)
+
+You can observe the event, rewrite it, or answer it yourself. A mod's file structure is minimal:
+
+```
+my-mod/
+├── .claude-plugin/
+│   └── plugin.json
+└── hooks/
+    ├── hooks.json
+    └── register.js
+```
+
+Mods require Claude Code v2.1.287 or later in the terminal, or v2.1.286 in the Desktop app. They work in the CLI, the Desktop app's Code tab, and the VS Code extension. Install one from a marketplace with `/plugin install name@marketplace`, or load a local directory with `--plugin-dir` during development.
+
+<Callout type="warning">
+**Mods run with your permissions.** They are not sandboxed. A mod can read files, start processes, and make network requests as your user account. Only install mods from sources you trust — the same diligence you apply to npm packages.
+</Callout>
+
+<Callout type="tip">
+**A note on the code examples below.** The middleware pattern — `($, e, next)` with observe, rewrite, and answer semantics — is documented. The specific hook names, event fields, and API calls shown in the examples are illustrative patterns based on that architecture. Check the [official event reference](https://code.claude.com/docs/en/plugins/mods/overview) for the current API surface before building.
+</Callout>
+
+## 1. Track Your Context Window in Real Time
+
+The single most common frustration with long coding sessions is running out of context without warning. The `token-weather` sample mod — available in Anthropic's `claude-code-playground` repository — addresses this. According to Anthropic's getting-started guide, it reads how full the context window is after each turn and draws a one-line weather report above the prompt: a weather icon, percentage used, tokens consumed, a sparkline of recent turns, and how much the last turn added.
+
+The conceptual pattern: hook into the turn lifecycle to read token usage, then render a band above the prompt:
+
+```javascript
+on('turn.end', async ($, e, next) => {
+  const usage = $.session.usage()
+  $.state.set('history', [...($.state.get('history') || []), usage])
+  $.ui.invalidate('ui.render')
+  return next(e)
+})
+```
+
+The band updates after each turn, giving you a live read on whether to wrap up or keep going.
+
+## 2. Catch Dangerous Commands Before They Execute
+
+The `blast-radius` sample mod intercepts risky shell commands — `rm -rf`, force pushes, database drops — and shows you what would change before anything happens. Anthropic's walkthrough describes it running the command's own dry-run mode to preview the impact, then presenting Proceed and Cancel buttons.
+
+The conceptual pattern: hook into tool calls for the Bash tool, inspect the command, and if it matches a risk pattern, hold the event and render a confirmation pane:
+
+```javascript
+on('tool.call', { tool: 'Bash' }, async ($, e, next) => {
+  if (isDangerous(e.input.command)) {
+    const decision = await $.ui.confirm({
+      title: 'Risky command detected',
+      body: `This will run: ${e.input.command}`,
+      actions: ['Run anyway', 'Cancel']
+    })
+    if (decision === 'Cancel') return { result: 'Command cancelled by user.' }
+  }
+  return next(e)
+})
+```
+
+The key advantage over a settings hook is the UI. A settings hook can block or allow; a mod can show you what is at stake and let you make an informed choice.
+
+## 3. Replay File Edits as a Step-Through Viewer
+
+The `replay-theater` sample mod adds a `/replay` command that steps through every file edit Claude made in the last turn. Instead of scrolling through a long diff or checking `git diff`, you walk through each change one at a time with navigation controls.
+
+The conceptual pattern: register a custom slash command and draw a pane for the replay viewer:
+
+```javascript
+$.command.register('/replay', async () => {
+  const edits = getLastTurnEdits()
+  $.ui.pane('replay', { edits, currentIndex: 0 })
+})
+```
+
+Custom slash commands registered by mods run your code directly — no Claude turn required.
+
+## 4. Enforce Team Coding Policies
+
+For teams, the most compelling mod use case is policy enforcement. Anthropic's own `sec-default` built-in mod is the template: it loads first on Team and Enterprise plans and guards managed settings from user-installed mods. You can write your own policy mod that prevents, for example, direct writes to production config files or usage of deprecated APIs.
+
+```javascript
+on('tool.call', { tool: 'Write' }, async ($, e, next) => {
+  if (e.input.file_path.includes('/prod/') && !e.input.file_path.endsWith('.test.js')) {
+    return { result: 'BLOCKED: Direct writes to /prod/ require a PR. Use a feature branch.' }
+  }
+  return next(e)
+})
+```
+
+The mod returns its own result, so the write never reaches the filesystem. Claude sees the block message and adjusts its approach. This is enforcement at the execution layer — not a comment in CLAUDE.md that the model might ignore under pressure.
+
+<Callout type="info">
+**Admin control matters here.** Administrators manage which mods load through managed settings. The built-in `sec-default` guard prevents user-installed mods from overriding organization deny rules. Your policy mod should be deployed as a managed plugin, not left to individual installs.
+</Callout>
+
+## 5. Route Requests to Different Models
+
+Not every prompt needs the same model. The middleware architecture opens the door to model routing — intercepting the request lifecycle and sending certain prompts to a faster, cheaper model while keeping complex ones on the default.
+
+A turn-level hook could inspect the prompt and decide:
+
+```javascript
+on('turn.start', async ($, e, next) => {
+  if (isSimpleQuery(e.prompt)) {
+    return next({ ...e, model: 'faster-model-id' })
+  }
+  return next(e)
+})
+```
+
+This pattern is particularly useful for teams paying per token. Routine questions — "what does this function do?" or "format this JSON" — route to a fast model, while architecture decisions and complex refactors stay on the heavy hitter. The routing logic lives in your mod, so you can tune it to your codebase.
+
+## 6. Add Custom Slash Commands
+
+Mods can register slash commands that run your own functions immediately, with no Claude turn. This is different from a skill (which gives Claude instructions) or an MCP tool (which gives Claude capabilities). A mod command runs your code directly.
+
+Use cases include project-specific workflows:
+
+```javascript
+$.command.register('/deploy-staging', async () => {
+  const result = await $.process.exec('npm run deploy:staging')
+  return { text: result.stdout }
+})
+
+$.command.register('/lint-check', async () => {
+  const result = await $.process.exec('npm run lint -- --format compact')
+  return { text: result.stdout || 'No lint issues found.' }
+})
+```
+
+Because mod commands run your code directly, they are ideal for quick checks that do not need AI reasoning.
+
+## 7. Redact Secrets From Tool Output
+
+When Claude runs a shell command, the output might contain API keys, tokens, or connection strings. A mod can scrub these before they enter Claude's context — and before they reach any logging or telemetry:
+
+```javascript
+on('tool.result', async ($, e, next) => {
+  const cleaned = redactPatterns(e.result, [
+    /sk-[a-zA-Z0-9]{20,}/g,       // Anthropic/OpenAI keys
+    /ghp_[a-zA-Z0-9]{36}/g,        // GitHub tokens
+    /postgres:\/\/[^\s]+/g,         // Connection strings
+  ])
+  return next({ ...e, result: cleaned })
+})
+```
+
+This is defense in depth. Your `.env` file keeps secrets out of the codebase, but a `printenv` or a misconfigured log can still leak them into the session. The mod catches what the other guardrails miss.
+
+## 8. Build a CI/CD Status Pane
+
+A pane that shows your latest CI pipeline status — right beside the conversation — means you never need to switch to a browser tab to check if the build passed. The mod polls your CI provider's API and renders the result:
+
+```javascript
+$.ui.pane('ci-status', async () => {
+  const status = await fetchCIStatus()
+  return {
+    title: 'CI Pipeline',
+    content: formatStatus(status)
+  }
+})
+
+setInterval(() => $.ui.invalidate('ci-status'), 30000)
+```
+
+Because panes persist across turns, the status stays visible while Claude works. When a build fails, you see it immediately and can redirect Claude before it continues building on a broken foundation.
+
+## 9. Auto-Approve Safe Operations
+
+Claude Code's permission system is thorough, but some operations are always safe for your project — reading files in the docs directory, running the test suite, listing git status. The rewrite pattern opens the possibility of pre-approving safe operations from within a mod:
+
+```javascript
+on('tool.call', async ($, e, next) => {
+  if (e.tool === 'Bash' && isSafeCommand(e.input.command)) {
+    return next({ ...e, approved: true })
+  }
+  if (e.tool === 'Read' && e.input.file_path.startsWith('/docs/')) {
+    return next({ ...e, approved: true })
+  }
+  return next(e)
+})
+```
+
+This would trade off security for speed — carefully. On Team and Enterprise plans, the `sec-default` built-in mod loads first and prevents user-installed mods from overriding organization deny rules. That guard limits what a user-installed mod can override.
+
+<Callout type="warning">
+**Be specific with auto-approvals.** Broad patterns like "approve all Bash commands" defeat the purpose of the permission system. Approve only the operations you have audited and trust for your specific project.
+</Callout>
+
+## 10. Log Every Action for Compliance
+
+For regulated environments, an audit trail of every tool call Claude makes is not optional. A mod that hooks into `tool.call` and `tool.result` can write structured logs to a file, a database, or an external SIEM — before the event continues:
+
+```javascript
+on('tool.call', async ($, e, next) => {
+  await appendLog({
+    timestamp: Date.now(),
+    event: 'tool.call',
+    tool: e.tool,
+    input: sanitize(e.input),
+    session: $.session.id
+  })
+  return next(e)
+})
+```
+
+The Anthropic blog mentioned an audit logger as a team use case. Loading this kind of mod first in the chain — via managed settings — ensures it sees every event, including those that later mods modify or block.
+
+## How Mods Compare to Everything Else
+
+Claude Code has four extension mechanisms, and they overlap. Here is when to reach for each one:
+
+| Mechanism | Use When |
+|-----------|----------|
+| **Mod** | You need custom UI, want to intercept/rewrite events, or need a slash command that runs your code |
+| **Settings hook** | You want to block, allow, or log an event with a shell script you already have |
+| **Skill** | You keep pasting the same instructions into chat — a skill gives Claude persistent context |
+| **MCP server** | Claude needs to reach an external system (database, API, service) through a tool |
+
+A plugin can contain all four, so they are not mutually exclusive. A mod can ship alongside a skill and an MCP server in the same package.
+
+## Getting Started
+
+The fastest path to your first mod is to describe what you want in a Claude Code session. Claude writes the mod, installs it, and hot-reloads it — you can iterate without leaving the conversation. The built-in `plugin-authoring` skill gives Claude the knowledge to build mods correctly.
+
+For hands-on learning, clone the `claude-code-playground` repository from GitHub and load a sample mod with `--plugin-dir`. The official documentation at [code.claude.com/docs/en/plugins/mods](https://code.claude.com/docs/en/plugins/mods/overview) covers the full event reference, the mods API, interface elements, testing, and troubleshooting. The source code of built-in mods like `/diff` and `sec-default` is public in the Claude Code repository on GitHub.
+
+The ten patterns above are starting points. The real power is in combining them to build exactly the development environment your team needs.
+
+---
+
+*Want more deep dives on AI developer tools and workflows? [Subscribe to the newsletter](/subscribe).*
