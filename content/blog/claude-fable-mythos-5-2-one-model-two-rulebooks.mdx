@@ -1,0 +1,139 @@
+---
+title: "Claude Fable 5.2 and Mythos 5.2 — One Model, Two Rulebooks"
+description: "Anthropic shipped one model as Fable (with safety classifiers) and Mythos (vetted orgs only). Access design, benchmarks, pricing, and when to stay on Opus 5.5."
+date: "2026-11-10"
+category: "ai-tools"
+tags: ["anthropic", "claude", "fable", "mythos", "claude-fable-5-2", "cybersecurity", "benchmarks", "claude-opus-5-5"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+On November 9, Anthropic released Claude Fable 5.2 and Claude Mythos 5.2. They are the same model. The difference is the rulebook each one ships with.
+
+Fable carries safety classifiers that block high-risk cybersecurity and biology tasks. Mythos carries a more permissive set of safeguards, and access is restricted to organizations vetted through Anthropic's Life Sciences and Cyber Verification Programs.
+
+Anthropic's latest iteration of the Fable/Mythos split doubles down on the idea that safety and capability can be decoupled at the access layer. Here is what the model does, how it is priced, and when you should or should not use it.
+
+## The Access Design
+
+The framing is deliberate. Previous model releases forced a binary choice: either a model is capable enough to do dangerous work and gets restricted, or it is safe enough to release widely and loses some capability. Fable and Mythos reject that framing.
+
+The implicit argument: the model itself is not the risk — the safeguards around it determine the risk. Fable 5.2 ships with classifiers that intercept high-risk cybersecurity and biology queries. When a query trips these classifiers, the request is blocked.
+
+Mythos 5.2 runs the same weights with more permissive safeguards. But you cannot just sign up for it. Organizations must apply through the Cyber Verification Program or the Life Sciences Verification Program, demonstrate legitimate use cases, and pass vetting.
+
+<Callout type="info">
+Anthropic reports about 55% fewer false-positive blocks with Fable 5.2 compared with Fable 5.1 — roughly 60% fewer in cybersecurity and 40% fewer in biology. The classifiers are getting better at distinguishing real threats from legitimate work.
+</Callout>
+
+## Claude Fable 5.2 Pricing: $8/$40 per Million Tokens
+
+Fable 5.2 and Mythos 5.2 cost $8 per million input tokens and $40 per million output tokens.
+
+A fast mode is also available: $16 per million input tokens and $80 per million output tokens, which speeds up token generation by up to 2.5x.
+
+For comparison, Opus 5.5 — Anthropic's recommended daily driver — costs $4 per million input tokens and $20 per million output tokens. Exactly half the price of Fable. This matters when deciding which model to use for what.
+
+| Model | Input | Output |
+|-------|-------|--------|
+| Fable / Mythos 5.2 | $8/MTok | $40/MTok |
+| Fable / Mythos 5.2 (fast) | $16/MTok | $80/MTok |
+| Opus 5.5 | $4/MTok | $20/MTok |
+| Sonnet 5.5 | $2/MTok | $10/MTok |
+
+Batch API gets a 50% discount on input and output. Prompt caching at the 5-minute window costs $10/MTok to write and $0.20/MTok to read — which means that for repeated workloads, the effective cost per task can drop substantially.
+
+## Benchmarks That Matter
+
+The benchmark table is long. Here are the vendor-reported numbers that tell a story — these are Anthropic's own evaluations, not independent benchmarks.
+
+**Agentic coding (FrontierCode 2.0):** Fable 5.2 hits 49.1% at Xhigh effort. Opus 5.5 scores 45.5%. GPT-6 Astra scores 42.8%. At High effort, Fable 5.2 scores roughly the same as Opus 5.5 at Max effort, for about half the cost per task.
+
+**Cybersecurity (CyScenarioBench):** Mythos 5.2 scores 76.3%, compared to Opus 5.5 at 67.6% and GPT-6 Cyber at 61%. On CVE Rediscovery — an internal evaluation testing how many published vulnerabilities a model can independently find — Mythos 5.2 scores 89.6%, versus 81.3% for Opus 5.5 and 78.3% for Mythos 5.1.
+
+**Business workflows (AutomationBench):** Fable 5.2 scores 51.4%. Opus 5.5 scores 42.5%. But Gemini 4 Carbon actually leads here at 53.9%.
+
+**Scientific research (Terminal-Bench-Science 0.1):** Fable 5.2 scores 74.6%, with Mythos 5.2 slightly higher at 75.3%. Opus 5.5 scores 58.7%. GPT-6 Astra lands at 68.1%.
+
+**Robotics (RoboDojo Sim):** Fable 5.2 scores 64.9% — more than double GPT-6 Astra at 29.8% and well ahead of Opus 5.5 at 39.4%.
+
+<Callout type="warning">
+These are vendor-reported benchmarks. Anthropic ran the evaluations; independent reproductions may differ. No single model wins every category — Gemini 4 Carbon leads AutomationBench at 53.9% versus Fable's 51.4%. Pick the model that matches your workload.
+</Callout>
+
+## The Headline Achievements
+
+Numbers on standardized benchmarks tell part of the story. The demonstrations Anthropic highlighted tell the rest. These are impressive claims from the vendor — reproducibility and real-world applicability remain to be seen.
+
+**Fermat's Last Theorem formalized in 30 hours.** A team of 1,000 Fable 5.2 agents formalized the complete proof of Fermat's Last Theorem. The same setup with Opus 5.5 completed only 26% in the same timeframe. The resulting proof was seven times shorter than Anthropic's first formalization attempt, which took 11 days.
+
+**A working OS from an empty folder.** Fable 5.2 coordinated over 1,000 subagents for eight days and produced a working operating system.
+
+**Python to Rust migration, 26x startup improvement.** A team of agents migrated a production service from Python to Rust. The resulting service starts about 26 times faster.
+
+**Three working electronic devices from scratch.** Fable 5.2 designed and produced three working devices.
+
+**Mozilla's vulnerability hunting doubled.** Mythos 5.2 roughly doubled the vulnerability discovery metrics of Mythos 5.1.
+
+## Fable 5.2 vs GPT-6 Cyber
+
+OpenAI released GPT-6 Cyber on November 5, four days before Fable and Mythos dropped. GPT-6 Cyber is rated "Critical" in cybersecurity capability and is also limited to vetted customers.
+
+The two models share a structural similarity: both restrict their most capable cybersecurity modes to verified organizations. But the approaches diverge from there.
+
+Anthropic ships Fable as the public model and Mythos as the restricted variant of the same weights. OpenAI ships GPT-6 Astra as the public model and GPT-6 Cyber as a separate, specialized release for security work.
+
+On CyScenarioBench, Mythos 5.2 scores 76.3% versus GPT-6 Cyber's 61%. On FrontierCode 2.0, Fable 5.2 at Xhigh hits 49.1% versus GPT-6 Astra's 42.8%. On Humanity's Last Exam, Fable 5.2 scores 74.2% versus GPT-6 Astra's 57.2%.
+
+On the public side, Fable 5.2's $8/$40 per MTok positions it as a premium model — more expensive than Opus 5.5 but targeted at harder problems.
+
+## Fable 5.2 vs Opus 5.5: When to Stay on Opus
+
+Anthropic's own recommendation is clear: start with Opus 5.5 for most coding and knowledge tasks, and reach for Fable only when the work demands it.
+
+Here is when that guidance actually applies:
+
+**Stay on Opus 5.5 when:**
+- The task is well-defined and scoped. Opus 5.5 handles routine coding, writing, analysis, and knowledge work at half the token cost.
+- You are running high-volume workloads. At $4/$20 per MTok versus $8/$40, the cost difference compounds fast.
+- The default effort level is sufficient. Fable defaults to High effort, which uses more tokens per request.
+- You want the best cost-per-quality ratio. At High effort, Fable 5.2 matches Opus 5.5's best FrontierCode score for roughly half the cost per task — but that comparison only holds at High versus Max. At comparable effort levels, Opus is cheaper per token.
+
+**Reach for Fable 5.2 when:**
+- The task is ambiguous, open-ended, or technically daunting. Fable excels at tasks where the path forward is unclear.
+- You need multi-agent coordination. Fable as Orchestrator — delegating simpler tasks to smaller models — is a pattern Anthropic is actively promoting.
+- You are doing scientific research or robotics work. The benchmarks in these areas show the largest gaps between Fable and everything else.
+- You need the highest ceiling on agentic coding. FrontierCode 2.0 at 49.1% is the best listed score among the models Anthropic compared.
+
+## Safety and Alignment
+
+The safety story runs counter to the usual "more capable = more dangerous" narrative.
+
+On Anthropic's automated behavioral audit, Mythos 5.2 scored 2.67 out of 10 (lower is better). That is better than Opus 5.5 (2.79), Sonnet 5.5 (3.10), and Mythos 5.1 (3.28). Sandbox escape attempts were substantially fewer than any other model Anthropic has tested.
+
+Anthropic also reports that their defenses against model distillation — the practice of training a cheaper model on a frontier model's outputs — have reduced data harvested by distillers by 90% to 99%.
+
+<Callout type="tip">
+Preserved thinking now applies to all API accounts. This is a meaningful infrastructure change that affects every Claude developer, not just Fable users.
+</Callout>
+
+## Availability
+
+Fable 5.2 is available now on all platforms: the Claude API (`claude-fable-5-2`), Amazon Bedrock, Google Cloud, and Microsoft Azure. Mythos 5.2 (`claude-mythos-5-2`) is available through the Cyber Verification Program and Life Sciences Verification Program.
+
+Both models share the same specs: 1M context window, 128K max output, adaptive thinking that is always on, and a knowledge cutoff of June 2026. Output generation is about 30% faster than the 5.1 generation.
+
+Paid subscribers are getting extra Fable usage this week as a launch promotion.
+
+## What This Means
+
+The one-model-two-rulebooks approach is the most interesting thing about this release. It is a bet that safety and capability can be decoupled at the access layer rather than the model layer. If Fable's classifiers reliably catch misuse without crippling legitimate work, and if the verification programs effectively screen for responsible organizations, it becomes a template for how frontier models ship going forward.
+
+The safety numbers are better than the previous generation despite higher capability. But the real test is whether this access model holds as the gap between "public" and "restricted" capabilities widens with each generation.
+
+For most developers and teams, the practical takeaway is simpler: default to Opus 5.5 for everyday work, escalate to Fable 5.2 when the task is ambiguous or demands multi-agent coordination. And if your organization does serious cybersecurity or biology research, apply for Mythos access — the capability gap is significant.
+
+---
+
+*Want more breakdowns of AI model releases and what they mean for developers? [Subscribe to the newsletter](/subscribe).*
