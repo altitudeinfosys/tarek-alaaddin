@@ -1,0 +1,167 @@
+---
+title: "Gemini Decisions API — Stop Using Chat Models as Classifiers"
+description: "Google's Decisions API scores up to 1,000 yes/no, choice, and rubric questions in one multimodal pass for $0.10 per million tokens, with zero output tokens billed."
+date: "2026-11-12"
+category: "ai-tools"
+tags: ["google", "gemini", "gemini-decision-1", "decisions-api", "classification", "google-ai-studio", "api"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Every AI team has the same dirty secret: somewhere in production, a chat model is answering "yes" or "no" and then someone is parsing the output with a regex. It works. It also wastes output tokens, adds latency, and produces probabilities that mean almost nothing because the model was never trained to be a calibrated scorer.
+
+Google just shipped a purpose-built alternative. On November 11, 2026, Google DeepMind launched the **Gemini Decisions API** alongside a new model called **Gemini Decision 1** (`gemini-decision-1`). Instead of asking a language model to generate an answer and hoping you can parse it, you define your questions up front and get back calibrated probabilities in a single forward pass.
+
+The pitch is simple: stop treating chat models like classifiers. Use a classifier.
+
+## What the Decisions API Actually Is
+
+The Decisions API is a new endpoint in the Gemini API, available today through [Google AI Studio](https://aistudio.google.com/docs/decisions-api) on the `v1beta` channel. It is not a wrapper around `generateContent`. It is a different inference path entirely.
+
+You send one multimodal input — text, images, audio, video, PDFs, or any combination — alongside up to **1,000 independent questions**. Gemini Decision 1 scores every question against that shared input in a single forward pass. No token-by-token decoding. No output text to parse. You get back structured answers with confidence scores between 0 and 1.
+
+<Callout type="info">
+The shared input can hold up to 256K tokens, and it is billed once regardless of how many questions you attach. Each question adds only its own instruction and criteria tokens to the bill.
+</Callout>
+
+The Python SDK makes the call shape obvious:
+
+```python
+from google import genai
+
+client = genai.Client(http_options={"api_version": "v1beta"})
+
+result = client.decisions.create(
+    model="gemini-decision-1",
+    input="The blue mug I ordered on Monday arrived cracked on Wednesday.",
+    questions={
+        "is_damaged": {
+            "type": "noul",
+            "instructions": "Did the item arrive damaged?",
+        },
+        "queue": {
+            "type": "choice",
+            "instructions": "Which support queue should handle this?",
+            "criteria": {
+                "billing": "Payment, invoice, or refund questions.",
+                "replacements": "Damaged, missing, or wrong items.",
+                "general": "Product questions and account updates.",
+            },
+        },
+    },
+)
+
+damaged = result.answers["is_damaged"]
+queue = result.answers["queue"]
+print(f"P(damaged)={damaged.noul:.2f}  queue={queue.choice}")
+```
+
+That is it. Two questions, one call, structured output. No "Please respond with only JSON" in the system prompt. No retry loop for when the model decides to be helpful and wraps the answer in a sentence.
+
+## Three Question Types, One Request
+
+Gemini Decision 1 supports three question types, and you can mix all three in a single request:
+
+### noul (Yes/No)
+
+Returns a probability between 0 and 1 that a condition holds. You can optionally supply `true` and `false` description criteria to sharpen what "yes" and "no" mean. This is the replacement for every `if "yes" in response.lower()` you have ever written.
+
+### choice (Multiple Choice)
+
+Selects from 2 to 255 named options. Returns the winner and normalized probabilities for every candidate. This is your routing layer — which model handles this query, which support queue owns this ticket, which template fits this email.
+
+### score (Ordered Rubric)
+
+Grades inputs on an ordered scale starting at 0. Returns a continuous weighted score and per-level probabilities. This is the quality gate — content moderation severity, response helpfulness, document relevance.
+
+The power is in composition. A single request can check whether a support photo shows damage (noul), route the ticket to the right queue (choice), and rate the severity of the issue (score) — all against the same image and text input, all in one round trip.
+
+## Decisions API Pricing and Latency
+
+The API shape is nice. The economics are the real story.
+
+**Latency:** 150–250 ms end-to-end for multimodal inputs with contexts up to 16K tokens and up to 100 questions. Model compute time is 50–100 ms. Latency stays nearly flat from 1 to 100 questions per request, because the model scores options in parallel rather than generating tokens sequentially.
+
+**Cost:** $0.10 per million input tokens. Zero output tokens billed. No variable thinking-token charges. No separate audio transcription or OCR fees. Your shared input is billed once, and each question adds only its instruction and criteria tokens.
+
+**Comparison:** Google reports the Decisions API is nearly **5x cheaper** across their shared benchmark suite than Gemini 3.5 Flash-Lite with the Interactions API. That comparison matters because Flash-Lite was already the cheap option for classification-style tasks.
+
+<Callout type="tip">
+A free tier is available in Google AI Studio for prototyping. You can start testing without a billing account.
+</Callout>
+
+The latency difference comes from architecture, not optimization. A `generateContent` call for classification still decodes tokens sequentially, even if you only need one word. The Decisions API sidesteps decoding entirely — it scores all options in a single forward pass, which is why it stays under 250ms.
+
+## Why Chat Models Make Bad Classifiers
+
+The Decisions API exists because the industry has been misusing generative models for years. Here is what goes wrong when you use `generateContent` for classification:
+
+**Uncalibrated probabilities.** When a chat model says it is "90% confident," that number comes from the token distribution over words like "yes" and "no," not from a calibrated scoring head. Gemini Decision 1 is specifically trained for calibration — its confidence scores have the lowest calibration error across the benchmark suite, according to Google's published results.
+
+**Wasted output tokens.** Every classification call that generates text is billing you for tokens you throw away. The Decisions API bills zero output tokens because there is no generated text.
+
+**Parsing fragility.** JSON mode and structured output help, but they are patches on a fundamental mismatch: you are asking a text generator to not generate text. The Decisions API returns native structured answers because that is all it does.
+
+**Latency overhead.** Token-by-token decoding is sequential. Scoring candidate options is parallel. The architectural difference is why latency stays nearly flat as you add questions — Google's benchmarks show it holding steady from 1 to 100 questions per request.
+
+## Where This Fits in a Real System
+
+The most immediate use cases are the ones Google is already running internally:
+
+**Agent routing.** Gemini Notebook uses the Decisions API as a real-time router, directing queries to the right model tier and thinking level. Google reports this delivers up to 40% lower latency for everyday queries by avoiding unnecessary deep reasoning.
+
+**Safety and policy checks.** Google Search uses the Decisions API to detect adversarial behavior against MCP tools. When your safety layer needs to run inside the latency envelope of a user-facing request, sub-250ms decisions make that feasible without a separate caching layer.
+
+**Content grading.** The score question type with ordered rubrics is a natural fit for quality gates in content pipelines — grading LLM outputs, scoring search relevance, rating customer satisfaction from transcripts.
+
+**Rapid prototyping.** Stitch's new rapid canvas experiment uses the Decisions API to generate playable wireframes and apply voice or tap edits almost instantly. When decisions need to feel real-time, sub-250ms matters.
+
+<Callout type="warning">
+The Decisions API is currently v1beta only. Google Cloud support is not available yet — it is AI Studio and the Gemini API only. If your production stack requires Google Cloud's enterprise controls, you will need to wait.
+</Callout>
+
+## The Ecosystem Is Moving Fast
+
+This is not a research preview stuck behind a waitlist. Day-one integrations are rolling out across **OpenRouter**, **LangChain**, **Vercel AI SDK**, **LiteLLM**, **Pydantic AI**, **Pipecat**, **LiveKit**, and **OpenCode**, alongside the `google-genai` Python and JavaScript SDKs.
+
+That integration breadth on launch day signals Google expects this to be a high-volume primitive, not a niche feature. When every major agent framework supports a model at launch, the provider is betting that developers will route significant traffic through it.
+
+## What Is Not Here Yet
+
+A few gaps worth noting before you commit to a migration:
+
+- **Google Cloud support is "coming soon."** If you need VPC Service Controls, CMEK, or enterprise audit logging, this is not ready for your production environment yet.
+- **Question instructions are text-only.** You can pass multimodal content in the shared input, but the per-question instructions and criteria are plain text. You cannot, for example, provide a reference image as part of a scoring rubric.
+- **Safety filters can return 400 errors.** If the shared input triggers content safety filters, the entire request fails — even if only one of your 1,000 questions would have been affected. Plan your error handling accordingly.
+- **v1beta stability.** The endpoint is in beta. API shape changes are possible before GA.
+
+## How to Start
+
+**Step 1:** Grab an API key from [Google AI Studio](https://aistudio.google.com/api-keys).
+
+**Step 2:** Install the Python SDK:
+
+```bash
+pip install "google-genai>=3.2"
+```
+
+**Step 3:** Try the three demo apps Google shipped alongside the launch — [Doorstep Parcels](https://aistudio.google.com/apps/bundled/doorstep-parcels-qa), [Speed Sketch](https://aistudio.google.com/apps/bundled/speed-sketch), and [Find the Zoo Keeper](https://aistudio.google.com/apps/bundled/find-the-zoo-keeper) — to see the question types in action.
+
+**Step 4:** Read the [Decisions API documentation](https://aistudio.google.com/docs/decisions-api) for the full request schema, calibration details, and multimodal input patterns.
+
+**Step 5:** Find every place in your codebase where you are calling `generateContent` just to get a yes/no or a category label. Replace them one at a time.
+
+## The Bigger Picture
+
+The Decisions API is Google drawing a line between generation and evaluation. For years, the industry default has been to use the same model for everything — write a poem, classify a ticket, route a query, grade an essay. The same architecture, the same inference path, the same billing model.
+
+That default was always a compromise. Chat models generate text because that is what they were built to do. When you need a decision instead of text, you are paying for capabilities you do not use and missing capabilities you need — like calibrated confidence scores and sub-second latency.
+
+Gemini Decision 1 is not the first model designed for classification. But the combination of a first-party hosted API, native multimodal support, 1,000-question batching, and $0.10 per million input tokens makes it practical to replace chat-model classifiers not as a weekend experiment, but as a production migration.
+
+The days of parsing "yes" out of a language model response should be numbered. Google just gave them an expiration date.
+
+---
+
+[Subscribe to the newsletter](/subscribe) for more breakdowns of tools that change how AI systems are built.
