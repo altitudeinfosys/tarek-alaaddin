@@ -1,0 +1,112 @@
+---
+title: "Grok Bot 1.0 and 1.0.1 — When a Bot Is a Colleague, Not a Chatbot"
+description: "xAI ships Team Bots, meeting attendance, and shared connectors. Grok Bot 1.0 is positioning itself as a coworker that joins your calls and acts through your apps."
+date: "2026-11-12"
+category: "ai-tools"
+tags: ["grok-bot", "xai", "ai-agents", "team-bots", "slack", "microsoft-teams", "meetings"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Every AI assistant starts the same way: you open a chat window, type a question, get an answer, and paste it somewhere useful. That loop is comfortable and it is also a ceiling. As long as the AI lives in a chat thread that only you can see, it stays a tool you use rather than a teammate others interact with.
+
+Grok Bot 1.0, announced by xAI on November 2, 2026, and versioned as 1.0.1 on November 11, breaks that loop deliberately. The headlining features — Team Bots, meeting attendance, shared connectors — all point in the same direction: the bot is no longer something you talk to in private. It shows up in the channels your team reads, joins the calls your team sits in, and acts through the apps your team relies on.
+
+That is a different product shape, and it comes with different risks.
+
+## What Actually Shipped
+
+The 1.0 and 1.0.1 releases bundle several months of beta work into a formal launch. Here is what is new or changed.
+
+**Team Bots.** A Bot can now be shared with an entire team, an organization, or specific people and groups. Sharing happens through a publish flow — a Team Bot starts as a draft only the owner can see, and goes live when the owner clicks Publish. Roles control access: Collaborators can chat with the Bot, Managers can edit and share it, and Owners can delete it. Teammates' chats stay private even from the owner and Managers.
+
+**Slack and Microsoft Teams.** Slack support was available in beta; Microsoft Teams is new. In both platforms, the Bot can join channels, respond to mentions, participate in threads, and handle direct messages. The Microsoft Teams setup is notably heavier — it requires three separate approvals: a team admin enables the feature, the Bot's owner or a Manager connects it, and a Microsoft Teams admin approves it in the Teams admin center. That last step can take up to an hour.
+
+**Meetings.** On Team, Enterprise, and Ultra plans, a Bot can join Google Meet, Zoom, and Microsoft Teams calls from a meeting link. It takes notes, answers questions in the meeting chat, and sends a summary with action items after the call ends. It does not speak aloud — interaction is text-only through the call's chat panel. Owners can toggle interactivity off so the Bot only listens and summarizes. xAI says live spoken conversation is "coming soon."
+
+**Shared connectors.** Owners and Managers can share their app connections with the team. Per-app options include individual accounts, the owner's shared account, or a dedicated Bot account where the app supports it. Sharing the owner's account means actions taken through the Bot are performed as the owner — a detail buried in the settings that deserves a giant flashing warning sign. A team admin must explicitly enable "Allow Shared Logins" before this works.
+
+**Review learnings.** When teammates teach a Team Bot something — a preference, a workflow, a correction — those learnings go into a queue. The owner or a Manager must approve them before they take effect for everyone. Personal learnings stay with the individual.
+
+<Callout type="info">
+**Among the supported platforms, Microsoft Teams is the only one that covers both chat and calls.** Slack gets the Bot in channels and threads; Google Meet and Zoom get it in meetings only. Microsoft Teams is the one place where the same Bot handles the daily chat and sits in the standup call.
+</Callout>
+
+## Proactive Behavior — the Actual Differentiator
+
+The features above are things every AI team tool is racing to ship. What makes Grok Bot 1.0 genuinely different is the proactive layer.
+
+A Primary Bot — the one pinned to your sidebar — can now spot work that needs doing, offer to take it on, follow up on unfinished tasks, and pull in human teammates when a decision needs judgment rather than execution. xAI's example is a Bot preparing launch materials ahead of a deadline without being asked.
+
+This is not a background cron job running predefined scripts. According to xAI, the Bot observes conversations across channels and meetings, identifies gaps, and proposes actions. It asks before acting, but it initiates rather than waiting for a prompt.
+
+The catch: you cannot turn off proactive check-ins. Turning off notifications silences the alerts, but the Bot still surfaces suggestions. Stopping them entirely requires contacting xAI support. That is an aggressive default for a product entering enterprise sales cycles, where admins expect granular control over every behavior that generates noise in shared channels.
+
+<Callout type="warning">
+**Team Bots cannot be a Primary Bot.** Only your personal Bot gets the proactive behavior. A Team Bot will not reach out to individuals on its own — it responds to mentions and messages. If you want proactive initiative in a shared context, you need the Primary Bot watching the same channels the Team Bot operates in, which means two bots doing overlapping work.
+</Callout>
+
+## Plan Tiers and Pricing
+
+xAI did not publish a clean pricing table with the 1.0 announcement, which is itself a signal — the enterprise tier is custom-quoted, and exact consumer tier pricing remains unclear.
+
+What is confirmed: meetings require a Team, Enterprise, or Ultra plan. The team-oriented features — Team Bots, Slack and Microsoft Teams integration, shared connectors, and Review learnings — appear to require at least a Team or Enterprise plan based on available documentation, though xAI has not published a definitive feature matrix.
+
+Third-party reporting puts Team seats at around $30 per seat per month, Ultra at $200 per month, and Enterprise at custom pricing. These figures conflict across sources. Check [xAI's plans page](https://grok.com/plans) directly before committing — pricing was not included in the 1.0 announcement, and the numbers circulating online may already be outdated.
+
+## The Three-Approval Problem
+
+The Microsoft Teams integration deserves its own section because the setup friction is a preview of a bigger tension in this product.
+
+Step one: a team admin enables the Microsoft Teams feature in the Grok Bot dashboard. Step two: the Bot's owner or a Manager connects the Bot. Step three: a Microsoft Teams admin approves it in the Teams admin center. Microsoft does not automatically notify the admin about pending app approvals, so someone has to send the link manually. The whole process can take up to an hour.
+
+Compare that to adding a typical Slack bot — usually a single OAuth flow — and you see the problem. The enterprises that would benefit most from a Bot in their Teams environment are the same enterprises with the strictest admin approval chains. Every additional approval step is a point where the rollout stalls, and stalled rollouts become canceled pilots.
+
+This is not a Grok Bot problem specifically. Every vendor that integrates with Microsoft Teams faces the same approval chain. But Grok Bot is selling itself as a colleague that just shows up and starts working, and a three-approval installation process is the opposite of that story.
+
+## Shared Connectors Are Powerful and Dangerous
+
+The shared connector model lets a team Bot access apps using the owner's credentials. That means when the Bot sends an email through the owner's Gmail, it sends as the owner. When it edits a document through the owner's Google account, the edit history shows the owner's name.
+
+xAI mitigates this with the "Allow Shared Logins" toggle, which is off by default and requires a team admin to enable. That is the right default. But the feature exists because the alternative — every teammate connecting their own apps to a shared Bot — creates a different problem: the Bot now has access to every teammate's credentials, and a compromised Bot is a breach of the entire team's accounts rather than one person's.
+
+Neither option is clean. The shared-login model concentrates risk on one account. The individual-login model distributes risk across all accounts. The dedicated Bot account option, where the app supports it, is the safest path, but not every app offers service accounts.
+
+<Callout type="info">
+**The practical move:** Create a dedicated service account for each critical app (Gmail, GitHub, etc.), give it only the permissions the Bot needs, and connect the Bot through that account. You lose the convenience of personal app access, but you gain an audit trail that does not implicate any individual when the Bot takes an action.
+</Callout>
+
+## What the 1.0.1 Changelog Adds
+
+Version 1.0.1, dated November 11, bundles the 1.0.0 features with a few smaller additions:
+
+- **Voice speed control** from 0.5x to 2x in the Voice menu.
+- **"Check price again"** option on expired order cards, so the Bot re-fetches pricing instead of showing stale data.
+- **Files up to 250 MB** no longer cause reply failures.
+
+The file-size fix matters. 250 MB covers most of the slide decks, datasets, and compressed video files that teams routinely share. If the beta was silently failing on those uploads, the fix alone justifies the point release.
+
+## Where This Puts Grok Bot in the Market
+
+The competitive landscape for AI team tools is crowded and moving fast. Claude, ChatGPT Enterprise, Gemini, and Microsoft Copilot all have some combination of shared workspaces, governance controls, and deep integration into their respective productivity suites. Copilot in particular already handles meeting recaps inside Microsoft Teams.
+
+Grok Bot's angle is different: it is not an add-on to a single productivity suite. It is a standalone agent that plugs into multiple suites. That gives it platform flexibility — the same Bot works in Slack, Teams, Gmail, GitHub, and video calls — but it also means it is always a guest in someone else's house. It does not have the deep integration advantages that Copilot has inside Microsoft 365 or that Gemini has inside Google Workspace.
+
+Where Grok Bot stands apart among the standalone AI assistants is the combination of proactive behavior and cross-platform meeting attendance. Few standalone AI assistants combine attendance on Google Meet, Zoom, and Teams calls from a single product with real-time Slack monitoring and proactive task volunteering. That pairing is the reason this release matters even if you never plan to use Grok Bot.
+
+The precedent is the point. The expectation that AI assistants will sit in meetings, watch channels, and volunteer for work is arriving fast. The question is not whether your AI tool will do this — it is whether your team is ready for it when it does.
+
+## The Bigger Question
+
+When a bot joins a meeting and takes notes, that is automation. When a bot reads the room, identifies that nobody picked up an action item, and messages the relevant person offering to handle it — that is something else. It is closer to what we do when we say someone "has good judgment about when to step in."
+
+Grok Bot 1.0 is betting that this is the next product surface for AI: not smarter answers, but better timing. Not more capabilities, but more initiative. The technical ceiling is still low — the Bot cannot speak in meetings, cannot override admin controls, cannot learn for the team without owner approval — but the product direction is unmistakable.
+
+The challenge is trust. A chatbot that gives a wrong answer wastes a moment of your time. A colleague that takes initiative on the wrong task wastes a day of your team's time and possibly sends an email you did not authorize. The approval gates, the review queues, and the admin controls in 1.0 all exist because xAI knows this.
+
+Whether those guardrails are enough is something only production use will answer.
+
+---
+
+*If you want to follow how AI tools are evolving from assistants to colleagues, [subscribe to the newsletter](/subscribe). New posts land every week.*
