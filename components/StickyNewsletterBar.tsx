@@ -105,17 +105,25 @@ export default function StickyNewsletterBar() {
       aria-label="Subscribe to the newsletter"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-300 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm shadow-[0_-4px_12px_rgba(0,0,0,0.08)]"
     >
-      <div className="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
+      {/*
+        Phones: text and close button share the first row, the form takes its own
+        full-width row below (form is `order-last w-full`). From `sm` up it is one
+        row again in DOM order: text, form, close.
+      */}
+      <div className="max-w-5xl mx-auto px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex flex-wrap items-center gap-x-3 gap-y-2">
         {status === 'success' ? (
           <p className="flex-1 text-sm font-medium text-green-700 dark:text-green-400">
             You&apos;re in — check your inbox for a welcome note.
           </p>
         ) : (
           <>
-            <p className="flex-1 min-w-0 text-sm text-gray-800 dark:text-gray-200">
+            <p className="flex-1 min-w-0 text-sm leading-snug text-gray-800 dark:text-gray-100">
               Get each new post on AI and building products by email.
             </p>
-            <form onSubmit={handleSubmit} className="flex items-center gap-2 flex-wrap">
+            <form
+              onSubmit={handleSubmit}
+              className="order-last w-full flex items-center gap-2 sm:order-none sm:w-auto"
+            >
               <input
                 type="text"
                 name="company"
@@ -133,12 +141,12 @@ export default function StickyNewsletterBar() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 aria-label="Email address"
-                className="px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-w-[14rem]"
+                className="px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-base sm:text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 flex-1 min-w-0 py-2 sm:py-1.5 sm:flex-none sm:w-56"
               />
               <button
                 type="submit"
                 disabled={status === 'submitting'}
-                className="px-3.5 py-1.5 rounded-md bg-primary-600 dark:bg-primary-400 text-white dark:text-gray-950 text-sm font-semibold hover:bg-primary-700 dark:hover:bg-primary-300 transition disabled:opacity-50"
+                className="shrink-0 px-3.5 py-2 sm:py-1.5 rounded-md bg-primary-600 dark:bg-primary-400 text-white dark:text-gray-950 text-sm font-semibold hover:bg-primary-700 dark:hover:bg-primary-300 transition disabled:opacity-50"
               >
                 {status === 'submitting' ? 'Subscribing…' : 'Subscribe'}
               </button>
@@ -147,7 +155,7 @@ export default function StickyNewsletterBar() {
               type="button"
               onClick={dismiss}
               aria-label="Dismiss newsletter bar"
-              className="p-1.5 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800"
+              className="shrink-0 self-start sm:self-auto -mr-1 sm:mr-0 p-2 sm:p-1.5 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -156,7 +164,7 @@ export default function StickyNewsletterBar() {
           </>
         )}
         {error && (
-          <p className="w-full text-xs text-red-600 dark:text-red-400">{error}</p>
+          <p className="order-last w-full text-xs text-red-600 dark:text-red-400 sm:order-none">{error}</p>
         )}
       </div>
     </div>
