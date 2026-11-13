@@ -1,0 +1,133 @@
+---
+title: "Sandboxing Claude Code Mods — What a LinkedIn Thread Taught Me"
+description: "Claude Code mods run with your full user privileges. Here is what is sandboxed, what is not, and a checklist for reviewing third-party mods."
+date: "2026-11-13"
+category: "ai-tools"
+tags: ["claude-code", "security", "sandboxing", "mods", "hooks", "supply-chain-security", "dns-tunneling"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+A Claude Code mod runs as you. Same SSH keys. Same `.env` files. Same network access.
+
+A LinkedIn discussion on mod security surfaced a common misconception: that installing a mod is like installing a browser extension, with declared permissions and a sandbox around it. The reality is closer to running an npm package with full host access — because that is exactly what a hooks module is.
+
+Claude Code's mod system is powerful and intentionally open. That openness is a feature for deep integration with your development environment. It is also a surface area worth understanding before you install something you did not write.
+
+## What a Mod Actually Is
+
+A mod is a plugin that includes a hooks module. That distinction matters because it tells you where the code runs.
+
+A plugin is a bundle of configuration — skills, slash commands, agent definitions, MCP server declarations — distributed as a directory or an npm package. Plugins extend what Claude Code can do during a conversation. A mod goes further: it includes a `hooks.js` (or `hooks.ts`) file that exports JavaScript functions triggered by lifecycle events. Those hooks can run code when a tool is called, when a notification fires, when the session starts, or when a stop signal is received.
+
+The hooks module is the part that makes mods qualitatively different from plain plugins. Skills and slash commands are text that Claude reads. MCP servers are processes that Claude talks to over a protocol. But a hooks module is code that runs in the Claude Code process itself, with the same privileges as the user who launched it.
+
+## The Sandbox Gap
+
+Claude Code does offer sandboxing, but it is narrower than most people assume. Here is the actual boundary as of November 2026, based on the official documentation.
+
+**What the Sandboxed Bash tool covers:** When Claude Code runs a shell command through the Bash tool, that command can be sandboxed using macOS Seatbelt profiles or Linux containers. The sandbox restricts filesystem writes to the project directory, blocks network access (optionally), and prevents modifications to system files. This is the layer most people think of when they hear "Claude Code is sandboxed."
+
+**What runs outside the sandbox:** MCP servers, hooks modules, and the file-system tools (Read, Write, Edit) all run on the host, outside the Bash sandbox. A hooks module runs in the Claude Code process with your full user privileges. It can read any file you can read, write anywhere you can write, and make any network request you can make.
+
+This means a malicious or buggy hooks module in a third-party mod could:
+
+- Read your SSH keys, environment variables, or credentials files
+- Exfiltrate data over the network
+- Modify files outside the project directory
+- Install persistent backdoors in shell startup files
+
+<Callout type="warning">
+**The Bash sandbox protects commands Claude runs in the shell. It does not protect you from code in hooks modules, MCP servers, or other plugin components that run directly on the host.** The sandbox boundary is the Bash tool, not the plugin system.
+</Callout>
+
+## Built-In Guardrails
+
+Claude Code does have some protections beyond the Bash sandbox. The runtime [automatically denies writes](https://code.claude.com/docs/en/sandbox-environments) to several sensitive paths:
+
+- `.git/hooks` and `.git/config` — prevents hijacking git hooks
+- `.mcp.json` — prevents modifying MCP server configuration
+- `.claude/commands` and `.claude/agents` — prevents injecting custom commands or agent definitions
+- Shell startup files (`.bashrc`, `.zshrc`, `.profile`, etc.) — prevents persistence mechanisms
+
+These path-level blocks are a meaningful defense against the most obvious attack vectors. They close the door on a mod that tries to install a git hook that runs on every commit or modify your shell profile to load malicious code on every terminal session.
+
+But they are a blocklist, not an allowlist. Anything not on the list is fair game. Your `~/.aws/credentials`, your `~/.ssh/config`, your project's `.env` files — none of these are blocked, presumably because legitimate tools need to read them.
+
+## The Sandbox Runtime Option
+
+For teams that need stronger isolation, Claude Code offers a sandbox runtime that wraps the entire process — not just the Bash tool. This is currently a beta research preview, available through the `@anthropic-ai/sandbox-runtime` package.
+
+The sandbox runtime puts Claude Code itself inside a container, so hooks modules, MCP servers, and file tools all operate within the sandbox boundary rather than on the bare host.
+
+This is the right answer for running untrusted mods. The tradeoff is that it is still a beta research preview — the API surface may change, and wrapping the entire process in a container adds setup complexity compared to the Bash-only sandbox.
+
+<Callout type="info">
+**Other isolation options exist beyond the sandbox runtime.** Dev containers, custom Docker containers, and full VMs all provide process-level isolation. The sandbox runtime is the most integrated option — it understands Claude Code's tool model — but a container boundary that wraps the entire process gets you most of the way there.
+</Callout>
+
+## DNS Tunneling: The Subtle Exfiltration Path
+
+One attack vector worth calling out separately: DNS tunneling. Even when you block direct network access from a sandboxed environment, DNS queries often pass through because they are essential for basic functionality.
+
+A malicious mod could encode stolen data into DNS subdomain queries — for example, encoding the contents of your `.env` file as a series of queries like `base64chunk1.evil.example.com`, `base64chunk2.evil.example.com`. The DNS server at `evil.example.com` reassembles the data. No direct HTTP connection needed.
+
+The indicators to watch for, per MITRE's DET0400 technique classification:
+
+- **High-entropy subdomain labels** — legitimate subdomains are readable words; encoded data looks like random character strings
+- **Unusual DNS record types** — TXT and NULL records can carry larger payloads than A records
+- **High query volume to a single domain** — a sudden burst of DNS queries to a domain you have never queried before
+- **Query length anomalies** — DNS labels have a per-label length cap, and tunneling tools pack them to the maximum
+
+Most developers will not set up DNS monitoring for their local environment. But if you are running a mod evaluation pipeline or operating in a regulated environment, DNS telemetry is the layer that catches exfiltration attempts that survive network allowlists.
+
+## A Practical Review Checklist
+
+Before installing a third-party Claude Code mod, run through this short checklist.
+
+A quick `grep` over the hooks file catches the most obvious red flags:
+
+```bash
+grep -rE "fetch|http\.|net\.|exec|spawn|eval|Function|homedir" hooks.js
+```
+
+**1. Read the hooks module.** This is the most important step. The `hooks.js` or `hooks.ts` file is usually short — dozens to hundreds of lines. Read it. Look for network calls (`fetch`, `http`, `net`), filesystem access outside the project directory (absolute paths, `os.homedir()`), child process spawning (`exec`, `spawn`), and dynamic code evaluation (`eval`, `Function`, `vm`).
+
+**2. Check the dependency tree.** Run `npm ls` or inspect `package.json`. A hooks module that pulls in dozens of transitive dependencies is a larger attack surface than one with zero dependencies. A mod that needs `axios` or `node-fetch` when it has no obvious reason to make HTTP requests is a red flag.
+
+**3. Test with network monitoring.** Run the mod with a tool like Little Snitch, Lulu, or `tcpdump` active. Watch for outbound connections to unexpected hosts. If the mod is legitimate, it should only connect to services it explicitly documents.
+
+**4. Use the sandbox runtime for untrusted mods.** If you are evaluating a mod from an unknown author, run it inside the sandbox runtime or a container. Test it there before promoting it to your host environment.
+
+**5. Pin versions.** Do not use `latest` tags or unpinned version ranges for mods. A compromised update to a previously safe mod is a well-documented supply chain attack vector. Pin to a specific version and review diffs before upgrading.
+
+**6. Audit outbound DNS.** If you are in a high-security context, monitor DNS queries during mod evaluation:
+
+```bash
+sudo tcpdump -i any port 53 -l
+```
+
+Watch for high-entropy subdomains going to domains you do not recognize.
+
+<Callout type="danger">
+**CVE-2025-59536 demonstrated real-world risk in this space.** A prior Claude Code vulnerability allowed hook-based remote code execution. It was patched, but it shows that the hooks surface area is actively examined by security researchers.
+</Callout>
+
+## The Tradeoff Is Intentional
+
+Claude Code's mod system is open by design. Hooks modules run with full user privileges because that is what makes them powerful — they can integrate deeply with your development environment, automate complex workflows, and extend Claude Code in ways that a restricted sandbox would prevent.
+
+The security model is not "mods are safe by default." It is "mods are as powerful as you are, so review them like you would review any code that runs on your machine."
+
+That review step matters more here than it does for a typical npm package, because a Claude Code mod operates in a context that includes your codebase, your environment variables, and your tool results. The attack surface is wider than what most packages see.
+
+## Where This Is Heading
+
+The sandbox runtime is still beta, and I expect the long-term direction is process-level isolation as a default, with host-level access as an opt-in for trusted mods. That would flip the current model — today, host access is the default and sandboxing is opt-in.
+
+Until that flip happens, the responsibility sits with the developer installing the mod. Read the hooks module. Monitor the network. Use containers for untrusted code. The tooling exists; the gap is awareness.
+
+---
+
+*Want more posts on AI tooling, security, and developer workflows? [Subscribe to the newsletter](/subscribe) to get them when they ship.*
