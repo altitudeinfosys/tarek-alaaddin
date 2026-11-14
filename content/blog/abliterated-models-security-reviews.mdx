@@ -1,0 +1,167 @@
+---
+title: "Abliterated Models — What They Are and Why I Want One for Security Reviews"
+description: "Adding 'I own this app' to a security prompt nearly doubles refusals. Abliterated models strip the refusal direction from the weights entirely."
+date: "2026-11-13"
+category: "ai-tools"
+tags: ["abliteration", "security-review", "local-llm", "open-weight-models", "ai-safety", "pen-testing", "ollama"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Adding "I own this application and have permission to test it" to a security prompt should help. It does not. Scale AI tested 2,390 defensive security prompts against frontier models and found that adding an explicit authorization statement raised refusal rates from 11.6% to 21.8%. The model treats the disclaimer as possible evidence of suspicious intent.
+
+I think vocabulary-based refusal is badly calibrated for legitimate defensive work, and I want to test one blunt fix: an abliterated model.
+
+I have not tried an abliterated model yet. I have not downloaded one, I have not run one, and I have not used one on any of my code. This post is me writing down what these models are, how the edit works, the trade-offs, and how I plan to try one for security reviews of apps I own.
+
+## The Refusal Problem in Security Work
+
+When you ask a frontier chat model to find SQL injection in your own API route, you are doing something legitimate. But the model does not know you own the code. It sees security-flavoured vocabulary and trips a guardrail.
+
+This is not a hypothetical complaint. Scale AI tested 2,390 defensive security prompts against frontier models and measured refusal rates by task:
+
+- **System hardening**: 43.8% refused
+- **Malware analysis**: 34.3% refused
+- **Vulnerability assessment**: 22.7% refused
+- **Incident response**: 18.9% refused
+- **Log analysis**: 0% refused
+
+Security-flavoured phrasing was refused at 2.72 times the rate of an equivalent question worded neutrally.
+
+<Callout type="warning">
+These refusal rates come from a Scale AI study cited by multiple secondary sources. Refusal behavior changes with every model update, so your experience may differ.
+</Callout>
+
+The data shows a mismatch: refusal does not track how dangerous a request actually is. A log analysis question goes through every time. A malware analysis question — the kind an incident responder asks daily — gets blocked a third of the time.
+
+## What an Abliterated Model Is
+
+An abliterated model is an open-weight model whose built-in refusal behavior has been edited out of its weights. The technique requires no labeled data and minimal expertise — no retraining run, no new dataset, no fine-tuning loop. The result is a checkpoint that preserves the original model's architecture and most of its capabilities. The primary change is that a specific pattern in the model's internal activations has been zeroed out.
+
+The name is commonly described as a portmanteau of "ablation" and "obliteration" — removing the refusal mechanism rather than training around it.
+
+### The Paper Behind It
+
+The technique comes from a 2024 paper by Andy Arditi, Oscar Obeso, Aaquib Syed, Daniel Paleka, Nina Panickssery, Wes Gurnee, and Neel Nanda: [Refusal in Language Models Is Mediated by a Single Direction](https://arxiv.org/abs/2406.11717), published at NeurIPS 2024.
+
+Their core finding: across 13 open-source chat models of up to 72 billion parameters, refusal behavior depends on a single direction in the model's residual stream activations. Not a complex subnetwork. Not a distributed feature across many layers. One direction.
+
+The implications are immediate:
+
+1. **Erase that direction** and the model stops refusing harmful instructions
+2. **Amplify that direction** and the model starts refusing harmless instructions
+3. **The edit takes minutes, not hours** — no labeled data, no GPU cluster, no retraining
+
+The paper frames this as evidence that current safety fine-tuning is brittle. A single rank-one weight edit undoes it.
+
+## How the Edit Works
+
+The abliteration process has three steps:
+
+**Step 1: Find the refusal direction.** Run two small contrast sets of prompts through the model — one set that triggers refusals, one set of benign prompts. Record the model's internal activations (specifically the residual stream) for both sets. The difference in mean activations between the two sets identifies the refusal direction — a single vector in the activation space.
+
+**Step 2: Orthogonalize.** For the relevant weight matrices in the model, project out the refusal direction. This is a rank-one edit to the weights. The model's knowledge, reasoning ability, and instruction-following behavior are largely preserved because they live in other directions of the activation space.
+
+**Step 3: Save.** Write the modified weights to a new checkpoint. The result is a standard model file — same format, same architecture, same size — that can run on any inference framework that supports the original.
+
+<Callout type="info">
+Abliteration is distinct from uncensored fine-tuning. Projects like Dolphin (Eric Hartford) train on datasets filtered to remove refusals, which requires a full training run. Abliteration edits existing weights directly, which is faster and preserves more of the original model's behavior — but it is also a blunter instrument.
+</Callout>
+
+An April 2026 Alice.io report on activation-space abliteration found that post-edit, safety-trained models complied with 98.0% of harmful requests, up from 5.8% at baseline. The technique required no labeled data and minimal expertise. That compliance rate is what makes abliteration effective for defensive security work — and also what demands careful handling.
+
+## What the Security Research Says
+
+A July 2026 paper, [Beyond Refusal: A Same-Lineage Study of Aligned and Abliterated LLMs for Vulnerability Analysis](https://arxiv.org/abs/2607.05842), compared instruction-tuned models against their abliterated counterparts on real security tasks. Each pair came from the same model lineage (Gemma and Qwen), which isolates the effect of the safety edit from differences in architecture or training data.
+
+The results were not a clean win for either side:
+
+**Where abliterated models did better — patch generation:**
+- Usable patches: **67.8%** (abliterated) vs. 29.9% (aligned)
+- Patches that applied cleanly: **65.0%** vs. 24.9%
+- Patches that compiled: **32.8%** vs. 9.0%
+
+**Where abliterated models did better — vulnerability localization:**
+- Line-level F1: **3.91%** (abliterated) vs. 2.08% (aligned)
+- Top-1 accuracy: **6.95%** vs. 4.10%
+
+The absolute numbers on localization are low — single-digit percentages — which tells you these models are not replacing a human reviewer. But the relative improvement is substantial.
+
+The authors' framework for evaluation is the right one: measure whether the model responds, whether the response is correct, and whether the output is actionable across the engineering workflow. A model that responds more often is not automatically more useful. But a model that refuses to respond at all is definitely less useful.
+
+## The Trade-Offs
+
+Abliteration is not free. The capability cost is real, even if it is often modest.
+
+**Benchmark preservation varies.** Arditi et al. report under 1% average benchmark drop across their tested models. A vendor card for a Qwen 3.8 27B abliterated variant shows an MMLU drop from 84.46% to 82.33% — roughly a 2-point hit. The gap depends on the model family and the abliteration tool used.
+
+**Detection tasks are roughly tied.** The same-lineage study found that for vulnerability detection — the binary "is this code vulnerable?" question — aligned and abliterated models scored similarly (58.42% vs. 57.22%). Neutral wording works fine for detection prompts, so refusals do not hurt the aligned model there. The abliterated model pulls ahead on tasks that involve generating output the aligned model would refuse, like patch generation and localization.
+
+**Stacking quantization compounds the loss.** If you abliterate a model and then quantize it aggressively (Q2 or Q3), you are applying two lossy operations in sequence. Test the exact variant you plan to use, because the interaction effects are unpredictable.
+
+**The safety removal is thorough.** The Alice.io report measured 98.0% compliance with harmful requests post-abliteration, up from 5.8% at baseline. The refusal direction is a single vector — you remove it or you do not. This means you are taking full responsibility for what the model produces and how you use it.
+
+<Callout type="danger">
+An abliterated model will attempt to comply with nearly any request — the Alice.io report measured 98.0% compliance. If you point it at code you do not own, it will happily generate exploits for it. The only guardrail is you. Scope your use to code you own, on hardware you control, and keep a human reviewer between the model's output and anything that ships.
+</Callout>
+
+## What Is Available Today
+
+Hugging Face hosts thousands of abliterated models. The landscape as of November 2026:
+
+**Llama family:**
+- Llama 3.3 8B Instruct 128K Abliterated — good entry point, fits in 8GB VRAM at Q4
+- DeepSeek R1 Distill Llama 70B Abliterated — needs a 24GB card or Apple Silicon
+
+**Qwen family:**
+- Huihui's Qwen 3.6 and 3.8 27B Abliterated
+- Qwen 3 8B Abliterated v2 — fits on 8GB cards at Q4
+
+Two common abliteration tool families are the original orthogonalization approach from the Arditi et al. paper and Heretic's Bayesian optimization variant (30–110 minutes per model, but achieves lower KL divergence on neutral inputs).
+
+## How to Run One Locally
+
+The setup is the same as any local LLM, with one extra search step:
+
+1. **Pick a model size that fits your VRAM.** An 8B model at Q4 quantization needs roughly 6–8GB. A 70B model needs 24GB+ with CPU offload, or Apple Silicon unified memory.
+
+2. **Find the abliterated variant on Hugging Face.** Search for the base model name plus "abliterated." Check the model card — good publishers include the abliteration script, the base model version, and post-edit evaluations. Avoid cards that are just a sensational title with no methodology.
+
+3. **Pull with Ollama or LM Studio.** Both handle GGUF files. In Ollama, the pattern is:
+   ```bash
+   ollama pull hf.co/<publisher>/<model-name>-GGUF
+   ```
+   Replace `<publisher>` and `<model-name>` with the repo from Hugging Face. Or download a specific GGUF file and load it through a Modelfile.
+
+4. **Test with your own security prompts.** Run the same prompts that the aligned model refused. If the abliterated model still refuses, the abliteration was probably weak or partial — try a different variant.
+
+5. **Keep a control.** Run the same prompts through the aligned base model so you can compare output quality, not just compliance.
+
+## My Plan
+
+I have not run any of these models yet. Here is my intended approach:
+
+**Start with the aligned model.** Before reaching for an abliterated variant, I want to see how far I can get with the regular model. Many security prompts work fine with neutral wording. I only want the abliterated model for the prompts that hit the refusal wall no matter how I phrase them.
+
+**Pick an 8B model first.** The Qwen 3 8B Abliterated v2 or the Llama 3.3 8B Instruct Abliterated both fit in 8GB VRAM at Q4. An 8B model is not going to find every vulnerability, but it is fast enough to iterate on prompts and understand the workflow before committing to a larger model.
+
+**Scope it to my own apps.** The entire point is reviewing code I wrote and own. The model runs locally, the code stays local, and nothing leaves my machine. I am not building a general-purpose uncensored assistant. I am building a security review tool with a specific, bounded scope.
+
+**Measure what matters.** Following the same-lineage study's framework: does the model respond? Is the response correct? Is it actionable — does the suggested fix compile and apply cleanly? Refusal rate alone is not the metric. A model that responds with garbage is worse than one that refuses.
+
+**Keep a human in the loop.** An abliterated model will produce output that an aligned model would not. Some of that output will be useful. Some of it will be confidently wrong. The model is a first pass, not a verdict. Everything it flags gets reviewed before I act on it.
+
+## Why This Matters Beyond My Apps
+
+The refusal problem in security work is not a niche complaint. Every developer who uses an LLM to review their own code hits the same wall eventually. The current state of safety alignment treats vocabulary as a proxy for intent, and that proxy is badly calibrated for legitimate defensive use cases.
+
+Abliterated models are a blunt fix. They do not make the safety alignment smarter — they rip it out entirely. That is a trade-off, not a solution. The real fix would be models that can distinguish "review my code for vulnerabilities" from "write me an exploit for someone else's system" without falling back to keyword matching.
+
+Until that fix arrives, abliterated models are the workaround. They are easy to run, easy to scope, and — based on the early research — they produce more actionable output on the tasks where aligned models refuse to help.
+
+I will write the results post after I have actually run one.
+
+---
+
+*Want posts like this in your inbox?* [Subscribe to the newsletter](/subscribe).
