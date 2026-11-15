@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Mailgun from 'mailgun.js'
 import formData from 'form-data'
+import { notifyTarek } from '@/lib/notify/ackpush'
 
 export const runtime = 'nodejs'
 
@@ -68,6 +69,16 @@ export async function POST(request: NextRequest) {
     if (!isValidToken) {
       return NextResponse.json({ error: 'Verification failed' }, { status: 400 })
     }
+
+    // Push before the email, so the message still reaches Tarek's phone if Mailgun fails.
+    const preview = String(message).trim()
+    notifyTarek({
+      title: `Contact form: ${String(subject || '').trim() || 'New inquiry'}`,
+      body: `${String(name).trim()} · ${String(email).trim()}\n\n${preview.length > 600 ? `${preview.slice(0, 599)}…` : preview}`,
+      priority: 1,
+      thread_key: 'contact',
+      metadata: { kind: 'contact' },
+    })
 
     const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY
     const MAILGUN_DOMAIN = process.env.MAILGUN_DOMAIN

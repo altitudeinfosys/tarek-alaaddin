@@ -55,6 +55,7 @@
   <table>
     <tr><th>Push</th><th>When</th><th>Button</th></tr>
     <tr><td>New newsletter subscriber</td><td>New signup or a returning subscriber, from any form</td><td>none</td></tr>
+    <tr><td>Contact form: &lt;subject&gt;</td><td>Every contact-page message that passes Turnstile; shows name, email and the first 600 characters</td><td>none</td></tr>
     <tr><td>Fit check: 82% (Good fit)</td><td>Every successful fit check; shows name/email if given, the role line, and the assessment</td><td>Turn off AI</td></tr>
     <tr><td>Fit check hit its daily cap</td><td>Once per day per feature, when the cap is reached</td><td>Turn off AI</td></tr>
     <tr><td>AI features are off / back on</td><td>Whenever the switch changes</td><td>The opposite action</td></tr>
@@ -77,7 +78,7 @@ curl -X POST -H "Authorization: Bearer $CRON_SECRET" -H "Content-Type: applicati
 
   <h2>One-time setup</h2>
   <ol>
-    <li><b>Create the two tables before merging.</b> Run only the statements in <code>drizzle/0001_ai_switch.sql</code> (<code>app_settings</code>, <code>ai_usage_daily</code>) against production Neon, for example in the Neon SQL editor. Don't use <code>drizzle-kit migrate</code>: the first schema went in with <code>drizzle-kit push</code>, so there's no migrations table and <code>migrate</code> would try to rerun <code>0000</code>. Nothing existing changes. Until the tables exist, the switch and cap log errors and stay open.</li>
+    <li><b>Done 2026-11-14:</b> both tables created on production Neon and checked with a live test of the switch and cap. For reference: <b>create the two tables before merging.</b> Run only the statements in <code>drizzle/0001_ai_switch.sql</code> (<code>app_settings</code>, <code>ai_usage_daily</code>) against production Neon, for example in the Neon SQL editor. Don't use <code>drizzle-kit migrate</code>: the first schema went in with <code>drizzle-kit push</code>, so there's no migrations table and <code>migrate</code> would try to rerun <code>0000</code>. Nothing existing changes. Until the tables exist, the switch and cap log errors and stay open.</li>
     <li><b>In the AckPush console</b> (ackpush.com), create an app for this site, for example "tarekalaaddin.com", and create an API token for it. Use a new token, not the Claude Code one.</li>
     <li><b>Set the app's webhook URL</b> to <code>https://www.tarekalaaddin.com/api/webhooks/ackpush</code> (with <b>www</b>: the bare domain answers with a 308 redirect, which webhooks don't follow). The console shows a signing secret once; copy it.</li>
     <li><b>Add the Vercel env vars</b> (Production), then redeploy:
