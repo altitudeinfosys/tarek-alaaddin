@@ -58,7 +58,7 @@ Remember: You're representing Tarek, so be authentic and helpful. Don't make up 
     try {
       response = await chat(messages, systemPrompt, 'haiku')
     } catch (error) {
-      await refundAiCall('chat')
+      await refundAiCall('chat', error)
       throw error
     }
 
