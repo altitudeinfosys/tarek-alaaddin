@@ -68,18 +68,18 @@
     <tr><td><b>Env var:</b> <code>AI_FEATURES_DISABLED=true</code> in Vercel</td><td>Needs a redeploy</td><td>Hard stop that ignores the database. Use if Neon is down.</td></tr>
   </table>
   <pre># status (switch, today's usage, caps)
-curl -H "Authorization: Bearer $CRON_SECRET" https://tarekalaaddin.com/api/admin/ai-switch
+curl -H "Authorization: Bearer $CRON_SECRET" https://www.tarekalaaddin.com/api/admin/ai-switch
 
 # turn off / on
 curl -X POST -H "Authorization: Bearer $CRON_SECRET" -H "Content-Type: application/json" \
-  -d '{"enabled":false}' https://tarekalaaddin.com/api/admin/ai-switch</pre>
+  -d '{"enabled":false}' https://www.tarekalaaddin.com/api/admin/ai-switch</pre>
   <div class="callout">If the database can't be read, the switch <b>fails open</b>: the AI stays on, so a Neon outage doesn't break the fit check. The env var is the hard stop for that case.</div>
 
   <h2>One-time setup</h2>
   <ol>
-    <li><b>Run the migration</b> (<code>drizzle/0001_ai_switch.sql</code>, two new tables: <code>app_settings</code>, <code>ai_usage_daily</code>). Nothing existing changes. Until it runs, the switch and cap log errors and stay open.</li>
+    <li><b>Create the two tables before merging.</b> Run only the statements in <code>drizzle/0001_ai_switch.sql</code> (<code>app_settings</code>, <code>ai_usage_daily</code>) against production Neon, for example in the Neon SQL editor. Don't use <code>drizzle-kit migrate</code>: the first schema went in with <code>drizzle-kit push</code>, so there's no migrations table and <code>migrate</code> would try to rerun <code>0000</code>. Nothing existing changes. Until the tables exist, the switch and cap log errors and stay open.</li>
     <li><b>In the AckPush console</b> (ackpush.com), create an app for this site, for example "tarekalaaddin.com", and create an API token for it. Use a new token, not the Claude Code one.</li>
-    <li><b>Set the app's webhook URL</b> to <code>https://tarekalaaddin.com/api/webhooks/ackpush</code>. The console shows a signing secret once; copy it.</li>
+    <li><b>Set the app's webhook URL</b> to <code>https://www.tarekalaaddin.com/api/webhooks/ackpush</code> (with <b>www</b>: the bare domain answers with a 308 redirect, which webhooks don't follow). The console shows a signing secret once; copy it.</li>
     <li><b>Add the Vercel env vars</b> (Production), then redeploy:
       <table>
         <tr><th>Variable</th><th>Value</th><th>Required</th></tr>
@@ -97,8 +97,9 @@ curl -X POST -H "Authorization: Bearer $CRON_SECRET" -H "Content-Type: applicati
   <h2>Other abuse limits in this change</h2>
   <ul>
     <li>Fit check now needs a Cloudflare Turnstile pass, using the same keys as /subscribe.</li>
+    <li>Webhook answers older than the switch's last change are ignored, so a late retry can't undo a newer change.</li>
     <li>Ask AI chat accepts at most 40 turns: visitor turns up to 4,000 characters, earlier assistant replies up to 12,000. The widget sends the last 19 turns.</li>
-    <li>Name and email on the fit check are optional. They are only shown in your push and are not stored or added to the newsletter.</li>
+    <li>Name and email on the fit check are optional. They aren't saved on the site or added to the newsletter. They do stay in your AckPush message history.</li>
   </ul>
 </main>
 </body>

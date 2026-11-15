@@ -50,6 +50,12 @@ export async function setAiEnabled(enabled: boolean, by: string): Promise<void> 
     })
 }
 
+/** When the switch last changed, or null if it never has (or can't be read). */
+export async function aiSwitchUpdatedAt(): Promise<Date | null> {
+  const rows = await db.select().from(appSettings).where(eq(appSettings.key, SWITCH_KEY)).limit(1)
+  return rows[0]?.updatedAt ?? null
+}
+
 export type AiGate = { ok: true } | { ok: false; reason: 'disabled' | 'daily_cap' }
 
 /**

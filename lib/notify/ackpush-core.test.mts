@@ -2,7 +2,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createHmac } from 'node:crypto'
-import { verifyAckPushSignature, switchActionFrom, parseVisitorContact, fitMessage, jobHint } from './ackpush-core.ts'
+import { verifyAckPushSignature, switchActionFrom, parseVisitorContact, fitMessage, jobHint, occurredAtFrom, isStaleSwitchEvent } from './ackpush-core.ts'
 
 const SECRET = 'whsec_test'
 const sign = (t: number, body: string, secret = SECRET) =>
@@ -50,4 +50,13 @@ test('messages are clipped to AckPush limits', () => {
 
 test('job hint is the first non-empty line', () => {
   assert.equal(jobHint('\n\n  Senior Engineer, Payments  \nWe are hiring'), 'Senior Engineer, Payments')
+})
+
+test('late retries older than the last switch change are stale', () => {
+  const at = occurredAtFrom({ occurred_at: '2026-11-14T10:00:00Z' })
+  assert.ok(at)
+  assert.equal(isStaleSwitchEvent(at, new Date('2026-11-14T10:05:00Z')), true)
+  assert.equal(isStaleSwitchEvent(at, new Date('2026-11-14T09:55:00Z')), false)
+  assert.equal(isStaleSwitchEvent(at, null), false)
+  assert.equal(isStaleSwitchEvent(occurredAtFrom({ occurred_at: 'garbage' }), new Date()), false)
 })

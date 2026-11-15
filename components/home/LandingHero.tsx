@@ -12,7 +12,7 @@ export default function LandingHero({ postCount, appCount }: LandingHeroProps) {
   const STATS = [
     { value: '20+', label: 'Years in production' },
     { value: String(postCount), label: 'Articles published' },
-    { value: String(appCount), label: 'Apps shipped solo' },
+    { value: String(appCount), label: 'Apps built solo' },
   ]
 
   return (

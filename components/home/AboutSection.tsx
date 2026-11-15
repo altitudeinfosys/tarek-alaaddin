@@ -44,7 +44,7 @@ export default function AboutSection() {
             </p>
             <p>
               The last few years I&apos;ve gone all-in on AI: agents and automations that run unattended, and
-              four apps I built and ship myself. Writing about it here keeps me honest about what actually
+              six apps I built and run myself. Writing about it here keeps me honest about what actually
               works versus what just demos well.
             </p>
             <p>

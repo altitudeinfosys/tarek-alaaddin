@@ -71,6 +71,24 @@ export function switchActionFrom(payload: unknown): 'disable' | 'enable' | null 
   return null
 }
 
+/** When the answer happened, from the webhook payload; null if missing or invalid. */
+export function occurredAtFrom(payload: unknown): Date | null {
+  const raw = (payload as { occurred_at?: unknown } | null)?.occurred_at
+  if (typeof raw !== 'string') return null
+  const at = new Date(raw)
+  return Number.isNaN(at.getTime()) ? null : at
+}
+
+/**
+ * A retried delivery can arrive after a newer change (say, a late "turn on"
+ * after a later "turn off"). Apply the answer only if it happened after the
+ * switch last changed.
+ */
+export function isStaleSwitchEvent(occurredAt: Date | null, switchUpdatedAt: Date | null): boolean {
+  if (!occurredAt || !switchUpdatedAt) return false
+  return occurredAt.getTime() < switchUpdatedAt.getTime()
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export interface VisitorContact {

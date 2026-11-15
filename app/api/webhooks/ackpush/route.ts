@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { setAiEnabled, notifySwitchChanged } from '@/lib/ai-guard'
-import { verifyAckPushSignature, switchActionFrom } from '@/lib/notify/ackpush'
+import { setAiEnabled, notifySwitchChanged, aiSwitchUpdatedAt } from '@/lib/ai-guard'
+import { verifyAckPushSignature, switchActionFrom, occurredAtFrom, isStaleSwitchEvent } from '@/lib/notify/ackpush'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -32,6 +32,10 @@ export async function POST(request: NextRequest) {
   if (!action) {
     // Snoozes, expiries, and other answers need nothing from the site.
     return NextResponse.json({ ok: true, ignored: true })
+  }
+
+  if (isStaleSwitchEvent(occurredAtFrom(payload), await aiSwitchUpdatedAt())) {
+    return NextResponse.json({ ok: true, ignored: 'stale' })
   }
 
   const enabled = action === 'enable'

@@ -154,6 +154,7 @@ export default function FitCheck() {
             siteKey={TURNSTILE_SITE_KEY}
             onVerify={setTurnstileToken}
             onError={() => setTurnstileToken('')}
+            onExpire={() => setTurnstileToken('')}
           />
         )}
         <div className="mt-4 flex items-center justify-between">
