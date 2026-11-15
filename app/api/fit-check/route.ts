@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     try {
       result = await analyzeFitCheck(getProfileForFitCheck(), jobDescription)
     } catch (error) {
-      await refundAiCall('fit_check')
+      await refundAiCall('fit_check', error)
       throw error
     }
 

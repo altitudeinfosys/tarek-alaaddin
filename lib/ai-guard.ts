@@ -14,6 +14,7 @@
 import { and, eq, sql } from 'drizzle-orm'
 import { db, appSettings, aiUsageDaily } from '@/lib/db'
 import { notifyTarek, DISABLE_AI_ACTION, ENABLE_AI_ACTION } from '@/lib/notify/ackpush'
+import { wasNotBilled } from '@/lib/ai-billing'
 
 export type AiFeature = 'fit_check' | 'chat'
 
@@ -126,17 +127,20 @@ async function claimCapAlert(feature: AiFeature): Promise<boolean> {
 }
 
 /**
- * Gives back the slot gateAiCall took when the model call then failed, so an
- * Anthropic outage doesn't use up the day's cap.
+ * Gives back the slot gateAiCall took when the model call then failed without
+ * being billed (connection error or error status), so an Anthropic outage
+ * doesn't use up the day's cap. Billed failures (refusal, cut-off or unparseable
+ * reply) keep their slot, so the cap stays a hard limit on spend.
  */
-export async function refundAiCall(feature: AiFeature): Promise<void> {
+export async function refundAiCall(feature: AiFeature, error: unknown): Promise<void> {
+  if (!wasNotBilled(error)) return
   try {
     await db
       .update(aiUsageDaily)
       .set({ count: sql`greatest(${aiUsageDaily.count} - 1, 0)` })
       .where(and(eq(aiUsageDaily.day, utcDay()), eq(aiUsageDaily.feature, feature)))
-  } catch (error) {
-    console.error('[ai-guard] could not refund AI usage:', error)
+  } catch (dbError) {
+    console.error('[ai-guard] could not refund AI usage:', dbError)
   }
 }
 

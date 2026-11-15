@@ -17,10 +17,26 @@ jobs:
       issues: write
       pull-requests: write
     steps:
+      # The review needs an OpenAI key in the OPENAI_KEY repo secret. Without one,
+      # skip it instead of failing every PR (pr-agent now exits with an error).
+      - name: Check for an OpenAI key
+        id: key
+        env:
+          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+        run: |
+          if [ -n "$OPENAI_KEY" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::AI review skipped: add an OPENAI_KEY repository secret to turn it on."
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: AI Code Review
+        if: steps.key.outputs.present == 'true'
         uses: Codium-ai/pr-agent@main
         env:
           OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           github_action.auto_review: "true"
           github_action.auto_describe: "true"
