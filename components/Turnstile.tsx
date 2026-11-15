@@ -6,6 +6,8 @@ interface TurnstileProps {
   siteKey: string
   onVerify: (token: string) => void
   onError?: () => void
+  /** Tokens expire after about five minutes; clear any stored token when this fires. */
+  onExpire?: () => void
   theme?: 'light' | 'dark' | 'auto'
 }
 
@@ -18,6 +20,7 @@ declare global {
           sitekey: string
           callback: (token: string) => void
           'error-callback'?: () => void
+          'expired-callback'?: () => void
           theme?: 'light' | 'dark' | 'auto'
         }
       ) => string
@@ -27,7 +30,7 @@ declare global {
   }
 }
 
-export default function Turnstile({ siteKey, onVerify, onError, theme = 'auto' }: TurnstileProps) {
+export default function Turnstile({ siteKey, onVerify, onError, onExpire, theme = 'auto' }: TurnstileProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const widgetIdRef = useRef<string | null>(null)
   const renderedRef = useRef(false)
@@ -35,10 +38,12 @@ export default function Turnstile({ siteKey, onVerify, onError, theme = 'auto' }
   // Store callbacks in refs to avoid re-render issues
   const onVerifyRef = useRef(onVerify)
   const onErrorRef = useRef(onError)
+  const onExpireRef = useRef(onExpire)
 
   // Update refs when callbacks change
   onVerifyRef.current = onVerify
   onErrorRef.current = onError
+  onExpireRef.current = onExpire
 
   const handleVerify = useCallback((token: string) => {
     onVerifyRef.current(token)
@@ -59,6 +64,7 @@ export default function Turnstile({ siteKey, onVerify, onError, theme = 'auto' }
           sitekey: siteKey,
           callback: handleVerify,
           'error-callback': handleError,
+          'expired-callback': () => onExpireRef.current?.(),
           theme,
         })
       }

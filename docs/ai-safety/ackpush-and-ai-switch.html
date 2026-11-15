@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>AckPush alerts and the AI switch — tarekalaaddin.com</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root { --bg:#0b0d12; --panel:#11141b; --border:#262c3a; --text:#e6e9ef; --muted:#8a93a6; --accent:#7cc4ff; --warn:#ffd166; --ok:#74e3a0; --danger:#ff7a7a; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  @media print { :root { --bg:#fff; --panel:#fff; --border:#bbb; --text:#111; --muted:#444; --accent:#0066cc; --warn:#996600; --ok:#006633; --danger:#990000; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif; background:var(--bg); color:var(--text); }
+  main { max-width: 900px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.8rem; margin: 0 0 4px; }
+  h2 { font-size: 1.2rem; margin: 36px 0 10px; color: var(--accent); }
+  p, li { color: var(--text); }
+  .muted { color: var(--muted); }
+  code, pre { font-family: var(--mono); font-size: 0.85em; }
+  pre { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--panel); }
+  .callout { border-left: 4px solid var(--warn); background: var(--panel); padding: 10px 14px; border-radius: 6px; margin: 14px 0; }
+  .ok { border-left-color: var(--ok); }
+  svg text { font-family: -apple-system, Inter, sans-serif; fill: var(--text); }
+  svg .box { fill: var(--panel); stroke: var(--border); }
+  svg .hot { stroke: var(--accent); }
+  svg .line { stroke: var(--muted); fill: none; marker-end: url(#arrow); }
+</style>
+</head>
+<body>
+<main>
+  <h1>AckPush alerts and the AI switch</h1>
+  <p class="muted">tarekalaaddin.com · November 2026 · How pushes reach your phone, how to switch the AI off, and the one-time setup.</p>
+
+  <h2>What happens</h2>
+  <svg viewBox="0 0 860 300" width="100%" role="img" aria-label="Flow from visitor request through abuse checks to Claude and an AckPush push, with the phone button flipping the switch back on the site">
+    <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8a93a6"/></marker></defs>
+    <rect class="box" x="10" y="20" width="140" height="56" rx="8"/><text x="80" y="44" text-anchor="middle">Visitor</text><text x="80" y="62" text-anchor="middle" font-size="12">fit check / chat</text>
+    <rect class="box" x="190" y="20" width="160" height="56" rx="8"/><text x="270" y="44" text-anchor="middle">Firewall limit</text><text x="270" y="62" text-anchor="middle" font-size="12">5 per 10 min / IP</text>
+    <rect class="box" x="390" y="20" width="140" height="56" rx="8"/><text x="460" y="44" text-anchor="middle">Turnstile</text><text x="460" y="62" text-anchor="middle" font-size="12">fit check only</text>
+    <rect class="box hot" x="570" y="20" width="140" height="56" rx="8"/><text x="640" y="44" text-anchor="middle">AI switch</text><text x="640" y="62" text-anchor="middle" font-size="12">+ daily cap</text>
+    <rect class="box" x="740" y="20" width="110" height="56" rx="8"/><text x="795" y="52" text-anchor="middle">Claude</text>
+    <path class="line" d="M150,48 H186"/><path class="line" d="M350,48 H386"/><path class="line" d="M530,48 H566"/><path class="line" d="M710,48 H736"/>
+    <rect class="box" x="570" y="150" width="140" height="56" rx="8"/><text x="640" y="174" text-anchor="middle">AckPush</text><text x="640" y="192" text-anchor="middle" font-size="12">push to phone</text>
+    <path class="line" d="M795,76 V178 H714"/><text x="800" y="130" font-size="12">result</text>
+    <rect class="box" x="330" y="150" width="190" height="56" rx="8"/><text x="425" y="174" text-anchor="middle">Your phone</text><text x="425" y="192" text-anchor="middle" font-size="12">"Turn off AI" button</text>
+    <path class="line" d="M570,178 H524"/>
+    <rect class="box hot" x="330" y="236" width="190" height="56" rx="8"/><text x="425" y="260" text-anchor="middle">/api/webhooks/ackpush</text><text x="425" y="278" text-anchor="middle" font-size="12">signed, flips switch</text>
+    <path class="line" d="M425,206 V232"/>
+    <path class="line" d="M520,264 H640 V80"/>
+    <rect class="box" x="10" y="150" width="200" height="56" rx="8"/><text x="110" y="174" text-anchor="middle">New subscriber</text><text x="110" y="192" text-anchor="middle" font-size="12">push only, no button</text>
+    <path class="line" d="M210,178 C 300,120 520,120 566,170"/>
+  </svg>
+
+  <table>
+    <tr><th>Push</th><th>When</th><th>Button</th></tr>
+    <tr><td>New newsletter subscriber</td><td>New signup or a returning subscriber, from any form</td><td>none</td></tr>
+    <tr><td>Contact form: &lt;subject&gt;</td><td>Every contact-page message that passes Turnstile; shows name, email and the first 600 characters</td><td>none</td></tr>
+    <tr><td>Fit check: 82% (Good fit)</td><td>Every successful fit check; shows name/email if given, the role line, and the assessment</td><td>Turn off AI</td></tr>
+    <tr><td>Fit check hit its daily cap</td><td>Once per day per feature, when the cap is reached</td><td>Turn off AI</td></tr>
+    <tr><td>AI features are off / back on</td><td>Whenever the switch changes</td><td>The opposite action</td></tr>
+  </table>
+
+  <h2>Ways to turn the AI off</h2>
+  <table>
+    <tr><th>Method</th><th>Speed</th><th>Notes</th></tr>
+    <tr><td><b>Phone:</b> tap <i>Turn off AI</i> on any fit-check or cap push</td><td>Seconds</td><td>Needs the webhook set up (step 3). The confirmation push has <i>Turn AI back on</i>.</td></tr>
+    <tr><td><b>API:</b> admin endpoint with the send key</td><td>Seconds</td><td>See the curl commands below.</td></tr>
+    <tr><td><b>Env var:</b> <code>AI_FEATURES_DISABLED=true</code> in Vercel</td><td>Needs a redeploy</td><td>Hard stop that ignores the database. Use if Neon is down.</td></tr>
+  </table>
+  <pre># status (switch, today's usage, caps)
+curl -H "Authorization: Bearer $CRON_SECRET" https://www.tarekalaaddin.com/api/admin/ai-switch
+
+# turn off / on
+curl -X POST -H "Authorization: Bearer $CRON_SECRET" -H "Content-Type: application/json" \
+  -d '{"enabled":false}' https://www.tarekalaaddin.com/api/admin/ai-switch</pre>
+  <div class="callout">If the database can't be read, the switch <b>fails open</b>: the AI stays on, so a Neon outage doesn't break the fit check. The env var is the hard stop for that case.</div>
+
+  <h2>One-time setup</h2>
+  <ol>
+    <li><b>Done 2026-11-14:</b> both tables created on production Neon and checked with a live test of the switch and cap. For reference: <b>create the two tables before merging.</b> Run only the statements in <code>drizzle/0001_ai_switch.sql</code> (<code>app_settings</code>, <code>ai_usage_daily</code>) against production Neon, for example in the Neon SQL editor. Don't use <code>drizzle-kit migrate</code>: the first schema went in with <code>drizzle-kit push</code>, so there's no migrations table and <code>migrate</code> would try to rerun <code>0000</code>. Nothing existing changes. Until the tables exist, the switch and cap log errors and stay open.</li>
+    <li><b>In the AckPush console</b> (ackpush.com), create an app for this site, for example "tarekalaaddin.com", and create an API token for it. Use a new token, not the Claude Code one.</li>
+    <li><b>Set the app's webhook URL</b> to <code>https://www.tarekalaaddin.com/api/webhooks/ackpush</code> (with <b>www</b>: the bare domain answers with a 308 redirect, which webhooks don't follow). The console shows a signing secret once; copy it.</li>
+    <li><b>Add the Vercel env vars</b> (Production), then redeploy:
+      <table>
+        <tr><th>Variable</th><th>Value</th><th>Required</th></tr>
+        <tr><td><code>ACKPUSH_API_TOKEN</code></td><td>Token from step 2</td><td>Yes, for pushes</td></tr>
+        <tr><td><code>ACKPUSH_WEBHOOK_SECRET</code></td><td>Secret from step 3</td><td>Yes, for the phone button</td></tr>
+        <tr><td><code>FIT_CHECK_DAILY_CAP</code></td><td>Default 30; <code>0</code> pauses the fit check</td><td>No</td></tr>
+        <tr><td><code>CHAT_DAILY_CAP</code></td><td>Default 300 messages; <code>0</code> pauses the chat</td><td>No</td></tr>
+        <tr><td><code>AI_FEATURES_DISABLED</code></td><td><code>true</code> only for a hard stop</td><td>No</td></tr>
+      </table>
+    </li>
+    <li><b>Test:</b> run one fit check on the live site, confirm the push arrives, tap <i>Turn off AI</i>, check the fit check now says "temporarily unavailable", then tap <i>Turn AI back on</i>.</li>
+  </ol>
+  <div class="callout ok">With no <code>ACKPUSH_API_TOKEN</code> set, pushes are skipped silently, and signups and fit checks work exactly as before.</div>
+
+  <h2>Other abuse limits in this change</h2>
+  <ul>
+    <li>Fit check now needs a Cloudflare Turnstile pass, using the same keys as /subscribe.</li>
+    <li>A request whose Claude call fails gives its slot back, so an Anthropic outage doesn't use up the day's cap.</li>
+    <li>Webhook answers older than the switch's last change are ignored, so a late retry can't undo a newer change.</li>
+    <li>Ask AI chat accepts at most 40 turns: visitor turns up to 4,000 characters, earlier assistant replies up to 12,000. The widget sends the last 19 turns.</li>
+    <li>Name and email on the fit check are optional. They aren't saved on the site or added to the newsletter. They do stay in your AckPush message history.</li>
+  </ul>
+</main>
+</body>
+</html>

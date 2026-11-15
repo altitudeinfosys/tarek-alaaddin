@@ -1,6 +1,6 @@
 # Tarek Alaaddin
 
-> Software engineer with 20+ years of experience building enterprise-scale applications. Builder of four shipped apps: Taskitos, ExpandNote, SayCopy, and PropertyPulse360. Writing about AI tools, developer productivity, and the future of software engineering.
+> Software engineer with 20+ years of experience building enterprise-scale applications. Builder of six apps: Taskitos, ExpandNote, SayCopy, PropertyPulse360, TextInvoiceGo, and AckPush. Writing about AI tools, developer productivity, and the future of software engineering.
 
 ## About
 - [Tarek Alaaddin](https://www.tarekalaaddin.com): Personal site and blog
@@ -9,8 +9,10 @@
 ## Products
 - [Taskitos](https://taskitos.com): AI-powered task manager with persistent reminders
 - [ExpandNote](https://expandnote.com): AI-powered note-taking app with automation profiles
-- [SayCopy](https://apps.apple.com/us/app/saycopy/id6790925849): Voice to text, ready to use — transcribe, translate (EN/ES/AR), clean up, copy anywhere
+- [SayCopy](https://saycopy.app): Voice to text, ready to use — transcribe, translate (EN/ES/AR), clean up, copy anywhere
 - [PropertyPulse360](https://www.propertypulse360.com): Property management for small landlords — rent collection, expense tracking, and owner reporting
+- [TextInvoiceGo](https://speakinvoicego.com): Invoicing for tradespeople by text message or phone call, drafted by an AI voice and SMS agent
+- [AckPush](https://ackpush.com): Push notifications for apps and AI agents, answered from the lock screen (early access)
 
 ## Videos
 - [Videos](https://www.tarekalaaddin.com/videos): Videos on AI tools and workflows, plus short talks on habits, money, and mindset

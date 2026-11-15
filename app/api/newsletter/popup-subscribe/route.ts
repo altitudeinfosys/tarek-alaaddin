@@ -3,6 +3,7 @@ import { upsertSubscriber } from '@/lib/db/subscribers'
 import { resend, FROM, REPLY_TO } from '@/lib/email/resend'
 import { renderWelcomeEmail } from '@/lib/email/templates'
 import { syncContactUpsert } from '@/lib/email/audience'
+import { notifyNewSubscriber } from '@/lib/notify/subscriber'
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -36,6 +37,8 @@ export async function POST(request: NextRequest) {
     // A blocked reactivation falls through to the same success response, so this
     // endpoint can't be used to probe which addresses have opted out.
     if (result.isNew || result.wasReactivated) {
+      notifyNewSubscriber(result.subscriber, source, result.wasReactivated)
+
       await syncContactUpsert({
         email: result.subscriber.email,
         firstName: result.subscriber.firstName,

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Mailgun from 'mailgun.js'
 import formData from 'form-data'
+import { notifyTarek } from '@/lib/notify/ackpush'
+import { verifyTurnstile } from '@/lib/turnstile'
 
 export const runtime = 'nodejs'
 
@@ -10,44 +12,6 @@ interface ContactFormData {
   subject: string
   message: string
   turnstileToken: string
-}
-
-interface TurnstileResponse {
-  success: boolean
-  'error-codes'?: string[]
-}
-
-async function verifyTurnstileToken(token: string): Promise<boolean> {
-  const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY
-
-  if (!TURNSTILE_SECRET_KEY) {
-    console.error('Missing TURNSTILE_SECRET_KEY')
-    return false
-  }
-
-  try {
-    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        secret: TURNSTILE_SECRET_KEY,
-        response: token,
-      }),
-    })
-
-    const data = (await response.json()) as TurnstileResponse
-
-    if (!data.success) {
-      console.error('Turnstile verification failed:', data['error-codes'])
-    }
-
-    return data.success
-  } catch (error) {
-    console.error('Turnstile verification error:', error)
-    return false
-  }
 }
 
 export async function POST(request: NextRequest) {
@@ -64,10 +28,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Verification required' }, { status: 400 })
     }
 
-    const isValidToken = await verifyTurnstileToken(turnstileToken)
-    if (!isValidToken) {
+    const turnstile = await verifyTurnstile(turnstileToken)
+    if (turnstile === 'not_configured') console.error('Missing TURNSTILE_SECRET_KEY')
+    if (turnstile !== 'ok') {
       return NextResponse.json({ error: 'Verification failed' }, { status: 400 })
     }
+
+    // Push before the email, so the message still reaches Tarek's phone if Mailgun fails.
+    const preview = String(message).trim()
+    notifyTarek({
+      title: `Contact form: ${String(subject || '').trim() || 'New inquiry'}`,
+      body: `${String(name).trim()} · ${String(email).trim()}\n\n${preview.length > 600 ? `${preview.slice(0, 599)}…` : preview}`,
+      priority: 1,
+      thread_key: 'contact',
+      metadata: { kind: 'contact' },
+    })
 
     const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY
     const MAILGUN_DOMAIN = process.env.MAILGUN_DOMAIN
