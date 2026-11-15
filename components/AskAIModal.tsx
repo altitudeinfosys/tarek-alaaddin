@@ -62,7 +62,8 @@ export default function AskAIModal({ isOpen, onClose }: AskAIModalProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [...messages, userMessage],
+          // Recent turns only (odd count keeps a user turn first); the API caps history at 40.
+          messages: [...messages, userMessage].slice(-19),
         }),
       })
 
@@ -70,6 +71,16 @@ export default function AskAIModal({ isOpen, onClose }: AskAIModalProps) {
         setMessages((prev) => [
           ...prev,
           { role: 'assistant', content: "That's a lot of questions in a short time. Please try again in a few minutes." },
+        ])
+        return
+      }
+
+      if (response.status === 503) {
+        // AI is switched off or at today's cap; the server sends a visitor-facing message
+        const body = await response.json().catch(() => null)
+        setMessages((prev) => [
+          ...prev,
+          { role: 'assistant', content: body?.error ?? 'Ask AI is temporarily unavailable. Please try again later.' },
         ])
         return
       }

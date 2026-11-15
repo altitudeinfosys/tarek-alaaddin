@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { chat, ChatMessage } from '@/lib/claude'
 import { getResumeForChat } from '@/lib/resume-loader'
+import { gateAiCall, AI_UNAVAILABLE_MESSAGE } from '@/lib/ai-guard'
 
 export const runtime = 'nodejs'
+
+const MAX_MESSAGES = 40
+// Visitor turns are typed questions; assistant turns are the model's earlier replies.
+const MAX_CHARS = { user: 4000, assistant: 12000 } as const
 
 export async function POST(request: NextRequest) {
   // Rate limiting is enforced at the Vercel Firewall (20 POSTs / 10 min per IP)
@@ -11,6 +16,20 @@ export async function POST(request: NextRequest) {
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: 'Invalid request: messages required' }, { status: 400 })
+    }
+
+    // Bound what one request can spend: a short conversation of plain-text turns.
+    const wellFormed = messages.every(
+      (m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.length <= MAX_CHARS[m.role]
+    )
+    if (!wellFormed || messages.length === 0 || messages.length > MAX_MESSAGES) {
+      return NextResponse.json({ error: 'Invalid request: messages required' }, { status: 400 })
+    }
+
+    // Kill switch and daily cap (lib/ai-guard.ts); each message counts once.
+    const gate = await gateAiCall('chat')
+    if (!gate.ok) {
+      return NextResponse.json({ error: AI_UNAVAILABLE_MESSAGE[gate.reason], unavailable: gate.reason }, { status: 503 })
     }
 
     // Load resume data for context

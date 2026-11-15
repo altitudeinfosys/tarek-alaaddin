@@ -3,6 +3,7 @@ import { upsertSubscriber } from '@/lib/db/subscribers'
 import { resend, FROM, REPLY_TO } from '@/lib/email/resend'
 import { renderWelcomeEmail } from '@/lib/email/templates'
 import { syncContactUpsert } from '@/lib/email/audience'
+import { notifyNewSubscriber } from '@/lib/notify/subscriber'
 
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY
 
@@ -64,6 +65,8 @@ export async function POST(request: NextRequest) {
     })
 
     if (result.isNew || result.wasReactivated) {
+      notifyNewSubscriber(result.subscriber, 'form', result.wasReactivated)
+
       await syncContactUpsert({
         email: result.subscriber.email,
         firstName: result.subscriber.firstName,

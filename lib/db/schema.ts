@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean, integer, uniqueIndex, primaryKey } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, uuid, boolean, integer, uniqueIndex, primaryKey, date } from 'drizzle-orm/pg-core'
 
 export const subscribers = pgTable('subscribers', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -40,6 +40,24 @@ export const sentTo = pgTable('sent_to', {
   resendEmailId: text('resend_email_id'),
 }, (table) => ({
   pk: primaryKey({ columns: [table.subscriberId, table.sendId] }),
+}))
+
+// Key/value switches the site reads at request time (today: the AI kill switch),
+// so they can be flipped without a redeploy.
+export const appSettings = pgTable('app_settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedBy: text('updated_by'),
+})
+
+// One row per (UTC day, feature): how many AI calls were let through, for the daily cap.
+export const aiUsageDaily = pgTable('ai_usage_daily', {
+  day: date('day').notNull(),
+  feature: text('feature').notNull(),
+  count: integer('count').notNull().default(0),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.day, table.feature] }),
 }))
 
 export type Subscriber = typeof subscribers.$inferSelect

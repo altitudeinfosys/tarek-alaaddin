@@ -6,13 +6,13 @@ export default function AppsGrid() {
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <div className="eyebrow eyebrow-accent mb-2.5">Apps I&apos;ve shipped</div>
-          <h2 className="h-section">Four products, built end to end.</h2>
+          <h2 className="h-section">Six products, built end to end.</h2>
           <p className="mt-3 text-gray-700 dark:text-gray-300 max-w-2xl">
-            Three in the App Store and Google Play, one on the web — each live and in use, each with its own site.
+            Three in the App Store and Google Play, the rest on the web, by text, or in early access — each with its own site.
           </p>
         </div>
 
-        <div className="thin-grid sm:grid-cols-2 lg:grid-cols-4">
+        <div className="thin-grid sm:grid-cols-2 lg:grid-cols-3">
           {apps.map((app) => (
             <a key={app.id} href={app.url} target="_blank" rel="noopener noreferrer" className="group thin-cell">
               <span className="font-display text-lg font-bold tracking-[-0.015em] text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">

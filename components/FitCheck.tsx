@@ -2,6 +2,9 @@
 
 import { useState } from 'react'
 import { track } from '@vercel/analytics'
+import Turnstile from '@/components/Turnstile'
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? ''
 
 interface FitCheckResult {
   score: number
@@ -16,10 +19,24 @@ export default function FitCheck() {
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<FitCheckResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState('')
+  // Turnstile tokens are single-use: bump this to render a fresh widget.
+  const [turnstileRound, setTurnstileRound] = useState(0)
+
+  const resetTurnstile = () => {
+    setTurnstileToken('')
+    setTurnstileRound((n) => n + 1)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!jobDescription.trim() || isLoading) return
+    if (!turnstileToken) {
+      setError('Please complete the verification check first.')
+      return
+    }
 
     setIsLoading(true)
     setError(null)
@@ -30,7 +47,12 @@ export default function FitCheck() {
       const response = await fetch('/api/fit-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobDescription: jobDescription.trim() }),
+        body: JSON.stringify({
+          jobDescription: jobDescription.trim(),
+          name: name.trim() || undefined,
+          email: email.trim() || undefined,
+          turnstileToken,
+        }),
       })
 
       if (response.status === 429) {
@@ -40,8 +62,9 @@ export default function FitCheck() {
       }
 
       if (!response.ok) {
-        // 4xx responses carry a message meant for the visitor (too short, too long)
-        if (response.status >= 400 && response.status < 500) {
+        // 4xx responses carry a message meant for the visitor (too short, too long);
+        // 503 means the AI is switched off or at today's cap
+        if ((response.status >= 400 && response.status < 500) || response.status === 503) {
           const body = await response.json().catch(() => null)
           if (body?.error) {
             setError(body.error)
@@ -58,6 +81,7 @@ export default function FitCheck() {
       setError('Failed to analyze job fit. Please try again.')
     } finally {
       setIsLoading(false)
+      resetTurnstile()
     }
   }
 
@@ -89,13 +113,56 @@ export default function FitCheck() {
           className="field resize-none"
           disabled={isLoading}
         />
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div>
+            <label htmlFor="fit-name" className="eyebrow block mb-1.5">
+              Your name <span className="normal-case tracking-normal">(optional)</span>
+            </label>
+            <input
+              id="fit-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={100}
+              autoComplete="name"
+              className="field"
+              disabled={isLoading}
+            />
+          </div>
+          <div>
+            <label htmlFor="fit-email" className="eyebrow block mb-1.5">
+              Your email <span className="normal-case tracking-normal">(optional)</span>
+            </label>
+            <input
+              id="fit-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              maxLength={200}
+              autoComplete="email"
+              className="field"
+              disabled={isLoading}
+            />
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+          Only Tarek sees these, so he can follow up. They aren&apos;t added to any mailing list.
+        </p>
+        {TURNSTILE_SITE_KEY && (
+          <Turnstile
+            key={turnstileRound}
+            siteKey={TURNSTILE_SITE_KEY}
+            onVerify={setTurnstileToken}
+            onError={() => setTurnstileToken('')}
+          />
+        )}
         <div className="mt-4 flex items-center justify-between">
           <p className="font-mono text-xs text-gray-600 dark:text-gray-400">
             {jobDescription.length > 0 && `${jobDescription.split(/\s+/).length} words`}
           </p>
           <button
             type="submit"
-            disabled={!jobDescription.trim() || isLoading}
+            disabled={!jobDescription.trim() || !turnstileToken || isLoading}
             className="btn-flat btn-flat-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (

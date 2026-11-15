@@ -16,15 +16,15 @@ Senior Programmer Analyst / Technical Lead and AI Engineer with 20+ years buildi
 - Built high-performance Spring Batch jobs processing millions of records daily
 - Currently leading the migration of a legacy Java Struts system to React 19 + Spring Boot for a Texas state agency
 - Shipped Taskitos, a React Native / Expo task app, to both the Apple App Store and Google Play
-- Built and run 10+ products on Next.js, React Native, and Supabase, several with Claude-powered AI features, MCP servers, and offline-first sync
+- Built and run 10+ products on Next.js, React Native, and Supabase, several with Claude-powered AI features, MCP servers, and offline-first sync, plus a set of internal automation tools (iMessage and email agents, Raspberry Pi services, Claude Code skills)
 
 ## Technical Skills
 
 ### Languages
-Java, TypeScript, JavaScript, SQL, Python, Kotlin, C#
+Java, TypeScript, JavaScript, SQL, Python, Kotlin, C#, Bash
 
 ### Frontend
-React (incl. React 19), Next.js (App Router, versions 14–16), Vite, Redux, Zustand, TanStack Query, React Hook Form, AG Grid, Tailwind CSS, shadcn/ui, MDX
+React (incl. React 19), Next.js (App Router, versions 14–16), Vite, Redux, Zustand, TanStack Query, React Hook Form, AG Grid, Tailwind CSS, shadcn/ui, MDX, Recharts, Chrome extensions (Manifest V3), installable PWAs
 
 ### Mobile
 React Native, Expo (SDK 54, Expo Router, EAS Build and Submit), push notifications with actionable responses, offline-first sync with PowerSync, in-app subscriptions with RevenueCat, App Store and Google Play releases
@@ -36,16 +36,16 @@ Spring Boot, Spring Batch, Hibernate, Node.js, Next.js API routes and server act
 Oracle, SQL Server, PostgreSQL, Supabase (Postgres, Auth, Row Level Security, Storage, Realtime, pgvector), Neon serverless Postgres, Drizzle ORM
 
 ### Cloud, DevOps & Hosting
-Vercel, Microsoft Azure, AWS, Docker, self-hosted services on Hetzner with Coolify, Jenkins, Azure DevOps, GitHub Actions, Git, Maven, Sentry, PostHog
+Vercel (Functions, Firewall rate limiting), Microsoft Azure, AWS, Docker, self-hosted services on Hetzner with Coolify, Raspberry Pi and Linux systemd services, macOS launchd agents, Jenkins, Azure DevOps, GitHub Actions, Git, Maven, Sentry, PostHog
 
 ### AI & LLM Engineering
-Claude API (Anthropic SDK, structured outputs, prompt caching), OpenAI API, OpenRouter, Model Context Protocol (MCP) servers, AI agents and agentic workflows, voice-to-text and speech features, LLM-based email and document parsing, prompt engineering
+Claude API (Anthropic SDK, structured outputs, adaptive thinking, prompt caching), OpenAI API, OpenRouter, Model Context Protocol (MCP) servers with OAuth, AI agents and agentic workflows, multi-agent orchestration (plan, build, verify, audit loops), human-in-the-loop approval flows, voice-to-text and speech features, LLM-based email and document parsing, prompt engineering, prompt-injection hardening and abuse controls for public AI features
 
 ### Agentic Development Tools
-Claude Code, OpenAI Codex, Cursor, GitHub Copilot, Gemini
+Claude Code (custom skills, hooks, subagents, scheduled tasks), OpenAI Codex, Cursor, GitHub Copilot, Gemini
 
 ### Integrations & Automation
-Stripe, Resend, AgentMail, AI voice and SMS agents (Retell, AgentPhone), n8n (self-hosted), Make.com, Zapier
+Stripe, Resend, Mailgun, AgentMail, AI voice and SMS agents (Retell, AgentPhone), signed webhooks (HMAC), Cloudflare Turnstile, Google Drive API, Slack, n8n (self-hosted), Make.com, Zapier
 
 ### Web Scraping & Data Extraction
 Scrapy, BeautifulSoup, Selenium, Apify, Python ETL pipelines
@@ -89,16 +89,24 @@ I build these as a solo developer working with AI coding agents. They are live, 
 
 - **Taskitos** (taskitos.com): AI-powered task manager that nags tasks to done with persistent reminders, snooze, recurring tasks, and voice-to-task capture. pnpm monorepo with a Next.js 15 / React 19 web app and a React Native / Expo mobile app sharing a TypeScript package. Supabase backend, PowerSync offline-first sync (self-hosted on Hetzner via Coolify), RevenueCat subscriptions, Expo push notifications. Released to the Apple App Store and Google Play.
 - **ExpandNote** (expandnote.com): AI note-taking app with voice-to-text, AI Profiles that process notes automatically, email-to-note, and workflow hooks. Next.js 16 web app plus Expo SDK 54 mobile app, Supabase with Row Level Security, PowerSync offline sync, Sentry, and a Model Context Protocol (MCP) server (local and remote) so AI assistants can read and write notes.
-- **TextInvoice / SpeakInvoice** (textinvoicego.com): invoicing for contractors and tradespeople by text message or phone call. Inbound call or SMS goes to an AI voice/SMS agent, then a webhook, then Claude extracts the job details and drafts the invoice. Next.js, Supabase, Claude API, Resend, Sentry, PostHog.
+- **TextInvoiceGo / SpeakInvoiceGo** (speakinvoicego.com, textinvoicego.com): invoicing for contractors and tradespeople by text message or phone call. Inbound call or SMS goes to an AI voice/SMS agent, then a webhook, then Claude extracts the job details and drafts the invoice. Next.js, Supabase, Claude API, Resend, Sentry, PostHog.
 - **SayCopy** (saycopy.app): privacy-focused React Native / Expo mobile app for recording, transcribing, translating, and organizing spoken text on iOS and Android, using user-supplied OpenRouter models.
-- **AckPush**: notification hub where apps and AI agents send push notifications and the user answers from the notification itself (action buttons, inline text reply, snooze). Expo SDK 54 / React Native 0.81 mobile app, Next.js 16 web inbox and console, Supabase.
+- **AckPush** (ackpush.com, early access): notification hub where apps and AI agents send push notifications and the user answers from the notification itself (action buttons, inline text reply, snooze). Expo SDK 54 / React Native 0.81 mobile app, Next.js 16 web inbox and console, Supabase Edge Functions, a remote MCP server with OAuth, HMAC-signed outbound webhooks, and a Claude Code hook that sends permission prompts to the phone for approval. This site uses it to push new subscribers and fit checks to Tarek's phone, with a button that switches the site's AI features off.
 - **PropertyPulse360**: property management app for small landlords: rent, expenses, owner reporting, distributions, and lease tracking. Next.js 15, Supabase (Postgres, Auth, Storage), Resend. Vendor invoice emails arrive through AgentMail and Claude parses them into expenses, inferring the property, vendor, and line items.
 - **RentalROI** (rentalroi.app): rental property investment calculator with web (Next.js) and mobile (Expo) apps in a monorepo with shared calculation, validation, and database packages, tested with Vitest.
 - **LUZIT nutrition dashboard**: ingests daily Lose It! email summaries through AgentMail webhooks into Supabase and gives AI nutritionist analysis with the Claude API.
 - **GetYourWebsiteReady** (getyourwebsiteready.com): web design agency site with an AI-powered website and GEO (generative engine optimization) audit tool. Next.js, Neon Postgres, Stripe, Resend, Claude API.
 - **Second Brain**: personal knowledge base exposed as an MCP server on Supabase with pgvector hybrid search, used daily from Claude Code and Claude Desktop.
-- **tarekalaaddin.com**: this site. Next.js, MDX blog, Neon + Drizzle, Resend newsletter, Vercel. Includes this fit-check tool (Claude API with structured outputs) and an autonomous AI content pipeline that drafts posts and publishes them through pull requests.
-- **Client websites**: Next.js marketing sites for local businesses, such as Austin Patio, with Tailwind, Framer Motion, and generated local SEO pages, deployed on Vercel.
+- **tarekalaaddin.com**: this site. Next.js, MDX blog, Neon + Drizzle, Resend newsletter, Vercel. Includes this fit-check tool (Claude API with structured outputs, Turnstile, a daily usage cap, and a remote kill switch) and an autonomous AI content pipeline that drafts posts and publishes them through pull requests.
+- **Soul Dashboard**: owner dashboard for a managed rental unit abroad. Monthly manager reports arrive by email through AgentMail, PDFs are parsed into Supabase, and a Next.js dashboard charts income, expenses, and transfers in COP and USD with received/pending tracking.
+- **MacMessageAgent**: Python agent on a Mac Mini that reads the iMessage database, auto-replies to contractors, and archives job-site photos to Google Drive by property, resolving which property a photo belongs to through a PropertyPulse360 roster lookup. Runs under launchd and reports each run to Slack.
+- **Jot Calendar** (in development): embeddable forms and native appointment scheduling for consultations and property showings, with multiple calendars, conditional questions, and reminders. Next.js, Neon Postgres, Resend.
+- **Landlord document tools**: a Texas notice-to-vacate generator (Property Code § 24.005, bilingual English/Spanish, print-ready PDF) and a property management contract generator that produces matching DOCX and PDF from one contract model.
+- **Gameplan**: a Claude Code skill that turns a one-line request into a shipped, git-tracked app by running clusters of AI agents through interview, plan, adversarial plan review, build, browser-driven verification of every acceptance criterion, independent audit, fix loop, and ship. Resumable through a per-run contract file.
+- **Claude Code skills and workflows**: teach/train/summarize learning skills that publish courses to a private hub, a YouTube production workflow (TarekTube) with scripting, hook tracking against real retention, and automated Shorts publishing, and CleanUpMyMac, a Python tool that cleans stale worktrees out of the Claude and Codex desktop apps with backups and dry runs.
+- **Reword**: Chrome extension that rewrites, translates, and polishes selected text in any editable field (Gmail, Slack, Notion, LinkedIn) with a floating toolbar and keyboard shortcuts.
+- **Home network tools on a Raspberry Pi**: a web remote for every Google TV and Vizio TV in the house (Python, Android TV Remote v2 protocol, mDNS discovery, pairing, PWA) and NetWatch, a home network monitor that scans for devices and risks and explains each finding with its danger, likelihood, and fix. Both run as systemd services.
+- **Client and business websites**: Space Vision Realty (static site with a Vercel Function inquiry endpoint, Mailgun, and Turnstile), Austin Patio (Next.js, Tailwind, Framer Motion, generated local SEO pages), and other local business sites, deployed on Vercel.
 
 ### Web Scraping & Data Projects
 

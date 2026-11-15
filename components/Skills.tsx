@@ -96,6 +96,8 @@ const SKILL_CATEGORIES = [
       { name: 'MCP Servers', level: 'Advanced' },
       { name: 'OpenAI Codex', level: 'Advanced' },
       { name: 'LLM Features & Agents', level: 'Advanced' },
+      { name: 'Multi-Agent Workflows', level: 'Advanced' },
+      { name: 'Claude Code Skills & Hooks', level: 'Advanced' },
       { name: 'AI-Accelerated Dev', level: 'Expert' },
     ],
   },

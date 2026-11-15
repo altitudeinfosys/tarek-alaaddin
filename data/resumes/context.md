@@ -89,12 +89,30 @@ All of these are built with AI coding agents (mainly Claude Code) as a solo deve
 
 - **Taskitos**: AI task manager with persistent reminders and voice-to-task. Next.js web + React Native/Expo mobile, Supabase, PowerSync offline sync. Released on the App Store and Google Play.
 - **ExpandNote**: AI notes app with voice-to-text, email-to-note, AI Profiles, and an MCP server. Next.js 16 + Expo SDK 54, Supabase, PowerSync.
-- **TextInvoice / SpeakInvoice**: contractors text or call to create invoices; an AI voice/SMS agent plus Claude turns the conversation into an invoice.
+- **TextInvoiceGo / SpeakInvoiceGo** (speakinvoicego.com): contractors text or call to create invoices; an AI voice/SMS agent plus Claude turns the conversation into an invoice.
 - **SayCopy**: Expo / React Native app for recording, transcribing, and translating speech.
-- **AckPush**: push notification hub for apps and AI agents, answered from the notification.
+- **AckPush** (ackpush.com, early access): push notification hub for apps and AI agents, answered from the notification. This site uses it to alert Tarek about new subscribers and fit checks.
 - **PropertyPulse360**: property management with Claude parsing vendor invoice emails.
 - **RentalROI**: rental investment calculator on web and mobile.
-- **LUZIT dashboard**, **GetYourWebsiteReady** (AI website/GEO audit), **Second Brain** MCP server, and client websites such as Austin Patio.
+- **LUZIT dashboard**, **GetYourWebsiteReady** (AI website/GEO audit), **Second Brain** MCP server, and client websites such as Austin Patio and Space Vision Realty.
+- **Soul Dashboard** and **MacMessageAgent**: email and iMessage agents for rental operations (manager reports parsed into a dashboard; contractor photos filed to Google Drive by property).
+- **Jot Calendar** (in development), a Texas eviction-notice generator, and a property management contract generator.
+- **Gameplan**, a multi-agent Claude Code build pipeline, plus learning, YouTube, and cleanup skills/tools.
+- **Reword** Chrome extension, and home network tools on a Raspberry Pi (Google TV/Vizio web remote, NetWatch network monitor).
+
+### Are these real products or experiments?
+A mix. Taskitos, ExpandNote, and SayCopy are released apps. PropertyPulse360 and Soul Dashboard run real rental operations. AckPush is in early access and TextInvoiceGo is launching. Jot Calendar is in development. The Raspberry Pi tools and Claude Code skills are personal tools used daily, not commercial products.
+
+## Agentic AI and Multi-Agent Systems
+
+### Have you built multi-agent or agent orchestration systems?
+Yes, for my own development work. Gameplan is a Claude Code skill that runs a build as a pipeline of agent clusters: an interview, a written plan, an adversarial review of the plan, an unattended build, a separate verifier that proves each acceptance criterion against the running app in a browser, an independent audit, and a fix loop before shipping. Each run keeps a living contract file in git so it can resume after a failure. Most rules in it came from real failures, such as agents reviewing their own work or reporting green tests over a broken feature.
+
+### Do you build human-in-the-loop AI flows?
+Yes. AckPush exists for this: an agent sends a question to my phone and waits for Approve, Deny, or a typed reply. I use it with a Claude Code hook so permission prompts reach my phone, and with an MCP server so assistants can ask me before risky steps.
+
+### How do you protect public AI features from abuse?
+On this site the fit check and chat are behind a Vercel Firewall rate limit, Cloudflare Turnstile on the fit check, a daily usage cap, and a kill switch I can flip from a push notification on my phone. The prompts treat pasted text as untrusted input and ignore instructions inside it.
 
 ## Mobile Development
 
@@ -161,7 +179,7 @@ I build end-to-end ETL workflows combining web crawling, data extraction, transf
 ## AI Resume Analyzer Project
 
 ### What is the AI Resume Analyzer?
-It's the fit-check tool on tarekalaaddin.com. A recruiter pastes a job description and the Claude API (Claude Sonnet 5.5 with adaptive thinking) scores the match from 0 to 100 against my full work history and shipped products. It returns a verdict, strengths with evidence, gaps, and an honest assessment. It uses structured JSON outputs so responses always match the schema, prompt caching on the profile, and treats pasted text as untrusted input.
+It's the fit-check tool on tarekalaaddin.com. A recruiter pastes a job description and the Claude API (Claude Sonnet 5.5 with adaptive thinking) scores the match from 0 to 100 against my full work history and shipped products. It returns a verdict, strengths with evidence, gaps, and an honest assessment. It uses structured JSON outputs so responses always match the schema, prompt caching on the profile, and treats pasted text as untrusted input. Each run sends Tarek a push notification through AckPush, and abuse is limited by Turnstile, a firewall rate limit, a daily cap, and a remote off switch.
 
 ## Fun Facts
 - 20+ years in the industry, still excited to learn new things

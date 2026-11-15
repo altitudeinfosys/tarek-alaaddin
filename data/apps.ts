@@ -29,7 +29,7 @@ export const apps: ShippedApp[] = [
     name: 'SayCopy',
     tagline: 'Voice to text, ready to use — transcribe, translate (EN/ES/AR), clean up, copy anywhere. Private by design.',
     platforms: 'iOS · Android',
-    url: 'https://apps.apple.com/us/app/saycopy/id6790925849',
+    url: 'https://saycopy.app',
   },
   {
     id: 'propertypulse360',
@@ -37,5 +37,19 @@ export const apps: ShippedApp[] = [
     tagline: 'Property management made simple — rent collection, expense tracking, and owner reporting with AI-parsed email ingestion.',
     platforms: 'Web',
     url: 'https://www.propertypulse360.com',
+  },
+  {
+    id: 'textinvoicego',
+    name: 'TextInvoiceGo',
+    tagline: 'Text or call in the job, get the invoice before you drive off — an AI voice and SMS agent drafts it for tradespeople.',
+    platforms: 'SMS · Voice · Web',
+    url: 'https://speakinvoicego.com',
+  },
+  {
+    id: 'ackpush',
+    name: 'AckPush',
+    tagline: 'Push notifications for apps and AI agents that you answer from the lock screen — buttons, typed replies, snooze.',
+    platforms: 'iOS · Android · Web · Early access',
+    url: 'https://ackpush.com',
   },
 ]
