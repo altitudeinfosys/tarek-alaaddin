@@ -1,0 +1,139 @@
+---
+title: "Claude Code Projects Update — The Coordinator Talks Back"
+description: "Anthropic's Nov 13 update gives the Projects coordinator a voice, plus /fork and /btw inside projects. Here's what changed and why it matters."
+date: "2026-11-15"
+category: "ai-tools"
+tags: ["claude-code", "claude-projects", "ai-agents", "anthropic", "parallel-agents", "developer-tools"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+The agents were never the bottleneck. Your attention was.
+
+Claude Code Projects already let one conversation manage parallel threads. The hard part was never starting them — it was knowing which ones finished, which were stuck, and which needed you, without opening every session one by one. Once you have more than a couple of threads running, you spend more time checking on them than you spent writing the prompts.
+
+On November 13, 2026, Anthropic's ClaudeDevs account [announced](https://x.com/ClaudeDevs/status/2121375309287301360) that the coordinator in a project conversation is now "much more proactive." It answers your questions in the project chat and gives you status updates on running threads. The same update brought `/fork` and `/btw` into Projects, read-only thread sharing, and reminders that hide a thread until a set time.
+
+This is the update that turns the project chat from a dispatch center into a control room.
+
+## What a Project Actually Is
+
+A project in Claude Code is one ongoing conversation — the project chat — plus the threads it spawns. Each thread is usually a cloud session. You send a message in the project chat, and the coordinator decides what to do with it: answer a quick question directly, start a new thread for a new task, or route a follow-up to a thread that is already working on that problem.
+
+The threads run in parallel. Cloud threads keep going after you close your laptop. The project chat is the coordination layer sitting on top.
+
+You create and use projects at claude.ai/code, in the Code tab of the desktop app, or in the Claude mobile app. Projects are not in the terminal CLI, the VS Code extension, or the JetBrains plugin — those are still individual sessions.
+
+<Callout type="info">
+A new project runs Opus everywhere, with high effort for threads and low effort for the coordinator conversation. Project usage counts against the same plan limits as other Claude Code sessions, with a cap of 500 new threads per day across your projects.
+</Callout>
+
+## What "More Proactive" Actually Means
+
+Before the November 13 update, the coordinator was relatively quiet. It started threads and routed messages, but you had to check each thread individually to see what was happening. The project chat was a dispatch center, not a control room.
+
+Now the coordinator does two things it did not do before:
+
+**It answers questions in the project chat.** Ask "which threads are still running?" or "what's the status of the auth refactor?" and the coordinator gives you a summary without making you open each thread. This is the difference between managing work and babysitting it.
+
+**It reports on the status of ongoing threads.** The Overview pane in Projects groups threads by state, and the coordinator surfaces this information conversationally. When a thread finishes, gets stuck, or needs your input, the coordinator tells you in the project chat.
+
+I think this is more important than it sounds. The interaction pattern shifts from polling to notification. Instead of cycling through each thread wondering if something changed, you have one place that tells you what needs attention and what does not. That is a fundamentally different relationship with parallel work.
+
+## /fork in Projects — A Second Approach Without Abandoning the First
+
+The `/fork` command is the headline feature if you need one. In a project, `/fork` starts a new thread from the current one. Your original thread keeps running. The forked thread picks up from the same point and tries a different direction.
+
+This matters for the kind of decision that comes up constantly in software development: "this approach might work, but what if we tried it differently?" Before `/fork` in Projects, you had two options — abandon your current thread and start over, or finish one approach and then backtrack. Neither is great when you are burning plan limits on cloud sessions and context windows.
+
+Now you fork. Both approaches run in parallel. The coordinator tracks both threads. You compare the results when they land. I think this is the single biggest quality-of-life improvement in the update — it makes experimentation cheap instead of expensive.
+
+### How /fork Differs From the Terminal Command
+
+This distinction is easy to miss and important to get right, because the same command name does different things in different contexts.
+
+In the terminal CLI, `/fork` copies the current conversation into a new background session. The original session keeps running in your terminal. The copy gets its own session in agent view. They are independent from that point forward.
+
+In Projects, `/fork` creates a new thread from the current thread, inside the same project. The coordinator sees both threads. They share the project context. The project chat can report on both.
+
+The terminal version is a session clone. The Projects version is a managed branch of work under the coordinator's supervision.
+
+## /btw in Projects — A Side Issue Gets Its Own Thread
+
+The `/btw` command handles the opposite problem from `/fork`. Where `/fork` is "try a different approach," `/btw` is "this tangent is worth exploring, but not in this thread."
+
+In a project thread, typing `/btw` followed by your question or task gives that side issue its own thread. The current thread stays focused on what it was doing. The side issue lives in the project, visible in the Overview pane alongside everything else.
+
+### How /btw Differs From the Terminal Command
+
+In the terminal CLI, `/btw` asks a side question about the current session without adding it to the conversation history. It is a throwaway question — you get an answer, and it does not pollute the context window.
+
+In Projects, `/btw` creates a persistent thread. The question and its answer live in the project, visible to the coordinator, trackable in the Overview pane. It is not throwaway — it is work that has been properly separated from the thread that spawned it.
+
+<Callout type="warning">
+Do not confuse the Projects behavior of `/fork` and `/btw` with their terminal equivalents. The terminal commands operate on individual sessions. The Projects commands operate within the coordinator's managed workspace. Same name, different scope.
+</Callout>
+
+## When You Would Still Run a Thread on Your Own Machine
+
+Projects are cloud-first by design. Cloud threads run on Anthropic's infrastructure. They do not need your machine to be awake.
+
+But some work needs something only your computer has — a local database, a device emulator, an API behind a VPN, files that are not in a remote repository. For those cases, you can ask the coordinator to run a thread on your machine through Remote Control, which requires Claude Code v2.1.280 or later on that machine.
+
+The project's other threads keep running in the cloud. The local thread runs only while your machine is awake and connected. This is not a fallback mode — it is the documented way to handle tasks that require local resources while keeping everything else in the cloud.
+
+To be direct: Projects is not "cloud coming soon." The threads are already cloud sessions. The local path exists for specific cases where cloud execution is not possible. Projects launched cloud-first, not local-first.
+
+## Terminal vs Projects: Quick Comparison
+
+The same command names doing different things in different contexts is the most likely source of confusion in this update. Here is the short version:
+
+| Command | Terminal CLI | Projects |
+|---------|-------------|----------|
+| `/fork` | Clones conversation into independent background session | Creates a new thread inside the same project, tracked by the coordinator |
+| `/btw` | Asks a throwaway side question, no history impact | Creates a persistent thread visible in the Overview pane |
+
+<Callout type="tip">
+If you are used to `/fork` and `/btw` from the terminal, reset your expectations when you use them in Projects. The Projects versions create tracked, persistent work — not disposable side conversations.
+</Callout>
+
+## Current Limits
+
+Projects is in beta, and the guardrails reflect that. Each account can start up to 500 new threads per day across all projects. Project usage counts against the same plan limits as other Claude Code sessions. Team and Enterprise plans are not supported yet.
+
+The announcement also introduced read-only thread sharing — you can share a thread's output with someone without giving them edit access, unless the thread used computer access. And reminders let you hide a thread from the Overview until a set time, which helps keep the active list focused on what actually needs attention right now.
+
+## Who Has Access
+
+Projects is in public beta. Availability is gradual, not instant.
+
+According to the official documentation, Projects is available on Pro, Max, and Ultra plans. The November 13 ClaudeDevs announcement specifically named Pro and Max. The rollout is gradual — not everyone on an eligible plan has access yet.
+
+Team and Enterprise are not included yet. There is no announced timeline for those plans.
+
+If you are on an eligible plan and do not see Projects, there is a waitlist. Anthropic has been admitting more users as capacity allows, but do not expect instant access.
+
+<Callout type="info">
+The Claude Code changelog shows version 2.1.325 shipped on November 13, 2026 — the same day as the coordinator announcement. Version 2.1.323, released November 12, added Code Mode and fixed bugs in /fork and /btw.
+</Callout>
+
+## What This Changes About How You Work
+
+The proactive coordinator shifts the balance of attention in parallel work. Before, you managed threads by checking them. Now, you manage threads by reading a conversation that tells you what is happening.
+
+That distinction matters more than it sounds. The bottleneck in parallel AI work is not compute — it is attention. Knowing which of your dozen running threads needs you right now, without opening each one, is the difference between orchestrating work and drowning in tabs.
+
+`/fork` is the command that makes parallel experimentation cheap. Try two approaches. Keep both. Let the coordinator tell you which one finished first and what it found.
+
+`/btw` is the command that keeps threads clean. The tangent that would have derailed a long thread now lives in its own space, tracked by the coordinator, visible in the Overview.
+
+I want to be clear about what this is not. This is not hands-off coding. You still review the pull requests. You still make the architectural calls. You still decide which fork wins. But the coordinator now handles the part that was always grunt work — watching progress bars and switching between sessions to see if anything changed.
+
+I think the teams that get the most out of this update will be the ones who were already hitting the attention bottleneck: running enough threads that tracking them was becoming a job in itself. If you have not hit that wall yet, the proactive coordinator is a nice quality-of-life improvement. If you have, it changes how you work.
+
+That is what shipped on November 13. Not a new feature category. A coordinator that finally talks back.
+
+---
+
+*Want more breakdowns of developer tools as they ship? [Subscribe to the newsletter](/subscribe) and get them in your inbox.*
