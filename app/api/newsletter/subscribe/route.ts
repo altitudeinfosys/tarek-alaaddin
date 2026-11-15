@@ -4,8 +4,7 @@ import { resend, FROM, REPLY_TO } from '@/lib/email/resend'
 import { renderWelcomeEmail } from '@/lib/email/templates'
 import { syncContactUpsert } from '@/lib/email/audience'
 import { notifyNewSubscriber } from '@/lib/notify/subscriber'
-
-const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY
+import { verifyTurnstile } from '@/lib/turnstile'
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -26,21 +25,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Please complete the verification' }, { status: 400 })
     }
 
-    if (!TURNSTILE_SECRET_KEY) {
+    const turnstile = await verifyTurnstile(turnstileToken)
+    if (turnstile === 'not_configured') {
       console.error('[subscribe] TURNSTILE_SECRET_KEY is not configured')
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
-
-    const turnstileResponse = await fetch(
-      'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ secret: TURNSTILE_SECRET_KEY, response: turnstileToken }),
-      }
-    )
-    const turnstileData = await turnstileResponse.json().catch(() => ({}))
-    if (!turnstileData.success) {
+    if (turnstile !== 'ok') {
       return NextResponse.json(
         { error: 'Verification failed. Please try again.' },
         { status: 400 }

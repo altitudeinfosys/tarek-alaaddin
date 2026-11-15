@@ -32,11 +32,7 @@ export default function FitCheck() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!jobDescription.trim() || isLoading) return
-    if (!turnstileToken) {
-      setError('Please complete the verification check first.')
-      return
-    }
+    if (!jobDescription.trim() || !turnstileToken || isLoading) return
 
     setIsLoading(true)
     setError(null)
@@ -148,6 +144,11 @@ export default function FitCheck() {
         <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
           Only Tarek sees these, so he can follow up. They aren&apos;t added to any mailing list.
         </p>
+        {!TURNSTILE_SITE_KEY && (
+          <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+            The fit check isn&apos;t available here right now. You can reach Tarek through the contact page.
+          </p>
+        )}
         {TURNSTILE_SITE_KEY && (
           <Turnstile
             key={turnstileRound}

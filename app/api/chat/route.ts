@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { chat, ChatMessage } from '@/lib/claude'
 import { getResumeForChat } from '@/lib/resume-loader'
-import { gateAiCall, AI_UNAVAILABLE_MESSAGE } from '@/lib/ai-guard'
+import { gateAiCall, refundAiCall, AI_UNAVAILABLE_MESSAGE } from '@/lib/ai-guard'
 
 export const runtime = 'nodejs'
 
@@ -54,7 +54,13 @@ ${resumeContext}
 Remember: You're representing Tarek, so be authentic and helpful. Don't make up information that isn't in the resume or context.`
 
     // Get non-streaming response
-    const response = await chat(messages, systemPrompt, 'haiku')
+    let response: string
+    try {
+      response = await chat(messages, systemPrompt, 'haiku')
+    } catch (error) {
+      await refundAiCall('chat')
+      throw error
+    }
 
     return NextResponse.json({ content: response })
   } catch (error) {

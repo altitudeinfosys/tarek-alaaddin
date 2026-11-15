@@ -1,4 +1,4 @@
-import { apps } from '@/data/apps'
+import { apps, appCountWord } from '@/data/apps'
 
 export default function AppsGrid() {
   return (
@@ -6,7 +6,7 @@ export default function AppsGrid() {
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <div className="eyebrow eyebrow-accent mb-2.5">Apps I&apos;ve shipped</div>
-          <h2 className="h-section">Six products, built end to end.</h2>
+          <h2 className="h-section">{appCountWord[0].toUpperCase() + appCountWord.slice(1)} products, built end to end.</h2>
           <p className="mt-3 text-gray-700 dark:text-gray-300 max-w-2xl">
             Three in the App Store and Google Play, the rest on the web, by text, or in early access — each with its own site.
           </p>

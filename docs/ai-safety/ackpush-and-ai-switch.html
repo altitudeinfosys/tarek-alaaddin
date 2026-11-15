@@ -86,8 +86,8 @@ curl -X POST -H "Authorization: Bearer $CRON_SECRET" -H "Content-Type: applicati
         <tr><th>Variable</th><th>Value</th><th>Required</th></tr>
         <tr><td><code>ACKPUSH_API_TOKEN</code></td><td>Token from step 2</td><td>Yes, for pushes</td></tr>
         <tr><td><code>ACKPUSH_WEBHOOK_SECRET</code></td><td>Secret from step 3</td><td>Yes, for the phone button</td></tr>
-        <tr><td><code>FIT_CHECK_DAILY_CAP</code></td><td>Default 30</td><td>No</td></tr>
-        <tr><td><code>CHAT_DAILY_CAP</code></td><td>Default 300 messages</td><td>No</td></tr>
+        <tr><td><code>FIT_CHECK_DAILY_CAP</code></td><td>Default 30; <code>0</code> pauses the fit check</td><td>No</td></tr>
+        <tr><td><code>CHAT_DAILY_CAP</code></td><td>Default 300 messages; <code>0</code> pauses the chat</td><td>No</td></tr>
         <tr><td><code>AI_FEATURES_DISABLED</code></td><td><code>true</code> only for a hard stop</td><td>No</td></tr>
       </table>
     </li>
@@ -98,6 +98,7 @@ curl -X POST -H "Authorization: Bearer $CRON_SECRET" -H "Content-Type: applicati
   <h2>Other abuse limits in this change</h2>
   <ul>
     <li>Fit check now needs a Cloudflare Turnstile pass, using the same keys as /subscribe.</li>
+    <li>A request whose Claude call fails gives its slot back, so an Anthropic outage doesn't use up the day's cap.</li>
     <li>Webhook answers older than the switch's last change are ignored, so a late retry can't undo a newer change.</li>
     <li>Ask AI chat accepts at most 40 turns: visitor turns up to 4,000 characters, earlier assistant replies up to 12,000. The widget sends the last 19 turns.</li>
     <li>Name and email on the fit check are optional. They aren't saved on the site or added to the newsletter. They do stay in your AckPush message history.</li>

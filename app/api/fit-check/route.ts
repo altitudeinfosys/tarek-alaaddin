@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ipAddress } from '@vercel/functions'
 import { analyzeFitCheck } from '@/lib/claude'
 import { getProfileForFitCheck } from '@/lib/resume-loader'
-import { gateAiCall, AI_UNAVAILABLE_MESSAGE } from '@/lib/ai-guard'
+import { gateAiCall, refundAiCall, AI_UNAVAILABLE_MESSAGE } from '@/lib/ai-guard'
 import { verifyTurnstile } from '@/lib/turnstile'
 import { notifyTarek, parseVisitorContact, jobHint, DISABLE_AI_ACTION } from '@/lib/notify/ackpush'
 
@@ -66,7 +66,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: AI_UNAVAILABLE_MESSAGE[gate.reason], unavailable: gate.reason }, { status: 503 })
     }
 
-    const result = await analyzeFitCheck(getProfileForFitCheck(), jobDescription)
+    let result: Awaited<ReturnType<typeof analyzeFitCheck>>
+    try {
+      result = await analyzeFitCheck(getProfileForFitCheck(), jobDescription)
+    } catch (error) {
+      await refundAiCall('fit_check')
+      throw error
+    }
 
     const who = [contact.contact.name, contact.contact.email].filter(Boolean).join(' · ') || 'Anonymous visitor'
     notifyTarek({

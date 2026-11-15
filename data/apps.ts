@@ -53,3 +53,8 @@ export const apps: ShippedApp[] = [
     url: 'https://ackpush.com',
   },
 ]
+
+const NUMBER_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve']
+
+/** How many apps, as a word ("six"), so copy stays in step with the list. */
+export const appCountWord = NUMBER_WORDS[apps.length] ?? String(apps.length)
