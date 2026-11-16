@@ -1,0 +1,177 @@
+---
+title: "Claude Code's Code Mode: How to Turn It On and When It Helps"
+description: "Claude Code v2.1.323 added Code Mode — Claude writes JavaScript to batch tool calls. How to enable it, when it helps, and its limits."
+date: "2026-11-16"
+category: "ai-tools"
+tags: ["claude-code", "anthropic", "ai-agents", "developer-tools", "code-mode", "agentic-coding", "claude-code-2-1-323"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Watch Claude Code rename a function. It opens one file, reads it, makes the edit, confirms, moves to the next. Twenty files later, you have watched the same loop twenty times, and you are not sure it remembered the third file. The round trip is the bottleneck — not because any single call is slow, but because every trip back to the model is a decision point where the agent can drift.
+
+On November 12, 2026, Anthropic shipped Code Mode in Claude Code v2.1.323. It is an experimental, opt-in feature that changes how Claude uses its tools. Instead of requesting Bash, Read, or Edit one call at a time, Claude writes a piece of JavaScript that makes the tool calls — and Claude Code runs that code in your session.
+
+The feature is off by default and may change or be removed in any release. Nobody has published benchmarks on how much faster it is. But the design implies something more interesting than speed: a different model for how agents interact with tools.
+
+## What Code Mode Actually Does
+
+Without Code Mode, Claude works like every other tool-calling agent: request a tool, read the result, decide the next step, repeat. With Code Mode, Claude writes JavaScript that can run commands in parallel, feed one result into the next call, and return only the output Claude needs to read.
+
+Here is Anthropic's example from the official docs. If you ask Claude to raise a retry limit, it might write this:
+
+```javascript
+const files = await $`rg -l "function retryPolicy" src`.text();
+const target = files.trim().split("\n")[0];
+await edit(target, "maxAttempts: 3", "maxAttempts: 5");
+({ edited: target, tests: $`npm test -- retryPolicy`.nothrow() });
+```
+
+One script. Find the file, edit it, run the tests. The last line returns the file path and the test output to Claude. In the conversation, you see the tool calls — the edit's diff, the test output — not the code. If you want to read the code, press `Ctrl+O` to open the transcript viewer.
+
+The difference is structural: instead of Claude deciding after every tool call, it decides once and writes a plan as code. The bet is that the model is better at generating and verifying code than at making reliable decisions in a long sequence of individual tool calls. If that bet is right, Code Mode should reduce the drift that plagues long agent sessions.
+
+## How to Turn It On
+
+You need three things:
+
+1. **Claude Code v2.1.323 or later.** Run `claude --version` to check. If you are behind, run `claude update`. If you are on the `stable` channel and the update has not reached v2.1.323, switch to `latest` or wait.
+
+2. **A supported model.** Code Mode works with Claude Opus 5.5, Sonnet 5.5, Haiku 5.5, and Fable 5.2.
+
+3. **An interactive terminal session.** Code Mode does not work in the VS Code panel, the Desktop app, with `-p`, the Agent SDK, or cloud sessions.
+
+<Callout type="info">
+**To start a Code Mode session**, set the environment variable before launching Claude Code:
+
+```bash
+CLAUDE_CODE_EXPERIMENTAL_CODE_MODE=1 claude
+```
+
+To make it the default for every session, add it to `~/.claude/settings.json`:
+
+```json
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_CODE_MODE": "1"
+  }
+}
+```
+
+Claude Code ignores this variable in a project's settings files, so a repository you clone cannot turn on Code Mode without your knowledge.
+</Callout>
+
+The first time you start a Code Mode session, Claude Code asks you to confirm. Select **Yes, turn on Code Mode**. It restarts and shows a line near the top:
+
+```
+Code Mode (experimental) is on · this session can be resumed only with Code Mode on
+```
+
+If you see something else — or nothing — check the [troubleshooting section](#when-code-mode-does-not-start) below.
+
+## When Code Mode Helps
+
+Code Mode works best on tasks with many related tool calls. The [official documentation](https://code.claude.com/docs) describes three patterns where it helps:
+
+**A change that repeats across many files.** Renaming a function across a codebase, updating a config value in every service, adding a header to every test file. Without Code Mode, Claude visits each file one at a time. With Code Mode, it can process them in parallel.
+
+**A search whose results need filtering.** Grep for a pattern, then filter the results before Claude reads them. Instead of Claude reading every match and deciding which ones matter, the script does the filtering and returns the short list.
+
+**Several independent commands that can run at the same time.** Run tests, lint, and type-check in parallel instead of sequentially.
+
+The common thread: Code Mode helps when the number of tool calls is high and the logic connecting them is straightforward enough to express in a script.
+
+## When Code Mode Does Not Help
+
+Code Mode adds a step — Claude has to write the script before anything runs. For a single edit and a test run, the standard flow is simpler. The feature is designed for breadth, not depth.
+
+It also does not help when you need features that are not yet compatible:
+
+- **Remote Control** is not available in Code Mode sessions
+- **Claude in Chrome** and **computer use** do not work
+- You cannot move a Code Mode session to the **Desktop app** or turn it into a **background session**
+- `/fork` cannot start a background copy
+
+If your workflow depends on any of these, Code Mode is not ready for you yet.
+
+## Permissions Still Apply
+
+This is the detail that matters most: Code Mode does not bypass your permission rules. Each tool call that Claude's code makes still goes through your `deny` and `ask` rules and your `PreToolUse` hooks.
+
+<Callout type="warning">
+**In auto mode, there is a subtle difference.** The classifier reviews each piece of code before it runs, not each individual tool call. That means it does not see values computed at run time — like a file path taken from search output. If you need to control specific calls regardless of how they were invoked, keep your permission rules or hooks in place. The implication is that auto mode's classifier works as a convenience layer, not as a security boundary.
+</Callout>
+
+For organizations that want to block Code Mode entirely, an administrator can set the environment variable to `0` in managed settings:
+
+```json
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_CODE_MODE": "0"
+  }
+}
+```
+
+Users who are already in a Code Mode session stay in it until they exit or restart Claude Code.
+
+## Background Code and Timeouts
+
+While code runs a long build or test, Claude either waits for it or lets it continue in the background. The behavior depends on your permission mode:
+
+- **Foreground (default):** Claude waits for the code to finish. The code stops after **ten minutes**, including time you spend at permission prompts.
+- **Background (auto or bypassPermissions mode):** You can keep talking to Claude while the code runs. Code can run for up to **two hours**.
+
+If you are in auto mode and Claude still waits instead of running code in the background, check that you did not switch modes mid-session. Press `Shift+Tab` to cycle back to the mode you started in.
+
+## The Bigger Picture: Why Code Mode Matters
+
+Code Mode is a bet on a different agent architecture. The standard agent loop — call a tool, read the result, decide the next step — is what most AI coding tools ship with today. It works, but it has a compounding fragility problem. Each trip back to the model is a decision point where the agent can lose context, forget the plan, or take a wrong turn. The more steps, the more chances for drift.
+
+Code Mode sidesteps this by having Claude express its plan as code rather than as a sequence of individual decisions. The model writes the entire workflow once, and the runtime executes it. If the plan is right, fewer decision points should mean fewer chances for error.
+
+Anthropic is not the only team pursuing this. The documentation mentions Docker, the Vercel AI SDK, OpenCode, and OpenClaw as having similar approaches to the same problem.
+
+What distinguishes Claude Code's implementation is the permission model. According to the documentation, Docker's version checks approval once on the outer script. Claude Code's implementation sends every inner tool call through your deny/ask rules and hooks. That difference matters for anyone working in a codebase where certain operations — force-pushes, production deploys, destructive deletes — need a human in the loop regardless of how they were invoked.
+
+## When Code Mode Does Not Start
+
+If you see `Code Mode (experimental) isn't available` at the top of your session, the reason follows on the same line. The [official documentation](https://code.claude.com/docs) lists several common causes:
+
+| Reason | Fix |
+|--------|-----|
+| Account not yet enabled | Update to v2.1.323 or later. If already updated, check your network and try again |
+| Not using the Anthropic API directly | Remove settings that route through a cloud provider or gateway |
+| API key helper in use | Remove `apiKeyHelper` and related auth settings, then sign in normally |
+| Unsupported model | Switch to a supported model — Opus 5.5, Sonnet 5.5, Haiku 5.5, or Fable 5.2 |
+| Running in background | Start in the foreground; Code Mode requires an interactive session |
+| Organization settings block it | Ask your administrator about the managed setting |
+
+If you see no line about Code Mode at all, verify your version is at least v2.1.323 and that the environment variable is set to `1`.
+
+<Callout type="tip">
+**Quick check:** Run `/status` inside a session to see whether Code Mode is active and, if not, the reason it was skipped.
+</Callout>
+
+## Early Fixes Worth Knowing About
+
+Anthropic shipped v2.1.325 the day after the Code Mode release, on November 13, 2026, with fixes targeting four areas:
+
+- **Worktree path handling** — Code Mode scripts could write incorrect paths into the project
+- **MCP status display** — a server could show as connected after its session expired
+- **Permission dialog input** — text typed alongside a permission confirmation could be lost
+- **Resume behavior** — sessions that ended during a Code Mode script could auto-start work instead of waiting for the next prompt
+
+If you tried Code Mode on day one and hit rough edges, update to at least v2.1.325 before writing it off.
+
+## Should You Turn It On?
+
+If you work in a codebase and regularly watch Claude grind through repetitive file-by-file operations — renames, migrations, search-and-filter tasks, multi-service config changes — Code Mode is worth trying. The script-writing step adds a moment of overhead, but for tasks with dozens of files, that overhead pays for itself in fewer round trips and fewer chances for the agent to drift.
+
+If your work is mostly single-file edits, chat-style Q&A, or tasks that depend on Remote Control and Claude in Chrome, skip it for now.
+
+The feature is experimental. It will change. But when Docker, the Vercel AI SDK, OpenCode, and OpenClaw all converge on the same pattern, the problem it addresses — agent reliability across many tool calls — is clearly widely felt.
+
+---
+
+*Want the next deep dive on AI developer tools the day it drops?* [Subscribe to the newsletter](/subscribe).
