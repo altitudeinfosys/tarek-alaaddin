@@ -1,0 +1,140 @@
+---
+title: "How to Keep AI Agent Coding from Blowing Your Budget"
+description: "Marc Lou spent $4K building one app. Uber burned its annual AI budget in months. Here's what drives agent coding costs and how to control them."
+date: "2026-11-15"
+category: "ai-tools"
+tags: ["ai-coding-agents", "claude-code", "cursor", "developer-productivity", "ai-budget", "opus-5-5", "software-engineering"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Marc Lou spent roughly $4,000 building MailCheap with Opus 5.5 on Cursor. Ten agents running at double speed, "prompted brain dead," as he put it. The post landed on November 13, 2026, pulled over 212,000 views, and became the week's cautionary tale for everyone shipping with AI coding agents.
+
+The part everyone quoted was the number. The part that actually matters is that MailCheap is his first unprofitable product. The tool worked. The economics didn't.
+
+This is the fundamental problem with agent-assisted development right now: the tools are genuinely productive, and the default pricing model punishes you for using them productively. If you don't understand where the money goes, you'll find out when the invoice arrives.
+
+## The Subscription Price Is Not the Cost
+
+Every AI coding tool leads with a subscription number. Cursor's plans range from free to $200 a month. Claude Code starts at $20 for Pro. These numbers are real, but they're the visible part of the iceberg.
+
+The actual cost driver is token consumption beyond your plan's included usage. Cursor now operates on a weekly usage pool shared across its own models. Third-party models like Claude Opus 5.5 or GPT-5.6 Sol aren't in that pool at all — they bill at API list price from the first request, paid from prepaid credit on Premium plans and above.
+
+Claude Opus 5.5 on Cursor runs $4 per million input tokens and $20 per million output tokens. Claude Sonnet 5.5 is half that. Claude Haiku 5.5 is 40x cheaper than Opus. The gap between "I used the expensive model all day" and "I picked the right model for each task" compounds fast.
+
+<Callout type="info">
+**Cursor's current plan structure** (November 2026): Free ($0), Plus ($8/mo), Premium ($30/mo), Super ($100/mo), Ultra ($200/mo). Third-party models like Claude and GPT require Premium or above and bill at API list price from prepaid credit. Source: [Cursor pricing docs](https://cursor.com/docs/models-and-pricing).
+</Callout>
+
+## What Uber Learned the Expensive Way
+
+Uber is the case everyone in engineering leadership is citing. Here's what actually happened.
+
+Uber's CTO, Praveen Neppalli Naga, told The Information that the company had burned through its full-year 2026 AI budget within the first few months. The overrun was driven largely by rapid Claude Code adoption. Uber later confirmed to Bloomberg a $1,500 monthly cap on employee token spending for agentic coding tools.
+
+The CEO said on the Q1 2026 earnings call that about 10 percent of the company's code is now written and submitted by AI agents. That's an adoption metric, not a value metric, and it's worth keeping the distinction clear.
+
+The lesson isn't that AI coding tools are expensive. It looks like Uber measured adoption and rewarded usage before it measured cost per developer and capped the tail. That's a FinOps sequencing problem — the same mistake companies made with cloud a decade ago.
+
+## Where the Bill Actually Hides
+
+Five things move the invoice far past the subscription price:
+
+**Overflow billing is on by default.** Cursor's on-demand usage kicks in automatically when the weekly pool runs out. On Claude Code, Max plans offer 5x or 20x the Pro usage ceiling, and Enterprise bills at API rates — in both cases, there is no hard ceiling that stops a runaway session.
+
+**Model defaults matter more than anything.** A FinOps analysis of Claude Code deployments points to Opus left as the default model and sessions that are never cleared as the usual causes of unexpectedly high spend. Switching routine tasks to Sonnet or Haiku is the single easiest saving most teams will ever find.
+
+**Long sessions bleed tokens.** Agentic coding tools send conversation context with each request. The longer a session runs, the more tokens get reprocessed. Prompt caching helps — Opus 5.5 cache reads cost $0.20 per million versus $4 for fresh input, a 20x gap — but once the cache expires, the full context window reprices from scratch.
+
+**Multi-agent runs multiply everything.** Multi-agent sessions use roughly 7x more tokens than standard single-agent sessions. Marc Lou's 10 parallel agents running at double speed with Opus 5.5 are the extreme version of this — productive, but expensive by design.
+
+**Attribution gaps hide spend.** If developers reach Claude through AWS Bedrock or Google Vertex, Anthropic's analytics don't see that usage. The cloud bill shows it as a line item without a developer attached. You need a gateway or OpenTelemetry to know who spent what.
+
+## What Claude Code Actually Costs Per Developer
+
+Anthropic publishes a useful number: across enterprise deployments, the average Claude Code cost is around $13 per developer per active day, or $150-250 per developer per month. They also say costs stay below $30 per active day for 90 percent of users.
+
+That means ten percent of users sit above $30 per active day. Those developers — the ones running multi-agent sessions, the ones who never clear context, the ones using Opus for everything — are the ones who decide whether your team hits budget.
+
+<Callout type="warning">
+**Claude Code plans** (November 2026): Pro at $20/mo, Max starting at $100/mo (5x or 20x Pro usage), Team Standard at $25/seat/mo, Team Premium at $125/seat/mo, Enterprise at $20/seat/mo plus usage at API rates. Enterprise adds per-member spend limits and analytics. Source: [Claude Code pricing](https://claude.com/pricing).
+</Callout>
+
+## The Model Pricing Landscape
+
+Once you leave the included pool, per-token rates are the price. Here's what the major models cost on Cursor as of November 2026, per million tokens:
+
+| Model | Input | Output |
+|-------|-------|--------|
+| Claude Opus 5.5 | $4 | $20 |
+| Claude Sonnet 5.5 | $2 | $10 |
+| Claude Haiku 5.5 | $0.10 | $0.50 |
+| GPT-5.6 Sol | $4 | $20 |
+| GPT-5.6 Terra | $2 | $12 |
+| Gemini 4 Carbon | $2 | $10 |
+| Grok 4.7 (Cursor model) | $2 | $6 |
+
+The 40x price gap between Haiku and Opus is real. For scaffolding, boilerplate, simple refactors, and test generation, the cheaper model isn't a compromise — it's the right tool. Save the expensive models for architecture decisions, complex debugging, and tasks where reasoning depth actually changes the output.
+
+## Five Rules That Prevent the Blowout
+
+These come from the same FinOps analysis that first documented the Uber and Anthropic cost data, cross-referenced with what the pricing structures actually allow.
+
+### 1. Baseline Before You Scale
+
+Run a pilot with a representative sample of developers for four weeks. Record cost per developer per active day, broken down by model. The FinOps analysis of enterprise Claude Code deployments recommends this before wider rollout. The pilot tells you what your team's actual usage pattern looks like, not what the industry average suggests.
+
+### 2. Pick the Billing Model Per Segment
+
+Standard seats work for most developers. Premium seats or metered usage work for a named heavy-user group. The critical decision is whether overflow billing is on — and for whom. Don't give everyone the same plan and hope the average holds.
+
+### 3. Cap at the Narrowest Level Available
+
+Cursor Teams only supports a team-wide cap — one heavy user can eat the whole team's headroom. Enterprise-tier plans from vendors like Anthropic offer per-member spend controls. If per-developer caps matter and your tool doesn't support them natively, route through a gateway that does.
+
+### 4. Alert on Velocity, Not Month-End Totals
+
+A looping agent burns tokens fast without making progress. Daily per-developer alerts catch it; a monthly report doesn't. Set alerts on daily spend rate, not cumulative monthly totals. By the time a monthly alert fires, the damage is done.
+
+### 5. Default to Cheaper Models
+
+Set the team default to Sonnet or an equivalent mid-tier model. Let developers opt up to Opus for specific tasks rather than opting down from it. This one change — making the expensive model a deliberate choice instead of the default — is worth more than most policy documents.
+
+## A Worked Budget for 100 Developers
+
+Here's a realistic budget model using Anthropic's published averages with an explicit tail:
+
+| Segment | Developers | Assumed Monthly Cost | Monthly Total |
+|---------|-----------|---------------------|---------------|
+| Light and medium users | 80 | $150-250 each | $12,000-20,000 |
+| Heavy agentic users | 20 | Capped at $750 each | Up to $15,000 |
+| **Total budget envelope** | **100** | | **$27,000-35,000** |
+
+The cap figure is a policy choice. The point is that the heavy segment gets its own line and its own ceiling, instead of hiding inside an average that makes the CFO comfortable until it doesn't.
+
+## What Marc Lou's $4,000 Actually Bought
+
+Marc Lou's spend wasn't a mistake. He ran 10 parallel agents at double speed with Opus 5.5 on what he described as "5.5 Max" and shipped a product. The cost was the cost of that velocity.
+
+The question isn't whether $4,000 is a lot — it's whether the alternative was cheaper. If those agents saved 200 hours of development time, the math works even at modest freelance rates. If they saved 20 hours, it doesn't.
+
+The problem is that most developers and most teams don't have a framework to answer that question before they start. They find out when the bill arrives and reverse-engineer whether it was worth it. That's the Uber pattern at individual scale.
+
+<Callout type="info">
+**The takeaway isn't "spend less."** It's "know what you're spending, on what, before you're surprised by it." Agent coding tools deliver real productivity gains. The teams that benefit most are the ones that treat the spend as an engineering decision, not a surprise line item.
+</Callout>
+
+## Where to Start on Monday
+
+Three changes that take an afternoon and remove most of the blowout risk:
+
+1. **Turn off default overflow** for everyone except a named heavy-user group
+2. **Set a cheaper default model** for routine work
+3. **Switch on daily per-developer spend alerts**
+
+Then run the four-week baseline before expanding access. The tools are worth it. The bill is worth understanding first.
+
+---
+
+If you want more breakdowns like this on the tools reshaping how developers work, [subscribe to the newsletter](/subscribe).
