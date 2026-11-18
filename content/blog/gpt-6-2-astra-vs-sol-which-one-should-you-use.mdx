@@ -1,0 +1,152 @@
+---
+title: "GPT-6.2 Astra vs Sol: Which One Should You Actually Use?"
+description: "GPT-6.2 Astra and Sol launched together. Sol costs a quarter of Astra. A decision guide with sourced pricing and an Anthropic comparison."
+date: "2026-11-18"
+category: "ai-tools"
+tags: ["gpt-6-2-astra", "gpt-6-2-sol", "openai", "ai-models", "ai-pricing", "chatgpt-work", "codex", "anthropic", "claude", "llm-comparison"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Two new models. Same day. One costs four times the other. That is the entire pitch for GPT-6.2 Astra and Sol, which OpenAI shipped on November 17, 2026.
+
+The internet is already doing the thing where everyone picks a side. Skip that. The real question is simpler: which one do you reach for when you open Work or Codex tomorrow morning? Because neither model landed in regular Chat — a detail most launch-day coverage buried.
+
+## Where They Actually Live
+
+This is the detail most coverage buries. Both models launched in **ChatGPT Work**, **Codex**, and **the API**. They did not land in regular Chat.
+
+OpenAI's Help Center makes it clear: neither model is coming to regular Chat. If you're opening chatgpt.com expecting to see Astra in the model picker, you won't find it. You need Work or Codex.
+
+API model IDs are `gpt-6.2-astra` and `gpt-6.2-sol`.
+
+## Who Can Use Them
+
+OpenAI's announcement says they're available to **Plus, Pro, Enterprise, and Edu** users in Work and Codex. The Help Center also lists Business, ChatGPT for Healthcare, and FedRAMP workspaces as access becomes available.
+
+Enterprise and Edu admins have to enable the models in workspace settings first. If the picker hasn't caught up, update your ChatGPT desktop app and Codex CLI.
+
+<Callout type="info">
+**Pro 500** subscribers can use Ultrafast with either model. **Pro 200** gets Ultrafast for Sol only — a first. Eligible Enterprise and Edu workspaces get Ultrafast once an owner enables it.
+</Callout>
+
+## What Each Model Is For
+
+OpenAI's own Learn docs spell out the split clearly, and it's worth reading their framing instead of guessing.
+
+**Astra** is the stronger choice for:
+- Complex reasoning across multiple sources
+- Bugs that cut across services
+- Slide decks built from a report and your template
+- Spreadsheets and documents that need to match field conventions
+- Frontend and design work where layout quality matters
+- Scientific research workflows
+
+OpenAI positions Astra as the stronger option for frontend and design work — the announcement highlights websites, gaming, and 3D design. It also has a law-specific configuration, **Astra for Law**, for legal professionals.
+
+**Sol** handles:
+- Everyday coding, writing, and multistep workflows
+- Pull request reviews
+- Code revision after feedback
+- Meeting notes turned into project briefs
+- Anything that takes several steps but doesn't need the frontier model
+
+The tell: OpenAI says many of its own employees use Sol as their default for both technical and non-technical tasks. Work defaults to Sol at Light reasoning on consumer plans. Enterprise defaults to Sol at Medium. When the company that built both models picks the cheap one for daily work, that is the loudest signal in the entire announcement.
+
+## Sol Is Nearly as Good at Coding — for a Fifth of the Price
+
+On Cognition's FrontierCode 2.0, a coding benchmark that measures whether code changes meet merge standards, **GPT-6.2 Sol comes within 0.5 percentage points of GPT-6.2 Astra at about one-fifth the cost** (both at max reasoning).
+
+That is OpenAI's reported score, not an independent audit. But think about what it means: on the one coding benchmark they chose to highlight, the cheap model is neck and neck with the expensive one. If that holds on your workloads, Astra is the wrong default for coding.
+
+## Where Astra Earns Its Premium
+
+The gap opens on harder, longer-horizon work:
+
+- **Agents' Last Exam** (multistep professional workflows): Astra scores 5.2 points higher than GPT-6 Astra at less than a third of the cost, and 5.5 points ahead of Claude Fable 5.2 at just 5% of the cost per task.
+- **Terminal-Bench-Science 0.1** (scientific research in a terminal): 9 percentage points above GPT-6 Astra at less than one-third the cost.
+- **Harvey LAB-AA v1.1** (legal assignments): More than double Claude Fable 5.2's pass rate at about one-sixth the cost.
+- **GDPval v2** (consulting, finance, design workflows): 6.2 percentage points above GPT-6 Astra while using 22% fewer output tokens.
+
+<Callout type="warning">
+All benchmark comparisons here are from OpenAI's own announcement and testing configurations. They are not independent audits. The Agents' Last Exam results for Fable 5.2 exclude nine tasks that used a fallback model. Take every vendor-published score as directional, not definitive.
+</Callout>
+
+## The Simple Decision Guide
+
+Based on OpenAI's own examples and positioning:
+
+1. **Start with Sol** for everyday writing, pull request reviews, code revisions, meeting notes, or any multistep workflow that doesn't require frontier-class reasoning.
+2. **Switch to Astra** when the job is research-heavy, cross-service, template-sensitive, or involves complex financial/legal/scientific work where layout and accuracy matter.
+3. **In ChatGPT**, do that work in Work or Codex, not regular Chat.
+4. **If you're paying API rates**, Sol is the default until a task clearly needs Astra.
+
+If you default to Astra for everything, you'll burn through your budget or rate limits faster than necessary. If you never switch to Astra, you're leaving the model OpenAI built for decks, research, and messy multi-service bugs on the table.
+
+## Exact API Pricing
+
+Standard short-context rates per million tokens, from OpenAI's pricing page:
+
+| | Input | Cached Input | Output |
+|---|---|---|---|
+| **GPT-6.2 Astra** | $8.00 | $0.40 | $40.00 |
+| **GPT-6.2 Sol** | $2.00 | $0.10 | $10.00 |
+
+Astra's prices are **20% lower than GPT-6 Astra** on input and output, with a deeper **60% discount on cached input**. Sol keeps GPT-6.1 Sol's prices unchanged.
+
+**Long-context surcharge**: If a request exceeds 272K input tokens, input and cache rates double and output is 1.5x the short-context rate for the full request.
+
+**Other tiers**: Batch is half of Standard. Fast mode is 2x. Ultrafast is 3x Standard through February 28, 2027, then jumps to 6x starting March 1, 2027 (Pacific time).
+
+## How This Stacks Up Against Anthropic
+
+The benchmarks OpenAI published compare Astra to Claude Fable 5.2 — not to Claude Opus 5.5. No head-to-head eval exists for that pairing from either company. What we can compare are the list prices from each company's official pricing page:
+
+| Model | Input (per 1M) | Output (per 1M) | Cached Input |
+|---|---|---|---|
+| **GPT-6.2 Astra** | $8.00 | $40.00 | $0.40 |
+| **Claude Fable 5.2** | $8.00 | $40.00 | $0.20 |
+| **Claude Opus 5.5** | $4.00 | $20.00 | $0.20 |
+| **GPT-6.2 Sol** | $2.00 | $10.00 | $0.10 |
+| **Claude Sonnet 5.5** | $2.00 | $10.00 | $0.10 |
+
+A few things stand out:
+
+**Astra and Fable 5.2 are priced identically on input and output**, but Fable 5.2 has a cheaper cache-read rate ($0.20 vs $0.40). Cache economics matter a lot for agentic workloads with repeated context.
+
+**Opus 5.5 sits at half of Astra's standard rates** — $4/$20 versus $8/$40. Both are frontier-class models aimed at the hardest work. Without a head-to-head eval from either company, the pricing gap is the only concrete comparison. And it's a big gap.
+
+**Sol and Sonnet 5.5 are priced identically** at $2/$10, with the same $0.10 cached input rate. The "efficient everyday model" tier is converging across vendors.
+
+<Callout type="tip">
+Raw list-price ratios are not the same as cost per task. Each company has its own cache-write rules, long-context pricing, reasoning tiers, and token-efficiency characteristics. OpenAI's published cost-per-task claims against Fable 5.2 and GPT-6 Astra are from their own benchmarks, with footnotes — not independent audits. Measure on your own workloads before budgeting.
+</Callout>
+
+## The Cyber Angle
+
+Both GPT-6.2 models meet the **Critical threshold for cybersecurity** under OpenAI's Preparedness Framework. Astra is also the first externally released model to meet the **High threshold for AI self-improvement** — meaning OpenAI assesses its capability as equivalent to giving every researcher an additional highly capable research engineer as an assistant, relative to their 2024 baseline.
+
+Because of the increased capabilities, OpenAI is launching both models with tighter safeguards for higher-risk cybersecurity assistance. Through OpenAI Daybreak, defenders can currently access GPT-6 Sol with reduced cyber refusals, with GPT-6.2 models coming to the program.
+
+## What This Means for Your Workflow
+
+The practical change is clean: **Work and Codex now have a cheap default and an expensive specialist.** Regular Chat is not part of that split.
+
+Sol handles everyday coding, writing, and multistep workflows at a quarter of Astra's API rates — and on the coding benchmark OpenAI highlights, it is nearly indistinguishable from Astra. When you hit a job that actually needs the frontier model — research across sources, template-matched financial documents, complex multi-service debugging — switch to Astra for that task and switch back.
+
+Across vendors, the pricing tiers are converging. The differentiation is in the details — cache economics, token efficiency on your workloads, and which model's coding style fits your stack. Those details matter more than any benchmark table.
+
+Start in Work on Sol. Keep Astra for the jobs that earn its price tag.
+
+---
+
+**Sources:**
+- [OpenAI, Introducing GPT-6.2 Astra and Sol](https://openai.com/index/introducing-gpt-6-2-astra-sol/) (Nov 17, 2026)
+- [OpenAI, GPT-6.2 model docs](https://developers.openai.com/api/docs/models/gpt-6.2-astra) (API pricing and specs)
+- [OpenAI Help Center, ChatGPT Work and Codex](https://help.openai.com/en/articles/20001275-chatgpt-work-and-codex)
+- [Anthropic, Pricing](https://platform.claude.com/docs/en/about-claude/pricing) (Opus 5.5, Fable 5.2, Sonnet 5.5 rates)
+
+---
+
+*Want more breakdowns like this? [Subscribe to the newsletter](/subscribe) for weekly analysis of the tools worth paying attention to.*
