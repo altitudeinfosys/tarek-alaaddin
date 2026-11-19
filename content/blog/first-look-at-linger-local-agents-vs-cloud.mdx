@@ -1,0 +1,104 @@
+---
+title: "Linger First Look: A Local AI Agent on Your Own GPU"
+description: "Linger runs a 125B model on a 12 GB GPU and keeps your data local. Here is what it ships, what the benchmarks say, and where it still needs to prove itself."
+date: "2026-11-19"
+category: "ai-tools"
+tags: ["linger", "local-ai", "personal-agent", "polystrata", "open-source", "ai-agents", "privacy", "local-inference", "mixture-of-experts"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+An open-source personal agent that runs a 125-billion-parameter model on a consumer GPU, keeps your data on your machine, and watches your inbox while you sleep. That is the pitch for Linger, which SimplexAI Labs open-sourced on November 10, 2026.
+
+The repo already has over a thousand stars and 518 commits. It is not a weekend project. But the pitch — local agent, no cloud bill, your data stays yours — is exactly the kind of promise that falls apart once you try to do real work with it. The docs, the repo, and the published benchmarks tell a clearer story than the pitch alone, so here is what Linger actually ships and where it still needs to earn trust.
+
+## The Core Idea: Your GPU, Your Data
+
+Every cloud agent service works the same way. You send your data to someone else's server, their model processes it, and you hope the privacy policy means what it says. Linger flips that. The model runs on your hardware — your NVIDIA GPU or your Mac — and the data stays on your disk.
+
+The agent is called "Another Me." It connects to your Gmail, Slack, and calendar, files what it learns into a personal wiki, and messages you when something needs your attention. If that sounds like every AI assistant pitch from the last three years, the difference is where the brain lives: on a machine you own, running a model you can inspect.
+
+<Callout type="info">
+Linger's docs describe three choices that distinguish it: where the model runs (your GPU or Mac), where memory lives (your disk), and what it can reach (only the files and apps you authorize). Data leaves your machine only through services you explicitly opt into — a remote model, connected apps via Composio, or voice audio through Soniox and xAI.
+</Callout>
+
+## PolyStrata: How a 125B Model Fits on a 12 GB Card
+
+The local inference claim is the headline, and it rests on PolyStrata — an open-source engine (MIT license) forked from Strata. PolyStrata is built for Mixture of Experts models, which only activate a subset of their parameters on each token. The engine keeps the busiest experts on your GPU, parks less-used ones in RAM, and stores the rest on your SSD. Experts migrate between tiers based on how often they get called.
+
+The result, according to Linger's own benchmarks: Qwen3.8-Flash-Next (125B parameters) runs at 45.5 tokens per second on an RTX 3060 with 12 GB of VRAM and 64 GB of system RAM. On a laptop RTX 4070 with 8 GB, it manages 38.1 tok/s with a Q2_0 quantization.
+
+Smaller MoE models go faster. LFM2.5-24B-A2B hits 97.8 tok/s on the same RTX 3060. Qwen3.6-35B-A3B reaches 91.8 tok/s. These are numbers from the README — not independent benchmarks — but the approach itself has academic backing: an OSDI 2026 paper from Tsinghua reports 28 tok/s on INT4 DeepSeek-R1 using a similar MoE-offloading technique.
+
+<Callout type="warning">
+All performance numbers in this section come from Linger's README and PolyStrata's repo. They were measured in SimplexAI's lab, often on a larger card held to a tier's memory budget rather than on the actual hardware. Real-world speeds on the exact card could be lower. No independent benchmarks exist yet.
+</Callout>
+
+## Model Autopilot: It Picks the Best Model for Your Hardware
+
+Linger does not expect you to know which model fits your GPU. Its installer detects your hardware — GPU model, VRAM, system RAM, disk bandwidth — and recommends the best model from a catalog of 49 it has tested. It installs the model, verifies it can answer a real question, and only then counts the setup as complete.
+
+The benchmarks it publishes tell a clear story about what different hardware tiers can expect. A Mac with 24 GB of RAM gets Qwen3.8-27B at a SimplexAI score of 51.9, which Linger compares to Claude Opus 4.5. A Linux box with an NVIDIA 12 GB card and 32 GB of RAM gets Qwen3.8-Flash-Next at a score of 57.3, compared to Claude Opus 4.6.
+
+Those SimplexAI scores sit on the third-party AIHOT scale, where 50 is the reference average and scores within 3 points are considered equivalent. The comparisons are directional — a local model scoring near a frontier cloud model on a benchmark does not mean it matches that model in every workflow. But the gap is narrower than most people assume.
+
+## The Memory System: 95% on LoCoMo
+
+An agent that forgets everything between conversations is a chatbot with extra steps. Linger's memory system tries to solve this. Every night, it reads through your inbox, chats, and meetings, then files what it finds into a personal wiki — one page per entity (clients, contacts, projects, sessions). Every agent can search this wiki.
+
+Linger's README reports a 95% score on the LoCoMo memory benchmark — above Zep at 94.7%, Mem0 at 92.5%, and Letta at 74%. The memory engine is built on Hindsight, an open-source library from vectorize-io. LoCoMo measures whether a system can answer questions about long conversations, so a high score means the wiki captures and retrieves the right facts from sprawling inputs. That said, a benchmark score is not the same thing as an error rate on your actual data.
+
+## Proactive "Another Me": It Messages You First
+
+This is where Linger gets ambitious. Another Me does not wait for you to ask. It watches your inbox, calendar, and Slack, follows up on things, and messages you only when something needs your attention. A client replies? It tells you. A meeting moves? It lets you know. A newsletter lands? It stays quiet.
+
+The interesting part is the self-improvement loop. Every night, Linger reads how its own proactive messages landed — did you act on them, ignore them, push back? — and rewrites its decision rules. Push back on the same kind of notification twice, and it becomes a standing rule: stop telling me about deliveries. Name the kind of thing you want to hear about, and one cycle makes it a rule.
+
+This is recursive in a small but real way. The agent's judgment tomorrow is shaped by how today's judgment landed. No retraining, no fine-tuning — just a list of rules that evolves based on your reactions.
+
+## What Linger Runs On
+
+Linger is not a single binary. It is a TypeScript and Go monorepo with a server component (TeamHub) and a computer component (the agent runtime). You can install it three ways:
+
+1. **Desktop app** — macOS (Apple silicon), Windows, Linux. Quick Install on the setup screen starts a local server too.
+2. **Docker Compose** — for a server that multiple computers share.
+3. **Build from source** — clone the repo, `docker compose up`.
+
+The agent runtimes are modular. You can run agents on Claude Code, Codex, or Pi (Linger's own local agent runner). Each runtime works the way it normally does — on local models or on whatever plan you already pay for.
+
+## The Competitor Landscape
+
+Linger is not the only open-source personal agent project. OpenJarvis from Stanford ships under Apache 2.0. Jan.ai focuses on local AI. Leon has been around for years as an open-source personal assistant. OpenAGI uses a PolyForm noncommercial license, which limits commercial use.
+
+On the cloud side, Claude with MCP, ChatGPT with tools, and Grok Bot all serve as personal agents — but they run on remote infrastructure. Linger's bet is that the local-first approach is worth the hardware requirements and the setup friction. It ships under the Linger Open Source License, which is based on Apache 2.0 with additional conditions — worth reading before you build on it.
+
+<Callout type="tip">
+Linger open-sourced on November 10, 2026. No independent reviews or third-party audits exist yet. The repo is active — 518 commits, 11 contributors, 6 releases — but the project is early. Treat the benchmarks and feature claims as the team's own reporting until someone else validates them.
+</Callout>
+
+## Where I Am Skeptical
+
+I have not installed Linger. What follows is based on the docs, the repo, and the numbers they publish — not personal testing. A few things give me pause.
+
+**The benchmark comparisons are aggressive.** Claiming a local 125B model matches Claude Opus 4.6 based on a single benchmark scale is a strong claim. Benchmarks compress complex capability into a number. The local model might nail the benchmark's distribution and fumble on your actual workload. Until independent evals appear, the comparison is marketing.
+
+**The hardware floor is higher than it sounds.** A 12 GB GPU plus 64 GB of system RAM is not exotic by enthusiast standards, but it is not what most people have on their desk. The Mac recommendations start at 24 GB for a competitive model. If you are on a laptop with 8 GB of RAM, the experience will be meaningfully worse.
+
+**Nightly memory processing is a trust exercise.** An agent that reads your inbox, chats, and meetings every night, then distills them into a wiki, is powerful if it works and disorienting if it doesn't. Hallucinated facts in a personal wiki compound over time. A strong benchmark score does not guarantee zero wrong facts in your wiki.
+
+**Version 0.1.4.** The initial open-source release was November 10. The desktop app is on its fourth patch release. This is early software with high commit velocity and a serious architecture — but early software breaks in ways documentation cannot warn you about.
+
+## Worth Watching, Not Worth Migrating To Yet
+
+The question Linger forces is a good one: how much of the AI agent experience actually requires the cloud?
+
+If a 125B MoE model on a consumer GPU genuinely approaches frontier-class quality on some tasks — and PolyStrata's numbers suggest it might — then the case for sending your personal data to a remote server gets weaker every month. The models are getting more efficiently sparse. The inference engines are getting smarter. The hardware is already sitting in millions of gaming PCs and Macs.
+
+Cloud agents still have the edge on raw capability and tool ecosystems. But Linger is one of the first projects to package the full local stack — inference engine, memory, proactive agent, desktop control — into something a non-researcher can install. That matters even if the execution is not there yet.
+
+My call: put it on your watch list, not your install list. Wait for independent benchmarks and a few more patch releases. If the numbers hold up and the memory system proves reliable in the wild, this is the shape of the thing that eventually makes cloud-only agents optional.
+
+---
+
+[Subscribe to the newsletter](/subscribe) for more breakdowns of tools worth watching — before the hype cycle decides for you.
