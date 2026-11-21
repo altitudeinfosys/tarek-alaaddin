@@ -1,0 +1,139 @@
+---
+title: "Why Your AI Agent Sessions Are Cheaper Than They Look"
+description: "A viral post claimed $100,000 of Claude tokens on a $200 plan. Priced at list rates, 15.9 billion cache reads put the real number near $7,000."
+date: "2026-11-21"
+category: "ai-tools"
+tags: ["claude", "anthropic", "ai-agents", "prompt-caching", "kv-cache", "claude-code", "pricing", "tokens"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+16.3 billion tokens. A $200-per-year Claude Pro plan. A viral claim of $100,000 in free compute.
+
+Reprice it at Anthropic's own published rates and you get about $7,000. The gap is the cache — almost all of those tokens were cache reads, billed at a fraction of regular input. The token counter on your dashboard is a terrible proxy for what your agent sessions actually cost.
+
+## The Viral Post
+
+On November 20, 2026, Vlad Mihalcea [posted on X](https://x.com/vlad_mihalcea/status/2123753559191617993) with his Claude usage screenshot and a question: at the per-use rate, wouldn't 16 billion tokens cost around $100,000?
+
+The screenshot told a more specific story. His all-time usage dashboard showed:
+
+- **Total tokens**: 16.3 billion
+- **Cache reads**: 15.9 billion
+- **Cache writes**: 301.8 million
+- **Output**: 88.6 million
+- **Fresh input**: 487,400
+- **Favorite model**: Opus 5.5
+- **Sessions**: 63
+- **Longest session**: 127 days, 4 hours, 15 minutes
+
+By the following afternoon the post had nearly 700,000 impressions. That $100,000 headline travels fast.
+
+## The Headline Number Was Wrong Twice
+
+Mihalcea estimated $100,000, but his screenshot does not show how he got there. If you price every input-side token at Opus 5.5's base input rate of $4 per million tokens, plus output at $20 per million, the total comes to roughly $66,600 — not $100,000.
+
+That is still a dramatic number, but it already shrinks the gap by a third. And that calculation still treats every cache read as a fresh input. It is not.
+
+<Callout type="info">
+Mihalcea's dashboard shows Opus 5.5 as his **favorite** model, not his **only** model. The screenshot does not split tokens by model. Pricing the whole account at Opus 5.5 is an assumption — and it is the most expensive one available.
+</Callout>
+
+## What a Cache Read Actually Is
+
+A language model does not remember your conversation by itself. Every turn, the client — Claude Code, the web interface, whatever you are using — sends the context back: system prompt, project files, prior messages, tool results, and then the new bit at the end.
+
+Anthropic can keep the work the model already did on the unchanged prefix. When the next request arrives with the same prefix, the system reuses that work and bills it as a **cache read** instead of reprocessing from scratch. Without caching, the API would reprocess the full history on every turn. With caching, it reuses what it already processed.
+
+An agent loop is almost designed to do this. Read context. Call a tool. Append the result. Repeat. The long prefix stays the same turn after turn, so the token counter explodes while most of those tokens are cheap rereads.
+
+Two terms show up in these discussions that are related but not identical:
+
+- **Prompt caching** (or prefix caching) is the customer-facing feature. Anthropic stores the processed prefix and bills rereads at a reduced rate. This is what appears on your bill.
+- **KV cache** is the underlying inference technique — saving key and value vectors so the model skips recomputation. It is the engine under the hood.
+
+People use them interchangeably. They are not the same thing, but for the billing question, prompt caching is the one that matters.
+
+## Do the Math With Published Prices
+
+Anthropic's [pricing page](https://docs.anthropic.com/en/docs/about-claude/pricing), fetched on November 21, 2026, lists Opus 5.5 at:
+
+| Token type | Price per million tokens |
+|---|---|
+| Base input | $4.00 |
+| Output | $20.00 |
+| Cache write (5-min) | $5.00 |
+| Cache write (1-hour) | $8.00 |
+| **Cache read** | **$0.20** |
+
+That cache read price is 0.05x the base input price. Five cents on the dollar. For Sonnet 5.5 it is also 0.05x. For Fable 5.2 and Mythos 5.2 it is 0.025x — even cheaper.
+
+Now reprice Mihalcea's screenshot at published list rates:
+
+| Token type | Volume | Rate | Cost |
+|---|---|---|---|
+| Cache reads | 15.9 billion | $0.20/MTok | $3,180 |
+| Output | 88.6 million | $20.00/MTok | $1,772 |
+| Cache writes (5-min) | 301.8 million | $5.00/MTok | $1,509 |
+| Fresh input | 487,400 | $4.00/MTok | ~$2 |
+| **Total (5-min writes)** | | | **~$6,463** |
+| **Total (1-hour writes)** | | | **~$7,368** |
+
+That is roughly **$6,500 to $7,400** at list API prices. Not $100,000. Not $66,600. About $7,000.
+
+The cache read line — 15.9 billion tokens — accounts for 97.6 percent of his total tokens but only about half the total cost. Without the cache discount, those same reads would cost $63,600 at base input price. The discount turns $63,600 into $3,180.
+
+<Callout type="warning">
+This is what a list-price API customer would pay. It is **not** Anthropic's cost to serve. Serving cost is not public. One heavy user is not the average Pro subscriber. This math shows the headline was wrong, not that Anthropic is profitable on this account.
+</Callout>
+
+## What Orosz Got Right — and What He Walked Back
+
+Later that day, Gergely Orosz [quote-tweeted it](https://x.com/GergelyOrosz/status/2123795984002232634) with the claim that inference is "SUPER profitable" because reading from the KV cache is cheap. The post pulled roughly 285,000 impressions and cited the claim that 90+ percent of a coding agent's tokens are cache reads.
+
+The intuition is directionally correct: cache reads are cheap, and coding agents use them heavily. But the next morning, Orosz [posted a follow-up](https://x.com/GergelyOrosz/status/2124087708964602070) acknowledging inaccuracies and missing nuances in his original thread.
+
+Cache reads being cheap is real. "Inference is SUPER profitable" is a leap that neither Mihalcea's screenshot nor any public data supports.
+
+## Why Agent Loops Make This Worse (and Cheaper)
+
+An agent session is a prefix-reuse machine. Every tool call sends the conversation back with one more result appended. If the session runs for 127 days — as Mihalcea's longest did — the same system prompt, the same project context, and the same early conversation history go back thousands of times.
+
+This is true whether you are running Claude Code, an n8n workflow, or a team of specialist bots. The pattern is the same:
+
+1. Long prefix. Same instructions, same files, same prior turns.
+2. Small delta. One new tool result or message.
+3. Repeat.
+
+Separately, Emiliano Bonassi of Boundless [reported on X](https://x.com/emilianobonassi/status/2123891907512398195) that one orchestrator ran 203 agents, consuming 4.8 billion tokens in four days — 3.4 billion in a single day. He estimated the cost at $2,452 "at Claude prices." That is his self-report, and Boundless sells inference, so the framing is not independent. But the magnitude — billions of tokens from one person's agent swarm — is real.
+
+Georgios Konstantopoulos captured the vibe when he wrote about ["effective swarm riding"](https://x.com/gakonst/status/2123839118409109853) — a post that pulled 180,000 impressions and nearly 4,000 bookmarks. The era of one person running many concurrent agent sessions is arriving.
+
+## What This Means for Your Agent Stack
+
+If you run any kind of agent workflow — Claude Code sessions, Grok Bot routines, multi-agent pipelines — here is what you should take from this:
+
+**Stop reading your token dashboard as a price tag.** The total token count on your usage screen mixes four categories with wildly different prices: fresh input, cache writes, cache reads, and output. Fifteen billion tokens that are mostly cache reads is a fundamentally different bill than fifteen billion tokens of fresh input.
+
+**Long sessions are not wasteful by default.** A 127-day session sounds extravagant. But prompt cache TTLs are short — five minutes or one hour depending on the tier — so the cache is not literally held for 127 days straight. What happens is that active stretches of use get cheap cache reads turn after turn, while idle gaps reset the cache. The cost still scales with fresh input, output, and cache writes, not with the total token counter.
+
+**Cache invalidation is the cost you control.** Switching models mid-session, restructuring your system prompt, or compacting your context at the wrong time can invalidate the prefix cache. When that happens, tokens that would have been billed as $0.20-per-million cache reads get reprocessed as cache writes at $5 to $8 per million — a 25x to 40x jump. Architecture decisions that preserve cache continuity directly affect your bill.
+
+<Callout type="tip">
+If you are evaluating costs across providers, do not import one provider's cache pricing onto another. xAI, for example, has not published equivalent cache-read rates for Grok Bot. The economics of a long session on a different provider might be very different from a long Claude session. Check each provider's published rates before you assume.
+</Callout>
+
+## The Question Nobody Asked
+
+When Mihalcea posted his screenshot, the conversation went straight to whether Anthropic is losing money. That is interesting. But it is not the useful question.
+
+The useful question is: when you last looked at a scary token number on your own dashboard, did you check how many of those tokens were cache hits?
+
+If the answer is no, you are probably overestimating what your agent sessions actually cost. And if you are making architecture decisions — which provider to use, whether to keep sessions long or restart them, whether to run subagents in parallel — based on that inflated number, you are optimizing for the wrong thing.
+
+The 16.3 billion was real. The $100,000 was not. The gap between those two numbers is the cache — and understanding it is the difference between panic and a plan.
+
+---
+
+*Want more breakdowns on AI tooling, agent architectures, and the real economics of running AI at scale? [Subscribe to the newsletter](/subscribe) for a new post every week.*
