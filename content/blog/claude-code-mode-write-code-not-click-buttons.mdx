@@ -1,0 +1,141 @@
+---
+title: "Claude Code Mode: Why Your Agent Should Write Code, Not Click Buttons"
+description: "Claude Code's experimental Code Mode replaces one-at-a-time tool calls with JavaScript programs that cut context size and stack with prompt caching."
+date: "2026-11-23"
+category: "ai-tools"
+tags: ["claude-code", "anthropic", "ai-agents", "code-mode", "mcp", "tokens", "developer-tools"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Every AI coding agent works the same way. Read a file. Wait. Run a command. Wait. Edit another file. Wait. Each tool call is a round trip: the model asks, the runtime answers, the model reads the full result, decides what to do next, and asks again. The conversation grows by thousands of tokens per step, and most of that growth is the model rereading context it already saw.
+
+On November 12, 2026, Anthropic shipped an experimental feature in Claude Code v2.1.323 that changes this loop. It is called Code Mode. Instead of requesting tools one at a time, Claude writes a short JavaScript program that chains them together, runs some in parallel, and hands back only the slice it needs. The model's context window grows more slowly as a result.
+
+On November 21, this blog covered [why your AI agent sessions are cheaper than they look](/blog/why-your-ai-agent-sessions-are-cheaper-than-they-look) — the KV cache makes rereading the same prefix nearly free. Code Mode attacks the problem from the other direction: it shrinks the prefix itself. The two stack.
+
+## The One-at-a-Time Problem
+
+Without Code Mode, Claude Code works like this: Claude asks for one tool, waits for the result, reads it, then decides the next step. The [official documentation](https://code.claude.com/docs/en/code-mode) describes the default behavior as a sequential loop — the model requests each tool directly and reads the full result before choosing what to do next.
+
+Take a simple task: find the file that sets a retry limit, change the value, and run the tests. That is three tool calls minimum — `rg` to find the file, `Edit` to change it, `Bash` to run the tests. Each call adds its full output to the conversation. The grep results, the diff, the test output — all of it lands in the context window, all of it gets re-sent on the next turn, all of it gets reprocessed (or at least re-read from cache).
+
+For three calls that is tolerable. For a refactoring task that touches dozens of files, or a debugging session that runs the same test suite repeatedly, the token meter runs up fast.
+
+## What Code Mode Does
+
+With Code Mode on, Claude writes one JavaScript program that does the whole job. The following is a simplified illustration of the pattern — the actual tool signatures may differ, but the shape is representative:
+
+```javascript
+const result = await Bash('rg -l "RETRY_LIMIT" src/');
+const file = result.stdout.trim().split('\n')[0];
+await Edit(file, { old: 'RETRY_LIMIT = 3', new: 'RETRY_LIMIT = 5' });
+const tests = await Bash('npm test -- --filter retry');
+return { file, passed: tests.exitCode === 0, output: tests.stdout.slice(-500) };
+```
+
+One script. Three tool calls chained. Only the final object — the filename, whether the tests passed, and the last 500 characters of output — comes back for Claude to read. The grep output never enters the model's context. The full test log stays on the floor.
+
+<Callout type="info">
+The conversation still shows each tool call and diff in the transcript viewer. Code Mode does not hide what happened — it hides the intermediate noise from the model's context window.
+</Callout>
+
+The gains compound when calls are independent. If you need to read five configuration files, normal mode reads them one at a time. Code Mode can fire all five reads in parallel, extract the relevant lines, and return a single summary object. Five round trips become one.
+
+## The Numbers So Far
+
+Anthropic has not published official benchmarks for Code Mode. But at least one early adopter has posted detailed numbers, and they match the expected direction: smaller context, fewer tokens, not necessarily faster.
+
+[George (@bolyki)](https://x.com/bolyki/status/2123068346224509366) ran side-by-side comparisons of Code Mode versus normal mode on the same tasks:
+
+- Context was **20–25% smaller** across runs
+- On the bigger task: **37% fewer tokens, 19% lower cost**
+- On a tiny task, it actually **cost more**
+- It was **not faster** — the overhead of writing and running a script can exceed the savings on small jobs
+
+That last point matters. Code Mode is not a universal win. If your task is "edit one line in one file," writing a JavaScript program to do it is overhead, not optimization. The feature shines on batch operations, multi-file refactors, and anything involving filtering large outputs.
+
+## The Bigger Pattern: Code as Interface
+
+Code Mode is not a novel idea. The concept that agents should write programs against their tools instead of calling them one at a time has been building momentum all year.
+
+**Cloudflare got there first.** On February 20, 2026, Cloudflare published [Code Mode for MCP](https://blog.cloudflare.com/code-mode/), which converts MCP tools into a TypeScript API that models code against inside sandboxed Workers. Their numbers were dramatic: 2,594 API tools went from 1,170,523 tokens as native MCP with full schemas down to 1,069 tokens with Code Mode. That is a 99.9% reduction in tool description overhead.
+
+**Anthropic's own engineering team made the theoretical case.** Their post on [code execution with MCP](https://www.anthropic.com/research/code-execution-with-mcp) described a Google Drive-to-Salesforce workflow that dropped from 150,000 tokens to 2,000 tokens — a 98.7% reduction. The model writes code against MCP servers as importable APIs, executes it in a sandbox, and only the final result enters the conversation.
+
+**The Claude API formalized it.** Programmatic Tool Calling on the Claude Developer Platform runs the agent's code in a remote execution container, with the same principle: the model writes a script, the platform runs it, the result comes back.
+
+Code Mode in Claude Code is the local version of this pattern. It runs the script in your terminal session, against Claude Code's built-in tools and permission system. No remote sandbox, no container — your machine, your environment, your files.
+
+<Callout type="warning">
+Code Mode runs locally. The model's generated JavaScript executes in your session with the same permissions you gave Claude Code. The permission model still applies — each tool call inside the script goes through deny and ask rules — but in auto mode the classifier reviews the whole script before it runs, not each call individually. Read the [security model](https://code.claude.com/docs/en/code-mode) before enabling it in auto mode.
+</Callout>
+
+## How It Stacks with Prompt Caching
+
+Here is why the two posts are connected.
+
+Prompt caching (the [KV cache story from November 21](/blog/why-your-ai-agent-sessions-are-cheaper-than-they-look)) makes rereading cheap. When an agent loop re-sends the same system prompt and conversation prefix, the cache lets the model skip reprocessing it. As that post showed, the discount on cache reads versus fresh input is dramatic — a fraction of the cost.
+
+Code Mode makes the prefix shorter. By collapsing five tool calls into one script, the conversation grows by one script-and-result pair instead of five call-and-result pairs. There is less to re-send, so there is less for the cache to handle, so the total cost drops further.
+
+They are complementary optimizations:
+
+- **Prompt caching** reduces the cost per token of re-sent context
+- **Code Mode** reduces the number of tokens that get re-sent
+
+If your agent session runs 50 turns and each turn re-sends 100K tokens of context, caching makes those rereads cheap. If Code Mode cuts each turn's new contribution by 30%, the prefix grows more slowly, and you stay in the cache sweet spot longer before hitting context limits.
+
+## How to Turn It On
+
+Code Mode requires Claude Code v2.1.323 or later. It is off by default and experimental — Anthropic flags it as subject to change or removal in future releases. You cannot enable it through project settings; the environment variable is the only gate, which is a deliberate security choice.
+
+To enable it, set one environment variable before launching Claude Code:
+
+```bash
+export CLAUDE_CODE_EXPERIMENTAL_CODE_MODE=1
+```
+
+<Callout type="info">
+Code Mode works only in interactive terminal sessions of the native CLI build. It supports Opus 5.5, Sonnet 5.5, Haiku 5.5, and Fable 5.2. It does not work with the `-p` flag, the Agent SDK, VS Code, the Desktop app, Amazon Bedrock, API gateways, or zero-data-retention organizations.
+</Callout>
+
+Once enabled, you do not need to change how you prompt. Claude decides when to use Code Mode based on the task. Multi-step jobs with filtering or parallel opportunities trigger it; single-call tasks run normally.
+
+## What It Does Not Change
+
+[Ravi Madabhushi](https://x.com/ravibits/status/2123128487125123166) made an important point about scope: Code Mode does not materially change anything with respect to authentication, authorization, or audit policy layers. Your agent still makes the same MCP calls with the same auth tokens. What changes is how much context gets into the model window and how much can be discarded.
+
+Code Mode is a context optimization, not a capability expansion. Your agent still uses the same tools, respects the same permissions, and operates within the same boundaries. It just does it with less conversational overhead.
+
+It also does not make MCP obsolete. MCP defines the tool interface — what tools exist, what parameters they take, what they return. Code Mode changes how the model reaches them: writing a script instead of making one call at a time. The tools are still MCP tools. The auth is still MCP auth. The model just batches the calls more efficiently.
+
+## When to Use It, When to Skip It
+
+**Use Code Mode for:**
+- Refactors that touch many files with the same pattern
+- Searches that need filtering (find files, grep for a pattern, extract lines)
+- Independent operations that can run in parallel (reading multiple configs, running multiple test suites)
+- Debugging loops where you run tests repeatedly and only care about the last few lines of output
+
+**Skip it for:**
+- Single-file edits where one tool call is enough
+- Tasks where you need to inspect every intermediate result
+- Anything running outside the interactive terminal (CI pipelines, headless mode, SDK-based agents)
+
+Code that Claude waits on stops after ten minutes. If you are running in auto mode or bypassPermissions mode, the script can be pushed to the background and run for up to two hours while the conversation continues.
+
+## The Direction This Points
+
+The one-call-at-a-time model was a product of how language models were first wired to tools: the model generates a function call, the runtime executes it, the result goes back into the conversation, repeat. It is simple and debuggable. It is also wasteful once the tasks get complex.
+
+The industry is converging on a different pattern: the model writes a program, the runtime runs it, and only the final result enters the conversation. Cloudflare showed it works for massive API surfaces. Anthropic showed it works for multi-service orchestration. Claude Code now shows it works for local developer workflows.
+
+The experimental flag will come off eventually. When it does, the default behavior of AI coding agents changes: from clicking buttons one at a time to writing programs that click them all at once.
+
+If you are already using Claude Code, the environment variable is one line. Try it on a refactoring task where you would normally watch the agent make twenty sequential tool calls. Watch how much smaller the context stays. That is the argument.
+
+---
+
+*If you found this useful, [subscribe to the newsletter](/subscribe) for more breakdowns of how AI developer tools actually work under the hood.*
