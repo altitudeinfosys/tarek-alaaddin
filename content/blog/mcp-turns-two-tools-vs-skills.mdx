@@ -1,19 +1,15 @@
 ---
 title: "MCP Turns Two: Tools vs. Skills, and Why Servers Should Ship Both"
-description: "MCP's second birthday brings Skills over MCP, letting servers ship playbooks alongside tools. Here's the status cheat sheet and what it means for builders."
+description: "MCP just shipped Skills, Tasks, Elicitation, and File Uploads. Here is why the tools-versus-skills distinction matters for every server author."
 date: "2026-11-25"
 category: "ai-tools"
-tags: ["mcp", "anthropic", "ai-agents", "skills", "developer-tools", "protocol", "claude"]
+tags: ["mcp", "anthropic", "ai-agents", "mcp-skills", "developer-tools", "protocol", "model-context-protocol"]
 image: "/images/blog/default-blog.webp"
 published: true
 featured: false
 ---
 
-The Model Context Protocol just shipped its most ambitious update yet. On November 24, 2026, Anthropic announced four MCP extensions — Skills and File Uploads as new additions, plus Tasks and Elicitation graduating to GA in the core spec — turning what started as a tool-calling standard into something closer to a full agent operating system.
-
-This matters because MCP is no longer a niche bet. The ecosystem has crossed 10,000 connectors, 5 billion total SDK downloads, and 700 million monthly downloads across the TypeScript, Python, Java, Kotlin, and C# SDKs. Partners like Shopify, HubSpot, Atlassian, and Carta are building on it. The spec has over 2,500 contributors.
-
-But the most interesting part of this update is not the scale. It is the distinction between **tools** and **skills** — and why server authors who ignore it are going to build worse integrations.
+Two years ago today, Anthropic open-sourced the Model Context Protocol. Yesterday they shipped the biggest update since the protocol went stateless in July: Skills over MCP in public beta, Tasks and Elicitation at GA in Claude, and File Uploads in experimental preview. MCP is no longer just a tool-calling standard. It is becoming an agent development platform — and the most consequential part of this release is a distinction most server authors have not thought about yet.
 
 ## What MCP Already Did Well
 
@@ -25,29 +21,27 @@ The problem is that tools are atomic. A tool says *what it can do* — query a d
 
 For simple tools, that is fine. For complex workflows, it falls apart.
 
-## Enter Skills: Instructions, Not Just Functions
+## Skills: Instructions, Not Just Functions
 
 Skills are the headline addition. An MCP skill is a structured set of instructions that tells the model how to perform a specific workflow using the tools a server exposes.
 
-Think of it this way: a tool is a function. A skill is a recipe that calls those functions in the right order, with the right parameters, handling the edge cases the tool descriptions cannot capture.
+A tool is a function. A skill is a recipe that calls those functions in the right order, with the right parameters, handling the edge cases the tool descriptions cannot capture.
 
 <Callout type="info">
 **The key distinction:** Tools answer "what can I do?" Skills answer "how should I do it?" A deployment server might expose `deploy`, `rollback`, and `get_status` as tools — but the skill is what tells the model to check status before deploying, wait for health checks after, and rollback automatically if the error rate spikes.
 </Callout>
 
-Skills ship as part of the MCP server itself. They are not prompt templates you paste into a system message. They are not documentation you hope the model reads. They live in the protocol, discoverable alongside tools.
+Skills ship as part of the MCP server itself. They are not prompt templates you paste into a system message. They are not documentation you hope the model reads. They live in the protocol, discoverable alongside tools. And Claude loads a skill only when it is needed, keeping context use low.
 
 This is a meaningful architectural choice. It means the server author — the person who actually understands the domain — defines the workflow. Not the model. Not the user. Not whatever prompt engineering someone did last Tuesday.
 
-## Why This Distinction Matters for Server Authors
+## Why Server Authors Should Ship Both
 
-If you maintain an MCP server, you are probably thinking about whether to add skills or stick with tools. Here is the case for shipping both.
+If you maintain an MCP server, you are probably thinking about whether to add skills or stick with tools. Ship both. Here is why.
 
-**Tools alone leave money on the table.** When a model uses your tools without guidance, it is guessing at the optimal workflow. It might call your APIs in the wrong order, skip validation steps, or miss error handling paths that your documentation covers but the tool schema does not.
+**Tools alone leave quality on the table.** When a model uses your tools without guidance, it is guessing at the optimal workflow. It might call your APIs in the wrong order, skip validation steps, or miss error handling paths that your documentation covers but the tool schema does not. Every bad interaction is a user who thinks your integration is unreliable. They do not blame the model for poor sequencing — they blame your server.
 
-Every bad interaction is a user who thinks your integration is unreliable. They do not blame the model for poor sequencing — they blame your server.
-
-**Skills encode institutional knowledge.** Imagine a commerce MCP server that exposes a `create_product` tool. Without a skill, the model just calls it. With a skill, the server can teach the model the workflow: check inventory sources first, validate image dimensions, set pricing with currency context, configure all variants before publishing. That sequence is not obvious from the tool schema. It is exactly the kind of knowledge that belongs in a skill.
+**Skills encode institutional knowledge.** Consider a commerce MCP server that exposes a `create_product` tool. Without a skill, the model just calls it. With a skill, the server can teach the model the full workflow: check inventory sources first, validate image dimensions, set pricing with currency context, configure all variants before publishing. That sequence is not obvious from the tool schema. It is exactly the kind of knowledge that belongs in a skill.
 
 **Skills reduce hallucination surface.** When the model has explicit instructions for how to accomplish a task, it is less likely to invent plausible-but-wrong intermediate steps. The skill constrains the action space to paths the server author has validated.
 
@@ -57,58 +51,66 @@ Skills handle workflows the model executes in a conversation. Tasks handle work 
 
 An MCP Task is a durable unit of background work. The model can create a task, check its status, and act on the results later — even in a different session. This is the primitive you need for anything that takes longer than a conversation turn: CI pipelines, data processing jobs, approval workflows, long-running analyses.
 
-Tasks hit general availability in this update, available on Claude Pro, Max, and Ultra plans by default. Team plans can enable them through admin settings, and Enterprise support is coming.
+Tasks are generally available in Claude for Pro, Max, and Ultra plans, and rolling out to Team and Enterprise organizations.
 
 <Callout type="tip">
-**Hypothetical example:** A code review skill creates a Task for each PR review. The task runs static analysis, checks test coverage, and waits for CI results. When the task completes, the model picks up the results in a new conversation and posts the review. The user never had to keep a session open.
+**Example of what becomes possible:** A code review skill creates a Task for each PR review. The task runs static analysis, checks test coverage, and waits for CI results. When the task completes, the model picks up the results in a new conversation and posts the review. The user never had to keep a session open. (No vendor ships exactly this today, but the primitives now exist to build it.)
 </Callout>
 
 The distinction between Skills and Tasks is not about complexity — it is about lifecycle. A skill guides a workflow happening now. A task tracks work that runs in the background and persists state across turns and sessions.
 
 ## Elicitation: Servers That Ask Before They Act
 
-The third extension is Elicitation, which also reached GA in this update. It gives MCP servers a structured way to request clarification from the user during a tool call.
+Elicitation also reached GA in this update. It gives MCP servers a structured way to request clarification from the user during a tool call.
 
 Before Elicitation, the interaction was one-directional: the model calls a tool, the tool returns a result. If the tool needed more information, it had to either fail with an error message and hope the model retried with better arguments, or return a partial result with instructions embedded in the response.
 
-Both patterns are fragile. Elicitation makes the back-and-forth explicit. A server can pause execution, request specific information from the user through the client, and resume with the additional context.
+Both patterns are fragile. Elicitation makes the back-and-forth explicit. A server can pause execution, request specific information from the user through the client, and resume with the additional context. Supabase already uses it to confirm costs before creating a paid project. Railway asks before making destructive changes. GitHub has users type a repository name before an agent deletes it.
 
 This is particularly useful for tools that deal with ambiguous inputs. A deployment tool that receives "deploy to staging" can elicit which staging environment, which branch, and whether to include database migrations — before it starts the deployment, not after it fails halfway through.
 
 ## File Uploads: Closing the Binary Gap
 
-The fourth extension is File Uploads, currently experimental and rolling out soon. It addresses the gap where MCP tools could send text back and forth but had no clean way to handle binary data — images, PDFs, archives, datasets.
+File Uploads is currently experimental and rolling out soon. It addresses the gap where MCP tools could send text back and forth but had no clean way to handle binary data — images, PDFs, archives, datasets.
 
 File Uploads adds a streaming upload primitive to the protocol. Tools can accept file data as part of their invocation, and servers can return file references that the model can pass to other tools.
 
 This is less architecturally interesting than Skills or Tasks, but it is practically essential. Any integration that touches documents, media, or data files needed this. The workarounds — base64 encoding in tool arguments, external URL references, temporary file systems — all had reliability and security problems.
 
-## The Feature Matrix
+## Where Each Extension Stands
 
-Here is where each extension stands as of this update:
+Here is the status matrix as of this update:
 
 | Extension | Spec Status | Claude Availability |
 |-----------|------------|-------------------|
 | Skills | Public Beta | Claude and Claude Code |
-| Tasks | GA (Core Spec) | Pro, Max, Ultra (Team with admin) |
+| Tasks | Beta (moving to Core) | Pro, Max, Ultra (Team rolling out) |
 | Elicitation | GA (Core Spec) | Generally available |
 | File Uploads | Experimental | Rolling out soon |
 
-Skills are in public beta, which means the protocol surface may see breaking changes before GA. If you are building an integration, the skills spec is worth adopting now — just expect to track updates as it matures.
+Skills are in public beta, which means the protocol surface may see breaking changes before GA. If you are building skills into your server, the spec is worth adopting now — just expect to track updates as it matures.
 
 <Callout type="warning">
 **Don't confuse MCP Skills with Claude's Agent Skills.** MCP Skills are protocol-level objects that any MCP server ships and any compatible client can discover. Claude's Agent Skills (the `SKILL.md` files in Claude Code projects) are a client-side convention specific to Anthropic's tools. They solve similar problems — teaching a model how to do a workflow — but they live at different layers.
 </Callout>
 
-## What This Means for the Ecosystem
+## The Ecosystem at Two Years
+
+The numbers tell one story: over 10,000 connectors, 5 billion total SDK downloads (4.5 billion in the past year alone), more than 700 million monthly downloads across the TypeScript, Python, Java, Kotlin, and C# SDKs, and over 2,500 unique contributors. MCP joined the Agentic AI Foundation under the Linux Foundation in December 2025, and the July 28, 2026 spec release — which made the protocol stateless — was the largest revision since launch.
+
+The community tells another. Dev summits have spread to ten cities across four continents: from the NYC summit in April (around 1,200 attendees, four times the first San Francisco summit) to Bengaluru, Mumbai, Seoul, Shanghai, Tokyo, Amsterdam, Toronto, San Jose, and Nairobi. Blender ships an official MCP server. DaVinci Resolve Studio and Cinema 4D added built-in MCP servers in September. Berkeley Lab runs an electron microscope through MCP. Someone made a 1982 NEC PC-98 talk to Claude.
+
+Partners are building production integrations with skills: Shopify helps Claude design and update a merchant's store end to end. HubSpot onboards customers. Atlassian draws on deep organizational context. Carta will help Claude draft and issue equity from an uploaded document when their integration ships.
+
+## What This Means Going Forward
 
 Three implications worth tracking:
 
-**1. Server quality becomes a competitive advantage.** When every server was just tools, the differentiator was coverage — which APIs do you expose? With skills, the differentiator shifts to quality — how well does your server guide the model through complex workflows? Servers with good skills will produce noticeably better results than servers with the same tools but no skills.
+**Server quality becomes a competitive advantage.** When every server was just tools, the differentiator was coverage — which APIs do you expose? With skills, the differentiator shifts to quality — how well does your server guide the model through complex workflows? Servers with good skills will produce noticeably better results than servers with the same tools but no skills.
 
-**2. The "MCP server" becomes more like a platform SDK.** Skills, tasks, and elicitation together give server authors enough primitives to build sophisticated agent experiences. An MCP server is no longer a thin wrapper around an API. It is a domain-specific agent toolkit with its own workflows, background processing, and interactive clarification.
+**The MCP server becomes more like a platform SDK.** Skills, tasks, and elicitation together give server authors enough primitives to build sophisticated agent experiences. An MCP server is no longer a thin wrapper around an API. It is a domain-specific agent toolkit with its own workflows, background processing, and interactive clarification.
 
-**3. Multi-server orchestration gets more interesting.** When servers expose skills, models can compose skills from different servers into workflows that none of them anticipated. A project management skill from one server can trigger a deployment skill from another, monitored by an observability skill from a third. The skills provide enough structure for the model to orchestrate safely, without hardcoded integrations between the servers.
+**Multi-server orchestration gets more interesting.** When servers expose skills, models can compose skills from different servers into workflows that none of them anticipated. A project management skill from one server can trigger a deployment skill from another, monitored by an observability skill from a third. The skills provide enough structure for the model to orchestrate safely, without hardcoded integrations between the servers.
 
 ## If You Are Building an MCP Server Today
 
