@@ -1,0 +1,117 @@
+---
+title: "AI Writes Fast. Verification Is the Real Work."
+description: "Anthropic's Rust migration passed 98% of tests but matched only 25% of production traffic. The verification loop they built is the pattern worth copying."
+date: "2026-11-25"
+category: "ai-engineering"
+tags: ["anthropic", "ai-engineering", "rust", "verification", "shadow-traffic", "code-migration", "production-systems"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Claude wrote a first version of Anthropic's Messages API core request path in Rust in about a week. The team then spent months proving it actually worked.
+
+That ratio — a week of generation, months of verification — is the most important number in [Anthropic's engineering post](https://www.anthropic.com/research/migrating-api-to-rust) published November 25, 2026. Not the 70% CPU reduction. Not the 1,800x traffic growth. The ratio. Because it tells you where the bottleneck has moved for every team using AI to write production code.
+
+## The Generator-Verifier Gap
+
+Anthropic frames this with a concept they call the generator-verifier gap: for many problems, it is far easier to verify that a solution is correct than to come up with one. Sudoku is the textbook example. Checking a filled grid takes seconds. Finding the solution can take much longer.
+
+Large code migrations used to sit on the wrong side of this gap. Writing the new code was the hard, expensive part. Verification was relatively straightforward — run the tests, do some manual QA, ship it.
+
+AI flipped this. Claude can generate a Rust port of a complex Python service in days. But the team cannot mechanically verify that the new code handles every quirk of the old system without building something they did not have before: a verification pipeline that uses live production traffic as the oracle.
+
+<Callout type="info">
+**The shift in one sentence:** Generation used to be the bottleneck. Now verification is. The team that builds the best verification loop ships the most ambitious AI-written code.
+</Callout>
+
+## Why Tests Were Not Enough
+
+Anthropic had about 700 integration tests for the Python Messages API. The Rust version passed roughly 98% of them by April 2026. That sounds close to done.
+
+It was not. When the team compared the Rust API against actual production traffic, only about a quarter of inputs produced matching results.
+
+The gap came from two problems.
+
+**The tests were coupled to the Python implementation.** Each integration test ran the Python API inside the test process and mocked external services in Python's memory. When Claude ported the tests to Rust, it also ported them — meaning a "pass" could indicate that the Rust code was correct, or that the test had been ported in a way that let incorrect code through. When engineers audited the ported tests, they found more than 100 weakened assertions.
+
+**The tests were incomplete.** The Messages API has dozens of features. Even a modest number of binary feature flags produces millions of possible combinations — far more than any test suite can cover in a reasonable timeframe. Engineers test a subset that approximates production. That subset inevitably misses cases. For example, Python's JSON serializer escapes certain characters like emoji by replacing them with text codes. Rust wrote those characters as-is. The prompts differed by a few bytes. No test caught it, but production traffic surfaced it immediately.
+
+This is not a failure of testing. It is a structural property of live systems. Users rely on edge cases and quirks that fall outside any test suite. The only source of truth for how a system actually behaves is the system itself, running on real traffic.
+
+## Shadow Traffic: Turn Production Into the Verifier
+
+Anthropic's solution was to run every request through both the Python and Rust APIs simultaneously and compare the results. This technique is called shadowing, and it has been used before — GitHub's [Scientist library](https://github.blog/2016-02-03-scientist/) from 2016 is probably the best-known example. But Anthropic's version had to solve three problems that standard shadowing tools do not handle well.
+
+**The system is nondeterministic.** Claude can give different answers to the same prompt. If you run a request through Python and then through Rust, the replies will differ — not because of a bug, but because the model is stochastic. Standard diff tools handle this by running the old code twice to learn what varies on its own and then ignoring it. That approach would ignore all of Claude's output, including any bugs in it.
+
+Anthropic's fix: run the model once and replay its output to both APIs. This way, both versions work from the same model output, and any difference in what the customer receives is a real bug.
+
+**They could not read customer requests.** Privacy constraints meant the team could not look at the actual text of requests or replies to see where the two versions diverged. So instead of recording text, they recorded the shape of each difference — a structural fingerprint that captured where in the pipeline it happened and how the two outputs diverged, without exposing any content.
+
+**The definition of "correct" kept changing.** The Python API was not frozen during the migration. New models shipped, new features launched. Parity was a moving target. The team compared the two versions continuously from late April through August 2026, chasing a goal that shifted with every Python deploy.
+
+<Callout type="warning">
+**The key number:** Matching inputs went from about 25% in late April to 99.6% by August 2026, according to Anthropic's data. That months-long climb is the actual migration. The code generation was the easy part.
+</Callout>
+
+## Fingerprints: Telling One Bug From Another
+
+One of the most practical ideas in the write-up is the fingerprinting system. A single bug can produce enormous numbers of diff records in production. Sending each record to an agent individually would be wasteful and confusing.
+
+Instead, the team recorded a fingerprint for each difference: which step in the pipeline it occurred at, which piece of the prompt was affected, the byte where the two versions first diverged, and the length difference. Bugs tend to leave the same fingerprint on every request they affect. Grouping by fingerprint let the team triage efficiently — a single cluster might all trace back to one missing service call.
+
+This also had a cascading benefit. A large bug at the start of the prompt could mask smaller bugs further downstream. Fixing the dominant fingerprint revealed older, smaller fingerprints beneath it. The team worked through them in layers, peeling back one class of difference to expose the next.
+
+## Three Verification Loops
+
+The verification system ran at three speeds.
+
+**The inner loop (seconds):** Each agent worked in a cloud sandbox with both codebases. It hypothesized what caused a fingerprinted difference, wrote a test request to reproduce it, ran both APIs locally, and checked whether the outputs matched. If they did not match in the way the fingerprint described, the agent edited the Rust code and tried again. No model inference was needed for the comparison itself — it was near-instant. This let agents iterate dozens of times per hour.
+
+**The outer loop (hours to days):** Once an agent proposed a fix that passed the inner loop, an engineer reviewed the PR. After merge, the fix deployed to staging, and then production. The shadowing system then checked whether the fingerprint disappeared from live traffic. If it persisted, the task returned to the inner loop with new evidence. This is the loop that actually moved the 25%-to-99.6% line.
+
+**The memory loop (permanent):** When an engineer corrected an agent — rejecting a shortcut, explaining why a fix was wrong, pointing out a pattern — the correction was saved as a rule that every future agent read. One engineer's correction about not guessing at Python behavior led an agent to scan the codebase and find several more places where the port had relied on guesses. Over time, an agent processed dozens of review comments into proposed rules, which an engineer approved.
+
+This is the pattern that scales. The inner loop is cheap and fast. The outer loop is the source of truth. The memory loop compounds the team's judgment into durable knowledge.
+
+## The Shortcut That Was Rejected
+
+One example from the write-up illustrates why human review still matters in this loop. In mid-May, the largest remaining difference between the two APIs came from web search. The Python API retrieved a tool description from an internal service. The Rust API did not call this service yet, so the description was missing.
+
+An agent proposed a shortcut: copy the description text into static files that Rust could read. The prompts matched. The inner-loop verifier passed.
+
+An engineer rejected it. Rust would need to call the actual service before launch. The static files were throwaway code that would be deleted as soon as the real integration was built. The verifier rewarded matching outputs, but it could not judge whether the fix was architecturally sound. That judgment — is this good enough to ship? — remained human.
+
+## What This Pattern Means for Everyone Else
+
+The specific numbers belong to Anthropic. But the pattern is general and copyable.
+
+If you are using AI to rewrite, port, or substantially refactor a production system, your test suite is probably not enough. It was written to verify the old code, not to verify that new code matches the old code's actual behavior on real traffic. The gap between "tests pass" and "production matches" is where the work lives.
+
+The shadow-traffic diff loop closes that gap:
+
+1. Run both versions on real traffic simultaneously
+2. Compare structured outputs, not text, to protect privacy
+3. Fingerprint differences so agents can triage by class, not by instance
+4. Give agents a fast inner loop for hypothesis testing
+5. Validate on real traffic in the outer loop
+6. Encode human corrections into rules that persist
+
+This is not a "move fast and break things" approach. The whole point is that nothing breaks. Production traffic is the verifier. The migration happens alongside the live system, not instead of it.
+
+<Callout type="info">
+**Anthropic's headline results:** about 70% less CPU per request, over 80% less memory per request, and roughly 20% faster median time to first token for Claude Code requests. Public traffic moved to Rust in September 2026.
+</Callout>
+
+## The Bottleneck Has Moved
+
+A year ago, the question was whether AI could write production code at all. That question is settled. Claude wrote the core request path of the API that serves Claude. The code ships to production at scale.
+
+The new question is whether your team can verify what the AI wrote. Not with unit tests alone. Not with integration tests alone. With a system that uses real production behavior as the ground truth and closes the loop fast enough to fix differences before they compound.
+
+Verification is the new bottleneck. The team that solves verification ships the rewrite.
+
+---
+
+*If you want to follow along as AI engineering patterns like this one move from research posts to production playbooks, [subscribe to the newsletter](/subscribe).*
