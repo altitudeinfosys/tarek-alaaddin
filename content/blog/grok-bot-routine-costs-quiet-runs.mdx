@@ -1,0 +1,112 @@
+---
+title: "Grok Bot Routine Usage Just Jumped. Here Is What We Know."
+description: "Sam Sokolin says harness optimizations gave Grok Bot users up to 50% more routine usage. What is confirmed, what is not, and what to do."
+date: "2026-11-27"
+category: "ai-engineering"
+tags: ["grok-bot", "ai-agents", "usage-limits", "routines", "xai", "openai", "cost-optimization"]
+image: "/images/blog/default-blog.webp"
+published: true
+featured: false
+---
+
+Grok Bot users got up to 50% more routine usage yesterday, and the person who announced it has not explained how.
+
+Sam Sokolin, who works on Grok Bot, [posted on X](https://x.com/SamSokolin/status/2126027973568466949) on November 26, 2026: "The team has been cooking over the last few weeks! You should now see an additional 11% more usage out of your plan, and up to 50% more usage for routines! Excited to share more soon on how we optimized our routine harness to remove inference requests for simple and repetitive tasks!"
+
+Two sentences of specifics. Everything below is what we can verify, what we cannot, and what to do about it.
+
+## Two Rounds of Optimizations
+
+This is the second announcement. On November 13, Sokolin [posted](https://x.com/SamSokolin/status/2121303079803089179) that he had shipped harness optimizations giving roughly 7% more usage per plan and up to about 15% more on routine runs.
+
+Two weeks later: 11% more plan usage, up to 50% more for routines.
+
+Both sets of numbers are Sokolin's own estimates. No official changelog, documentation update, or measured methodology has accompanied either post. The November 26 post says "additional," which implies the 11% sits on top of the earlier 7%, but no combined total was published and it is unclear whether the percentages compound, add, or overlap.
+
+<Callout type="info">
+**What is confirmed:** Sokolin said the team "optimized our routine harness to remove inference requests for simple and repetitive tasks." He said he would share more detail soon. That is the full extent of what is published about the mechanism.
+</Callout>
+
+## Why Routine Usage Matters
+
+Grok Bot routines share a single weekly usage pool with the rest of your Grok Bot activity — conversations, bots, and routine runs all draw from the same allowance. The [official docs on skills and routines](https://docs.x.ai/grok-bot/skills-routines-and-automations) are blunt: a channel can use a week of usage in a day.
+
+The rate caps, per the docs, are generous: up to 300 routine runs per hour across all your routines, and 200 per hour for any single routine. But the rate cap is not the binding constraint. The weekly usage pool is.
+
+This creates a tension anyone who runs multiple bots recognizes. The whole point of routines is automation — things that run on a schedule without you thinking about them. But the more routines fire, the faster the pool drains. One user [documented](https://medium.com/@aleksandardobrohotov/grok-bot-hit-my-usage-limit-how-i-keep-a-studio-running-anyway-04c8723c9bae) their routines failing on November 8-9, 2026, when usage hit zero.
+
+## What the Optimization Probably Does
+
+Sokolin's key phrase is "remove inference requests for simple and repetitive tasks." He has not published details yet, but the implication is worth unpacking.
+
+A routine that runs on a schedule typically needs the model to evaluate whether there is work to do. If the answer is usually "nothing happened," that evaluation still burns through the usage pool. The optimization appears to target these quiet runs — reducing or eliminating the inference cost when the routine's check is simple and the result is predictable.
+
+<Callout type="warning">
+**This is inference, not confirmed.** Sokolin said he would share more soon. Until he does, we do not know the exact mechanism, which routine shapes benefit most, or how the "up to 50%" ceiling maps to specific workloads. The numbers above are his published estimates, not measured benchmarks.
+</Callout>
+
+That said, the stated intent is clear: xAI is working to make the routine harness cheaper, and the efficiency gains are aimed at simple, repetitive work. If you design routines where the common case is "nothing to do," you are likely to see more of that 50% ceiling than if your routines do complex reasoning on every run.
+
+## What "Up to 50%" Actually Means
+
+Both the 15% and 50% figures describe ceilings, not averages. Sokolin qualifies both with "up to." Your actual improvement depends on what your routines do — but since the mechanism is unpublished, we cannot say exactly how.
+
+What we can say: the 11% applies to general plan usage. The "up to 50%" applies specifically to routines. So routines are where the biggest improvement lives, and the simplest routines likely capture more of it.
+
+No combined figure was published for the two rounds. If the percentages are additive, users would be at roughly 18% more plan usage and somewhere above 15% more for routines (the November 13 ceiling) stacking with the November 26 gains. If they compound or overlap differently, the total could be higher or lower.
+
+## The Practical Bet: Simpler Routines, Better Returns
+
+Even without knowing the mechanism in detail, Sokolin's own description points toward a design principle: make the "nothing happened" path as simple as possible.
+
+Here is the logic. The optimization removes inference for simple, repetitive tasks. A routine that checks one narrow condition — did this Slack channel get a message? did this inbox get an email? — is about as simple and repetitive as it gets. A routine that does multi-step analysis or generates content on every run is not.
+
+You cannot verify the per-routine savings until Sokolin publishes the mechanism. But you can structure routines so they are positioned to benefit:
+
+- **Narrow the check.** A routine that asks "did anything change?" is simpler than one that asks "what changed and what should I do about it?" If you can split those into two steps, the first one — the gate — is the one that benefits from the optimization.
+
+- **Widen the schedule.** The docs suggest pausing or spacing out routines when usage drains fast. A routine that runs every five minutes costs twelve times as much pool as one that runs hourly. If the data it checks does not change that often, slow it down.
+
+- **Pause routines nobody reads.** If a routine generates output that nobody acts on, it is spending your usage for nothing. A routine that never runs does not spend usage, per the docs.
+
+<Callout type="tip">
+**How to audit:** Ask your bot: "Show me which bots, routines, and days used the most this week." This surfaces the one or two routines doing most of the damage — and those are the candidates to simplify or slow down.
+</Callout>
+
+## The Usage Docs Have Not Changed
+
+The [xAI usage limits page](https://docs.x.ai/x-subscription/usage-limits) still describes the same weekly pool mechanics it did before these announcements. As the guide at [aq.dev](https://aq.dev/guides/grok-bot-usage-limits/) notes, the November 13 optimizations shipped but the documented mechanics are unchanged. The improvement is in how efficiently the harness uses the pool, not in a larger pool.
+
+This matters for expectations. If you are hitting your limit now, these optimizations give you more headroom. But the weekly cycle, the shared pool, and the per-routine rate caps are all the same.
+
+## Meanwhile, OpenAI Pushed Costs the Other Direction
+
+On the same day as Sokolin's announcement, OpenAI disclosed a billing mistake that made its newest models more expensive to use, not less.
+
+Thibault Sottiaux, engineering lead for Codex at OpenAI, [posted on X](https://x.com/thsottiaux/status/2125784147889393806): "We made a billing mistake at launch of GPT-6.2 that incorrectly discounted GPT-6.2 Astra and Sol usage for most users. We've fixed this now, so the same work will use more of your plan's usage allowance."
+
+The numbers, [per BetaNews](https://betanews.com/article/gpt-6-2-billing-fix-astra-sol/): users will reach their limits 40% faster on GPT-6.2 Astra and 25% faster on Sol, compared to the previous week. BetaNews calculated that a meter running 40% faster leaves a fixed Astra allowance covering roughly 71% of what it handled before. Sol covers about 80%.
+
+Both models launched November 17. OpenAI will not retroactively charge for the difference. As an apology, every Go, Plus, Pro, and Business subscriber gets one banked reset — a one-time early usage limit refresh. BetaNews reports that desktop users claim it from Usage settings; mobile does not support it yet, and it expires if unused.
+
+GPT-6.2 Astra input tokens cost 200 credits per million versus 250 on GPT-6 Astra — a 20% per-token reduction, per [OpenAI's credit pricing](https://help.openai.com/articles/20001106). Sol carries the same rates as GPT-6.1 Sol. So despite the billing correction, both models may still go further per plan than their predecessors — the correction takes back the unintended discount, not the efficiency gain.
+
+<Callout type="info">
+**The contrast in one day:** xAI announced it had made agent routines cheaper. OpenAI disclosed that its agents had been undercharging and would now cost more. Both announcements are about the same fundamental tension: how much compute should a fixed subscription buy when agents can consume arbitrary amounts of it?
+</Callout>
+
+## What to Watch For
+
+Sokolin said he would share more on how the routine harness optimization works. When he does, three things will matter:
+
+1. **Which routine shapes benefit most.** The "up to 50%" ceiling needs context. Does it apply to routines that find nothing? Routines with specific trigger types? Routines below a certain complexity threshold?
+
+2. **Whether the two rounds stack.** The combined improvement — 7% plus 11% for plan usage, 15% plus 50% for routines — has not been officially quantified as a total.
+
+3. **Whether the docs update.** Right now, the usage limits documentation does not reflect these improvements. When it does, the numbers become official rather than one engineer's estimates on X.
+
+Until then, the bet is straightforward: design your routines to be as simple and repetitive as possible, slow down the ones that do not need to run often, and pause the ones nobody reads. Those are good practices regardless of the optimization, and they position you to benefit from whatever the mechanism turns out to be.
+
+---
+
+*Building AI agents or optimizing your AI workflows? [Subscribe to the newsletter](/subscribe) for weekly analysis of what is actually shipping in the AI engineering space.*
